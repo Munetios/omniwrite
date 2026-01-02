@@ -400,12 +400,8 @@ if ('serviceWorker' in navigator) {
             display: none;
         }
         @media (max-width: 560px) {
-            #documentTitle {
-                display: none;
-            }
-            #renameMoreOptionsBtn {
-                display: flex !important;
-            }            
+           #versionHistoryBtn, #shareDocumentBtn {
+               display: none;
         }
     </style>
 </head>
@@ -907,10 +903,6 @@ if ('serviceWorker' in navigator) {
         <link href="https://fonts.googleapis.com/css?family=Shadows+Into+Light&display=swap" rel="stylesheet">
 </div>
 <div class="dropdown-wrapper liquid-glass" id="editorMoreOptions">
-    <div class="dropdown-item" id="renameMoreOptionsBtn">
-        <icon>drive_file_rename_outline</icon>
-        <div class="menu-text">Rename Document</div>
-    </div>
     <div class="dropdown-item" id="versionHistoryMoreOptionsBtn">
         <icon>history</icon>
         <div class="menu-text">Version History</div>
@@ -5292,4 +5284,5 @@ if ('serviceWorker' in navigator) {
         //
     </script>
 </body>
+
 </html>
