@@ -1,4 +1,4 @@
-const CACHE_NAME = 'omniwrite-cache-v1';
+const CACHE_NAME = 'omniwrite-cache-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -8,7 +8,8 @@ const urlsToCache = [
     '/android-chrome-512x512.png',
     '/apple-touch-icon.png',
     '/favicon-16x16.png',
-    '/favicon-32x32.png'
+    '/favicon-32x32.png',
+    'https://api.munetios.com/beautiful-css/beautiful.css'
 ];
 
 // Install event: cache files
@@ -49,4 +50,5 @@ self.addEventListener('fetch', event => {
                 caches.match(event.request)
             )
     );
+
 });
