@@ -9,7 +9,10 @@ const urlsToCache = [
     '/apple-touch-icon.png',
     '/favicon-16x16.png',
     '/favicon-32x32.png',
-    'https://api.munetios.com/beautiful-css/beautiful.css'
+    'https://api.munetios.com/beautiful-css/beautiful.css',
+    'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded',
+    'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap'
+    
 ];
 
 // Install event: cache files
@@ -52,3 +55,4 @@ self.addEventListener('fetch', event => {
     );
 
 });
+
