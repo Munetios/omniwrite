@@ -396,13 +396,20 @@ if ('serviceWorker' in navigator) {
             margin: 0 10px;
             border-left: 1px solid rgba(255, 255, 255, 0.2);
             height: 24px;
-        }#renameMoreOptionsBtn {
+        }
+        
+        #renameMoreOptionsBtn {
             display: none;
         }
         @media (max-width: 560px) {
            #versionHistoryBtn, #shareDocumentBtn {
                display: none;
            }
+            documentTitle {
+                width: 30px;
+                white-space: nowrap;
+                overflow:hidden;
+            }
             #renameMoreOptionsBtn {
                 display: flex !important;
             }            
@@ -909,7 +916,7 @@ if ('serviceWorker' in navigator) {
 <div class="dropdown-wrapper liquid-glass" id="editorMoreOptions">
     <div class="dropdown-item" id="renameMoreOptionsBtn">
         <icon>drive_file_rename_outline</icon>
-        <div class="menu-text">Rename Document (UI only)</div>
+        <div class="menu-text">Rename Document</div>
     </div>
     <div class="dropdown-item" id="versionHistoryMoreOptionsBtn">
         <icon>history</icon>
@@ -5293,3 +5300,4 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
+
