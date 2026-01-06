@@ -396,19 +396,12 @@ if ('serviceWorker' in navigator) {
             margin: 0 10px;
             border-left: 1px solid rgba(255, 255, 255, 0.2);
             height: 24px;
-        }
-        
-        #renameMoreOptionsBtn {
+        }#renameMoreOptionsBtn {
             display: none;
         }
         @media (max-width: 560px) {
-           #versionHistoryBtn, #shareDocumentBtn {
-               display: none;
-           }
-            documentTitle {
-                width: 30px;
-                white-space: nowrap;
-                overflow:hidden;
+            #documentTitle {
+                display: none;
             }
             #renameMoreOptionsBtn {
                 display: flex !important;
@@ -1247,6 +1240,10 @@ if ('serviceWorker' in navigator) {
         // Set editor content
         const editorArea = document.getElementById('editorArea');
         editorArea.innerHTML = doc.content || '';
+        // Re-attach font pickers for this document/editor (ensure DOM is ready)
+        setTimeout(() => {
+            setupFontPickers(doc, editorArea);
+        }, 0);
         // After setting content, resolve all omniwrite image ids to blob URLs
         (async function resolveOmniwriteImages() {
             const imgs = editorArea.querySelectorAll('img[data-omniwrite-image-id]');
@@ -2616,151 +2613,8 @@ if ('serviceWorker' in navigator) {
             }
         }
       
-        // Font Size Picker
-        const fontSizeBtn = document.getElementById('fontSizeBtn');
-        const fontSizePicker = document.getElementById('fontSizePicker');
-        const fontSizeDisplay = document.getElementById('fontSizeDisplay');
-        // Show/hide picker
-        fontSizeBtn.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            if (fontSizePicker.style.display === 'block') {
-            fontSizePicker.style.display = 'none';
-            } else {
-            // Position dropdown below the button
-            const rect = fontSizeBtn.getBoundingClientRect();
-            fontSizePicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-            fontSizePicker.style.left = (rect.left + window.scrollX) + 'px';
-            fontSizePicker.style.display = 'block';
-            }
-        });
-        // Hide picker when clicking outside
-        document.addEventListener('mousedown', function(e) {
-            if (
-            fontSizePicker.style.display === 'block' &&
-            !fontSizePicker.contains(e.target) &&
-            !fontSizeBtn.contains(e.target)
-            ) {
-            fontSizePicker.style.display = 'none';
-            }
-        });
-        // Apply font size
-        fontSizePicker.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            const size = this.getAttribute('data-size');
-            // Use execCommand with fontSize (1-7), then replace <font size> with inline style
-            // We'll use px directly via a span
-            document.execCommand('fontSize', false, 7); // 7 is largest, will be replaced
-            // Replace <font size="7"> with <span style="font-size: XXpx">
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                let range = selection.getRangeAt(0);
-                // Find all <font size="7"> in editorArea and replace
-                editorArea.querySelectorAll('font[size="7"]').forEach(fontEl => {
-                const span = document.createElement('span');
-                span.style.fontSize = size + 'px';
-                span.innerHTML = fontEl.innerHTML;
-                fontEl.parentNode.replaceChild(span, fontEl);
-                });
-            }
-            fontSizeDisplay.textContent = size + 'px';
-            fontSizePicker.style.display = 'none';
-            // Save after change
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
-            });
-        });
-        // Font Family Picker
-        const fontFamilyBtn = document.getElementById('fontFamilyBtn');
-        const fontFamilyPicker = document.getElementById('fontFamilyPicker');
-        const fontFamilyText = document.getElementById('fontFamilyText');
-        // Show/hide picker
-        fontFamilyBtn.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            if (fontFamilyPicker.style.display === 'block') {
-            fontFamilyPicker.style.display = 'none';
-            } else {
-            // Position dropdown below the button
-            const rect = fontFamilyBtn.getBoundingClientRect();
-            fontFamilyPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-            fontFamilyPicker.style.left = (rect.left + window.scrollX) + 'px';
-            fontFamilyPicker.style.display = 'block';
-            }
-        });
-        // Hide picker when clicking outside
-        document.addEventListener('mousedown', function(e) {
-            if (
-            fontFamilyPicker.style.display === 'block' &&
-            !fontFamilyPicker.contains(e.target) &&
-            !fontFamilyBtn.contains(e.target)
-            ) {
-            fontFamilyPicker.style.display = 'none';
-            }
-        });
-        // Apply font family and update text
-        fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            const font = this.getAttribute('data-font');
-            // Use execCommand to set fontName (for selection)
-            document.execCommand('fontName', false, font.replace(/['"]/g, '').split(',')[0]);
-            // Update toolbar display text and style
-            fontFamilyText.textContent = this.innerText;
-            fontFamilyText.style.fontFamily = font;
-            fontFamilyPicker.style.display = 'none';
-            // Save after change
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
-            });
-        });
-
-        // Update font family toolbar display based on caret position, only if selection is inside editorArea
-        document.addEventListener('selectionchange', function() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            let node = selection.anchorNode;
-            if (!node) return;
-            // Only update if selection is inside the editorArea
-            let insideEditor = false;
-            let checkNode = node.nodeType === 3 ? node.parentNode : node;
-            while (checkNode) {
-                if (checkNode === editorArea) {
-                    insideEditor = true;
-                    break;
-                }
-                checkNode = checkNode.parentNode;
-            }
-            if (!insideEditor) return;
-            // Traverse up to find a font-family style
-            let font = '';
-            let displayText = '';
-            while (node && node !== editorArea && node !== document.body) {
-                if (node.nodeType === 1) { // Element node
-                    const computed = window.getComputedStyle(node);
-                    if (computed.fontFamily) {
-                        font = computed.fontFamily;
-                        break;
-                    }
-                }
-                node = node.parentNode;
-            }
-            if (!font) font = "'Google Sans Flex', sans-serif";
-            // Find the dropdown item that matches this font
-            let found = false;
-            fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
-                const itemFont = item.getAttribute('data-font');
-                if (itemFont && font.replace(/['"]/g, '').toLowerCase().startsWith(itemFont.replace(/['"]/g, '').toLowerCase().split(',')[0])) {
-                    displayText = item.innerText;
-                    fontFamilyText.textContent = displayText;
-                    fontFamilyText.style.fontFamily = itemFont;
-                    found = true;
-                }
-            });
-            if (!found) {
-                fontFamilyText.textContent = font.split(',')[0].replace(/['"]/g, '');
-                fontFamilyText.style.fontFamily = font;
-            }
-        });
+ 
+        // Call setupFontPickers(doc, editorArea) inside openDocument after setting editorArea and doc
         // --- Preview Functionality ---
         const previewBtn = document.getElementById('previewBtn');
         let previewModal = null;
@@ -3410,6 +3264,163 @@ if ('serviceWorker' in navigator) {
             modal.remove();
         };
     });
+        // Font Size and Font Family Picker logic as functions to re-attach event listeners
+        function setupFontPickers(doc, editorArea) {
+            // Always get fresh references after cloning
+            let fontSizeBtn = document.getElementById('fontSizeBtn');
+            let fontSizePicker = document.getElementById('fontSizePicker');
+            let fontSizeDisplay = document.getElementById('fontSizeDisplay');
+            let fontFamilyBtn = document.getElementById('fontFamilyBtn');
+            let fontFamilyPicker = document.getElementById('fontFamilyPicker');
+            let fontFamilyText = document.getElementById('fontFamilyText');
+
+            // Check if required elements exist
+            if (!fontSizeBtn || !fontSizePicker || !fontSizeDisplay || !fontFamilyBtn || !fontFamilyPicker || !fontFamilyText) {
+                console.warn('Font picker elements not found in DOM');
+                return;
+            }
+
+            // Remove previous listeners by cloning
+            function replaceWithClone(el) {
+                const clone = el.cloneNode(true);
+                el.parentNode.replaceChild(clone, el);
+                return clone;
+            }
+            // Replace pickers to remove old listeners
+            fontSizeBtn = replaceWithClone(fontSizeBtn);
+            fontFamilyBtn = replaceWithClone(fontFamilyBtn);
+
+            // Re-fetch all references after cloning
+            fontSizeBtn = document.getElementById('fontSizeBtn');
+            fontFamilyBtn = document.getElementById('fontFamilyBtn');
+            fontSizePicker = document.getElementById('fontSizePicker');
+            fontFamilyPicker = document.getElementById('fontFamilyPicker');
+            fontSizeDisplay = document.getElementById('fontSizeDisplay');
+            fontFamilyText = document.getElementById('fontFamilyText');
+
+            // Font Size Picker
+            fontSizeBtn.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                if (document.body.contains(fontSizePicker)) {
+                    fontSizePicker.remove();
+                } else {
+                    const rect = fontSizeBtn.getBoundingClientRect();
+                    fontSizePicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                    fontSizePicker.style.left = (rect.left + window.scrollX) + 'px';
+                    fontSizePicker.style.display = 'block';
+                    document.body.appendChild(fontSizePicker);
+                }
+            });
+            document.addEventListener('mousedown', function(e) {
+                if (
+                    document.body.contains(fontSizePicker) &&
+                    !fontSizePicker.contains(e.target) &&
+                    !fontSizeBtn.contains(e.target)
+                ) {
+                    fontSizePicker.remove();
+                }
+            });
+            fontSizePicker.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    const size = this.getAttribute('data-size');
+                    document.execCommand('fontSize', false, 7);
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        editorArea.querySelectorAll('font[size="7"]').forEach(fontEl => {
+                            const span = document.createElement('span');
+                            span.style.fontSize = size + 'px';
+                            span.innerHTML = fontEl.innerHTML;
+                            fontEl.parentNode.replaceChild(span, fontEl);
+                        });
+                    }
+                    fontSizeDisplay.textContent = size + 'px';
+                    if (document.body.contains(fontSizePicker)) fontSizePicker.remove();
+                    doc.content = editorArea.innerHTML;
+                    saveDocuments();
+                });
+            });
+
+            // Font Family Picker
+            fontFamilyBtn.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                if (document.body.contains(fontFamilyPicker)) {
+                    fontFamilyPicker.remove();
+                } else {
+                    const rect = fontFamilyBtn.getBoundingClientRect();
+                    fontFamilyPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                    fontFamilyPicker.style.left = (rect.left + window.scrollX) + 'px';
+                    fontFamilyPicker.style.display = 'block';
+                    document.body.appendChild(fontFamilyPicker);
+                }
+            });
+            document.addEventListener('mousedown', function(e) {
+                if (
+                    document.body.contains(fontFamilyPicker) &&
+                    !fontFamilyPicker.contains(e.target) &&
+                    !fontFamilyBtn.contains(e.target)
+                ) {
+                    fontFamilyPicker.remove();
+                }
+            });
+            fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    const font = this.getAttribute('data-font');
+                    document.execCommand('fontName', false, font.replace(/['"]/g, '').split(',')[0]);
+                    fontFamilyText.textContent = this.innerText;
+                    fontFamilyText.style.fontFamily = font;
+                    if (document.body.contains(fontFamilyPicker)) fontFamilyPicker.remove();
+                    doc.content = editorArea.innerHTML;
+                    saveDocuments();
+                });
+            });
+
+            // Update font family toolbar display based on caret position, only if selection is inside editorArea
+            document.addEventListener('selectionchange', function() {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+                let node = selection.anchorNode;
+                if (!node) return;
+                let insideEditor = false;
+                let checkNode = node.nodeType === 3 ? node.parentNode : node;
+                while (checkNode) {
+                    if (checkNode === editorArea) {
+                        insideEditor = true;
+                        break;
+                    }
+                    checkNode = checkNode.parentNode;
+                }
+                if (!insideEditor) return;
+                let font = '';
+                let displayText = '';
+                while (node && node !== editorArea && node !== document.body) {
+                    if (node.nodeType === 1) {
+                        const computed = window.getComputedStyle(node);
+                        if (computed.fontFamily) {
+                            font = computed.fontFamily;
+                            break;
+                        }
+                    }
+                    node = node.parentNode;
+                }
+                if (!font) font = "'Google Sans Flex', sans-serif";
+                let found = false;
+                fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
+                    const itemFont = item.getAttribute('data-font');
+                    if (itemFont && font.replace(/['"]/g, '').toLowerCase().startsWith(itemFont.replace(/['"]/g, '').toLowerCase().split(',')[0])) {
+                        displayText = item.innerText;
+                        fontFamilyText.textContent = displayText;
+                        fontFamilyText.style.fontFamily = itemFont;
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    fontFamilyText.textContent = font.split(',')[0].replace(/['"]/g, '');
+                    fontFamilyText.style.fontFamily = font;
+                }
+            });
+        }
     // --- Templates Logic ---
     // Define 20 templates
     const TEMPLATES = [
@@ -4119,7 +4130,7 @@ if ('serviceWorker' in navigator) {
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
                         &copy; 2025-2026 Munetios.<br>
                         Munetios OmniWrite is a unregistered trademark of Munetios.<br>
-                        Website <a href="https://munetios.com" target="_self" style="color:#ffe066;">munetios.com</a>
+                        Website <a href="https://munetios.com" target="_blank" style="color:#ffe066;">munetios.com</a>
                     <br>OmniWrite is open source. See <a href="https://github.com/munetios/omniwrite" target="_self" style="color:#ffe066;">github.com/munetios/omniwrite</a><br>
                     </div>
                 </div>
@@ -5300,5 +5311,3 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
-
-
