@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Munetios OmniWrite – Fast & Secure Writing</title>
+
+    <!-- Munetios Beautiful CSS -->
+    <link
+      rel="stylesheet"
+      href="https://api.munetios.com/beautiful-css/beautiful.css"
+    />
+
+    <!-- Google Sans Flex -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap"
+    />
+
+    <!-- Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Meta -->
+    <meta
+      name="description"
+      content="Munetios OmniWrite is a fast, privacy-first, open-source writing platform with end-to-end encryption."
+    />
+    <meta
+      name="keywords"
+      content="Munetios, OmniWrite, writing, privacy, end-to-end encryption, open source"
+    />
+    <meta name="author" content="Munetios" />
+
+    <style>
+      * {
+        box-sizing: border-box;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Google Sans Flex", sans-serif;
+        background-color: #110736;
+        color: #ffffff;
+        overflow-x: hidden;
+      }
+
+      a {
+        color: #ffffff;
+        text-decoration: none;
+      }
+
+      h1 {
+        font-size: 2.4rem;
+        font-weight: 700;
+        font-variation-settings: "ROND" 100;
+      }
+
+      h2 {
+        font-size: 1.6rem;
+        margin-top: 2rem;
+      }
+
+      p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        max-width: 900px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.2rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+
+      .nav-right a {
+        margin-left: 1rem;
+        font-weight: 500;
+      }
+
+      section {
+        padding: 3rem 2rem;
+      }
+
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .container-l,
+      .container-r {
+        flex: 1;
+        min-width: 280px;
+      }
+
+      .container-r img {
+        max-width: 100%;
+        border-radius: 16px;
+      }
+
+      .cta-btn {
+        margin-top: 1rem;
+        padding: 0.6rem 1.6rem;
+        background: #6200ea94;
+        border: 1px solid #ffffff28;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
+      ul {
+        padding-left: 1.2rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+        max-width: 1100px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #ffffff22;
+        padding: 0.75rem;
+        text-align: left;
+      }
+
+      th {
+        font-weight: 600;
+      }
+
+      footer {
+        padding: 2rem;
+        margin-top: 4rem;
+        font-size: 0.95rem;
+      }
+
+      .footer-links a {
+        margin-right: 1rem;
+        opacity: 0.85;
+      }
+
+      .footer-links a:hover {
+        opacity: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Topbar -->
+    <div class="topbar liquid-glass transparency-md">
+      <strong>Munetios OmniWrite</strong>
+      <div class="nav-right">
+        <a href="#features">Features</a>
+        <a href="#security">Security</a>
+        <a href="#compare">Compare</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section id="home">
+      <div class="container">
+        <div class="container-l">
+          <h1>Fast, private, and secure writing — by design.</h1>
+          <p>
+            Munetios OmniWrite is a modern, open-source writing platform that
+            encrypts your documents directly in your browser. Your content stays
+            private, offline-ready, and fully under your control.
+          </p>
+          <button
+            class="cta-btn"
+            onclick="window.location.href='https://write.munetios.com'"
+          >
+            Get Started
+          </button>
+        </div>
+        <div class="container-r">
+          <img src="omniwrite-preview.png" alt="Munetios OmniWrite preview" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+      <h1>Features</h1>
+      <ul>
+        <li>End-to-end encrypted documents</li>
+        <li>Offline-first design</li>
+        <li>Images and media support</li>
+        <li>Liquid Glass interface</li>
+        <li>Dark mode and appearance themes</li>
+        <li>No account required</li>
+        <li>Fully open source</li>
+      </ul>
+    </section>
+
+    <!-- Security -->
+    <section id="security">
+      <h1>Security & Privacy</h1>
+      <p>
+        All documents in Munetios OmniWrite are encrypted locally using modern
+        cryptography. Encryption keys are generated on your device, stored
+        securely, and never transmitted to Munetios servers.
+      </p>
+      <p>
+        This zero-knowledge design ensures that only you can read your content.
+        If encryption keys are lost or reset, documents cannot be recovered — a
+        core property of true end-to-end encryption.
+      </p>
+    </section>
+
+    <!-- Compare -->
+    <section id="compare">
+      <h1>Comparison</h1>
+      <table>
+        <tr>
+          <th>Capability</th>
+          <th>OmniWrite</th>
+          <th>Google Docs</th>
+          <th>Microsoft Word</th>
+          <th>Apple Pages</th>
+          <th>Proton Docs</th>
+        </tr>
+        <tr>
+          <td>Local end-to-end encryption</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Encryption keys stay on device</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>No account required (full use)</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td>Offline-first encrypted design</td>
+          <td>Yes</td>
+          <td>Limited</td>
+          <td>Limited</td>
+          <td>Limited</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Liquid Glass UI</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>iOS 26 only</td>
+          <td>No</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h1>FAQ</h1>
+      <ul>
+        <li>
+          <strong>Is OmniWrite open source?</strong> Yes. OmniWrite is open
+          source and transparent by design.
+        </li>
+        <li>
+          <strong>Can Munetios read my documents?</strong> No. Encryption keys
+          never leave your device.
+        </li>
+        <li>
+          <strong>Do I need an account?</strong> No account or sign-in is
+          required.
+        </li>
+        <li>
+          <strong>Does OmniWrite work offline?</strong> Yes, offline support is
+          built in.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer class="liquid-glass blur-sm transparency-md">
+      <p>© <span id="year"></span> Munetios. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="https://www.munetios.com">Munetios</a>
+        <a href="https://write.munetios.com">OmniWrite</a>
+        <a href="https://www.munetios.com/policies/#/privacy">Privacy</a>
+        <a href="https://www.munetios.com/policies/#/terms">Terms of Service</a>
+        <a href="https://www.munetios.com/policies/#/cookies">Cookies</a>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
