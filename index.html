@@ -36,9 +36,9 @@ if ('serviceWorker' in navigator) {
     default-src 'self';
      style-src 'self' https://fonts.googleapis.com https://api.munetios.com 'unsafe-inline';
       font-src 'self' https://fonts.gstatic.com;
-    script-src 'self' https://cdnjs.cloudflare.com 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
+    script-src 'self' https://cdnjs.cloudflare.com https://api.munetios.com 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
        media-src 'self' blob: data:;  img-src 'self' https: data: blob:; connect-src 'self';
-        frame-src 'self' https://www.munetios.com https://calendar.munetios.com;
+        frame-src 'self' https://www.munetios.com https://calendar.munetios.com https://www.youtube-nocookie.com;
         ">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap');
@@ -915,6 +915,67 @@ if ('serviceWorker' in navigator) {
         <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Shadows+Into+Light&display=swap" rel="stylesheet">
 </div>
+<div class="dropdown-wrapper liquid-glass" id="themeDropdownOptions"> 
+    <div class="dropdown-item" id="systemThemeOption">
+      <icon>settings_brightness</icon>
+        <div class="menu-text">System Theme</div>
+    </div>
+    <div class="dropdown-item" id="lightThemeOption">
+    
+        <icon>light_mode</icon>
+        <div class="menu-text">Light Theme</div>
+    </div>
+    <div class="dropdown-item" id="darkThemeOption">
+        <icon>dark_mode</icon>
+        <div class="menu-text">Dark Theme</div>
+    </div>
+    <div class="dropdown-item" id="customThemeOption">
+        <icon>palette</icon>
+        <div class="menu-text">Custom Theme</div>
+    </div>
+</div>
+<div class="dropdown-wrapper liquid-glass" id="languageDropDownOptions">
+    <div class="dropdown-item" id="englishLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">English</div>
+    </div>
+    <div class="dropdown-item" id="spanishLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Spanish</div>
+    </div>
+    <div class="dropdown-item" id="frenchLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">French</div>
+    </div>
+    <div class="dropdown-item" id="germanLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">German</div>
+    </div>
+    <div class="dropdown-item" id="italianLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Italian</div>
+    </div>
+    <div class="dropdown-item" id="portugueseLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Portuguese</div>
+    </div>
+    <div class="dropdown-item" id="chineseLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Chinese</div>
+    </div>
+    <div class="dropdown-item" id="japaneseLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Japanese</div>
+    </div>
+    <div class="dropdown-item" id="koreanLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Korean</div>
+    </div>
+    <div class="dropdown-item" id="arabicLanguageOption">
+        <icon>language</icon>
+        <div class="menu-text">Arabic</div>
+    </div>
+</div>
 <div class="dropdown-wrapper liquid-glass" id="editorMoreOptions">
     <div class="dropdown-item" id="renameMoreOptionsBtn">
         <icon>drive_file_rename_outline</icon>
@@ -1057,7 +1118,7 @@ if ('serviceWorker' in navigator) {
                     // Generate new key
                     window.crypto.subtle.generateKey(
                         { name: 'AES-GCM', length: 256 },
-                        true,
+                        true, // Set extractable to true so we can export the key
                         ['encrypt', 'decrypt']
                     ).then(async key => {
                         const raw = await window.crypto.subtle.exportKey('raw', key);
@@ -1129,13 +1190,13 @@ if ('serviceWorker' in navigator) {
 
     // --- Initialization ---
     async function initializeApp() {
-        // Patch DB for images/trash before opening
+        // Patch DB for images/trash/videos/audios before opening
         if (typeof openDBPatched === 'undefined') {
             (function patchDBForImages() {
                 const origOpenDB = openDB;
                 openDB = function() {
                     return new Promise((resolve, reject) => {
-                        const req = indexedDB.open(DB_NAME, DB_VERSION + 1);
+                        const req = indexedDB.open(DB_NAME, DB_VERSION + 2);
                         req.onupgradeneeded = function(e) {
                             const db = e.target.result;
                             if (!db.objectStoreNames.contains(DOC_STORE)) {
@@ -1149,6 +1210,12 @@ if ('serviceWorker' in navigator) {
                             }
                             if (!db.objectStoreNames.contains('trashImages')) {
                                 db.createObjectStore('trashImages', { keyPath: 'id', autoIncrement: true });
+                            }
+                            if (!db.objectStoreNames.contains('videos')) {
+                                db.createObjectStore('videos', { keyPath: 'id', autoIncrement: true });
+                            }
+                            if (!db.objectStoreNames.contains('audios')) {
+                                db.createObjectStore('audios', { keyPath: 'id', autoIncrement: true });
                             }
                         };
                         req.onsuccess = () => resolve(req.result);
@@ -1235,6 +1302,9 @@ if ('serviceWorker' in navigator) {
         list.appendChild(el);
     }
 
+    // Flag to track if toolbar listeners have been initialized
+    let toolbarListenersInitialized = false;
+
     // Open document in editor
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
@@ -1284,12 +1354,73 @@ if ('serviceWorker' in navigator) {
                 }
             }
         })();
+        
+        // Resolve video files from IndexedDB
+        (async function resolveOmniwriteVideos() {
+            const videos = editorArea.querySelectorAll('video[data-omniwrite-video-id]');
+            for (const video of videos) {
+                const videoId = Number(video.getAttribute('data-omniwrite-video-id'));
+                if (!isNaN(videoId)) {
+                    try {
+                        const tx = db.transaction(VIDEO_STORE, 'readonly');
+                        const store = tx.objectStore(VIDEO_STORE);
+                        const req = store.get(videoId);
+                        req.onsuccess = function() {
+                            if (req.result && req.result.file) {
+                                const url = URL.createObjectURL(req.result.file);
+                                video.src = url;
+                            } else {
+                                video.style.display = 'none';
+                            }
+                        };
+                        req.onerror = function() {
+                            video.style.display = 'none';
+                        };
+                    } catch (e) {
+                        video.style.display = 'none';
+                    }
+                }
+            }
+        })();
+        
+        // Resolve audio files from IndexedDB
+        (async function resolveOmniwriteAudios() {
+            const audios = editorArea.querySelectorAll('audio[data-omniwrite-audio-id]');
+            for (const audio of audios) {
+                const audioId = Number(audio.getAttribute('data-omniwrite-audio-id'));
+                if (!isNaN(audioId)) {
+                    try {
+                        const tx = db.transaction(AUDIO_STORE, 'readonly');
+                        const store = tx.objectStore(AUDIO_STORE);
+                        const req = store.get(audioId);
+                        req.onsuccess = function() {
+                            if (req.result && req.result.file) {
+                                const url = URL.createObjectURL(req.result.file);
+                                audio.src = url;
+                            } else {
+                                audio.style.display = 'none';
+                            }
+                        };
+                        req.onerror = function() {
+                            audio.style.display = 'none';
+                        };
+                    } catch (e) {
+                        audio.style.display = 'none';
+                    }
+                }
+            }
+        })();
+        
         // Save content on input
         editorArea.oninput = async function() {
             doc.content = editorArea.innerHTML;
             await saveDocuments();
         };
+        
         // --- Rich Text Formatting Toolbar Functionality ---
+        // Only initialize toolbar listeners once to prevent duplicates when switching documents
+        if (!toolbarListenersInitialized) {
+            toolbarListenersInitialized = true;
 
         // Utility: Apply execCommand and keep selection/caret in place
         function execCommandWithRestore(command, value = null) {
@@ -1485,8 +1616,11 @@ if ('serviceWorker' in navigator) {
             // Use execCommand with 'hiliteColor' (modern browsers) or 'backColor' (IE)
             execCommandWithRestore('hiliteColor', '#ffe066');
             // Save after change
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
+            const { doc, editorArea } = getCurrentDocAndEditor();
+            if (doc && editorArea) {
+                doc.content = editorArea.innerHTML;
+                saveDocuments();
+            }
         });
         // --- Insert Music Functionality ---
         const insertMusicBtn = document.getElementById('insertMusicBtn');
@@ -1581,9 +1715,13 @@ if ('serviceWorker' in navigator) {
             } else {
             editorArea.appendChild(quote);
             }
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
+            const { doc } = getCurrentDocAndEditor();
+            if (doc) {
+                doc.content = editorArea.innerHTML;
+                saveDocuments();
+            }
         });
+    
 
         // --- Insert Code Block Functionality ---
         document.getElementById('insertCodeBlockBtn').addEventListener('mousedown', function(e) {
@@ -1607,9 +1745,13 @@ if ('serviceWorker' in navigator) {
             } else {
             editorArea.appendChild(pre);
             }
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
+            const { doc } = getCurrentDocAndEditor();
+            if (doc) {
+                doc.content = editorArea.innerHTML;
+                saveDocuments();
+            }
         });
+      
         // --- Insert Table of Contents Functionality ---
         document.getElementById('insertTableOfContentsBtn').addEventListener('mousedown', function(e) {
             e.preventDefault();
@@ -1657,8 +1799,11 @@ if ('serviceWorker' in navigator) {
             }
 
             // Save after insert
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
+            const { doc } = getCurrentDocAndEditor();
+            if (doc) {
+                doc.content = editorArea.innerHTML;
+                saveDocuments();
+            }
 
             // Add click handler for TOC links (delegate for all future TOCs)
             editorArea.addEventListener('click', function(e) {
@@ -1773,21 +1918,27 @@ if ('serviceWorker' in navigator) {
             input.onchange = async function() {
                 const file = input.files[0];
                 if (file) {
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    insertMusicAtCaret(ev.target.result, file.name);
-                    musicInsertModal.remove();
-                    musicInsertModal = null;
-                    showToast('Music inserted.', { type: 'success' });
-                };
-                reader.readAsDataURL(file);
+                // Show progress indicator
+                const progressToast = showToast('Preparing music...', { type: 'info', duration: 2000 });
+                
+                // Store audio file in IndexedDB
+                const audioId = await addAudioToDB(file);
+                
+                // Use Blob URL for immediate display
+                const blobUrl = URL.createObjectURL(file);
+                
+                if (progressToast && progressToast.remove) progressToast.remove();
+                insertMusicAtCaret(blobUrl, file.name, audioId);
+                musicInsertModal.remove();
+                musicInsertModal = null;
+                showToast('Music inserted.', { type: 'success' });
                 }
             };
             input.click();
             };
         }
 
-        function insertMusicAtCaret(dataUrl, alt = '') {
+        function insertMusicAtCaret(dataUrl, alt = '', audioId = null) {
             const editorArea = document.getElementById('editorArea');
             editorArea.focus();
             const audio = document.createElement('audio');
@@ -1796,6 +1947,9 @@ if ('serviceWorker' in navigator) {
             audio.style.maxWidth = '100%';
             audio.style.borderRadius = '8px';
             audio.style.margin = '8px 0';
+            if (audioId) {
+                audio.setAttribute('data-omniwrite-audio-id', audioId);
+            }
             audio.setAttribute('title', alt || '');
             // Insert at caret
             const sel = window.getSelection();
@@ -2010,81 +2164,8 @@ if ('serviceWorker' in navigator) {
 
         // Upgrade audio players on document open and after insert
         upgradeAudioPlayers();
-        editorArea.addEventListener('input', upgradeAudioPlayers);
-        // Also upgrade after music insert
-        editorArea.addEventListener('DOMNodeInserted', function(e) {
-            if (e.target.nodeName === 'AUDIO') {
-            setTimeout(upgradeAudioPlayers, 10);
-            }
-        });
-        // --- Text Color Picker Functionality ---
-        const textColorBtn = document.getElementById('textColorBtn');
-        const colorPicker = document.getElementById('colorPicker');
-        let colorPickerTarget = null;
-
-        // Show/hide color picker when clicking the palette button
-        textColorBtn.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            // Position color picker below the button
-            const rect = textColorBtn.getBoundingClientRect();
-            colorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-            colorPicker.style.left = (rect.left + window.scrollX - 300) + 'px';
-            colorPicker.style.display = colorPicker.style.display === 'flex' ? 'none' : 'flex';
-            colorPickerTarget = 'foreColor';
-        });
-
-        // Hide color picker when clicking outside
-        document.addEventListener('mousedown', function(e) {
-            if (
-            colorPicker.style.display === 'flex' &&
-            !colorPicker.contains(e.target) &&
-            !textColorBtn.contains(e.target)
-            ) {
-            colorPicker.style.display = 'none';
-            }
-        });
-
-        // Color swatch click handler
-        colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', function(e) {
-            // Get click position relative to swatch
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            // Convert x/y to HSV and then to RGB/HEX
-            // Horizontal: hue (0-360), Vertical: value/saturation
-            const hue = (x / rect.width) * 360;
-            const sat = 1 - (y / rect.height) * 0.8; // 0.2-1.0
-            const val = 1 - (y / rect.height) * 0.8; // 0.2-1.0
-
-            // HSV to RGB
-            function hsvToRgb(h, s, v) {
-            let f = (n, k = (n + h / 60) % 6) =>
-                v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-            return [
-                Math.round(f(5) * 255),
-                Math.round(f(3) * 255),
-                Math.round(f(1) * 255)
-            ];
-            }
-            const rgb = hsvToRgb(hue, sat, val);
-            const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-            // Show hex in display
-            document.getElementById('colorHexDisplay').textContent = hex;
-
-            // Apply color to selection
-            if (colorPickerTarget === 'foreColor') {
-            document.execCommand('foreColor', false, hex);
-            } else if (colorPickerTarget === 'hiliteColor') {
-            document.execCommand('hiliteColor', false, hex);
-            }
-            // Save after change
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
-
-            // Hide picker after pick (optional: comment out if you want it to stay open)
-            colorPicker.style.display = 'none';
-        });
+        // Note: editorArea event listeners for audio/video are set up once below
+        
         // --- Insert Video Functionality ---
         const insertVideoBtn = document.getElementById('insertVideoBtn');
         let videoInsertModal = null;
@@ -2106,6 +2187,7 @@ if ('serviceWorker' in navigator) {
             <h2>Insert Video</h2>
             <div style="margin-bottom:18px;">
             <button id="insertVideoFromFileBtn">Upload Video File</button>
+            <button id="insertYoutubeVideoBtn" style="margin-left:12px;">Insert from YouTube</button>
             </div>
             <div id="videoInsertContent"></div>
             </div>
@@ -2117,7 +2199,100 @@ if ('serviceWorker' in navigator) {
             videoInsertModal.remove();
             videoInsertModal = null;
             };
-
+            // Insert from YouTube
+            videoInsertModal.querySelector('#insertYoutubeVideoBtn').onclick = () => {
+                const content = videoInsertModal.querySelector('#videoInsertContent');
+                content.innerHTML = `
+                    <div style="margin-top:16px;">
+                        <input type="text" id="youtubeUrlInput" placeholder="Paste YouTube or YouTube-nocookie URL here" style="width:90%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:16px;">
+                        <button id="insertYoutubeVideoConfirmBtn" style="margin-left:8px;">Insert</button>
+                    </div>
+                    <div id="youtubeUrlError" style="color:#e74c3c;margin-top:8px;font-size:14px;"></div>
+                `;
+                const urlInput = content.querySelector('#youtubeUrlInput');
+                const insertBtn = content.querySelector('#insertYoutubeVideoConfirmBtn');
+                const errorDiv = content.querySelector('#youtubeUrlError');
+                insertBtn.onclick = () => {
+                    const url = urlInput.value.trim();
+                    // Accept both youtube.com and youtube-nocookie.com
+                    const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+                    if (!ytMatch) {
+                        errorDiv.textContent = 'Please enter a valid YouTube or YouTube-nocookie URL.';
+                        return;
+                    }
+                    const videoId = ytMatch[1];
+                    // Always use youtube-nocookie.com for privacy
+                    const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+                    // Always insert a placeholder with click-to-load, never a direct iframe
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'youtube-nocookie-placeholder';
+                    placeholder.style.position = 'relative';
+                    placeholder.style.width = '100%';
+                    placeholder.style.maxWidth = '560px';
+                    placeholder.style.height = '315px';
+                    placeholder.style.background = '#191a2a';
+                    placeholder.style.borderRadius = '8px';
+                    placeholder.style.margin = '8px 0';
+                    placeholder.style.display = 'flex';
+                    placeholder.style.alignItems = 'center';
+                    placeholder.style.justifyContent = 'center';
+                    placeholder.style.cursor = 'pointer';
+                    placeholder.innerHTML = `
+                        <div style="text-align:center;">
+                            <icon style="font-size:64px;color:#ffe066;">smart_display</icon>
+                            <div style="margin-top:12px;font-size:18px;color:#ffe066;">Click to load YouTube video</div>
+                            <p style="margin-top:8px;font-size:14px;color:#ffe066;">Note: This video will be loaded from YouTube-nocookie.com for privacy but may only have minimal tracking.</p>
+                        </div>
+                    `;
+                    placeholder.onclick = function() {
+                        // Only allow loading if not already loaded
+                        if (placeholder.parentNode) {
+                            const iframe = document.createElement('iframe');
+                            iframe.src = embedUrl;
+                            iframe.width = "760";
+                            iframe.height = "415";
+                            iframe.frameBorder = "0";
+                            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                            iframe.allowFullscreen = true;
+                            iframe.style.maxWidth = '100%';
+                            iframe.style.borderRadius = '8px';
+                            iframe.style.margin = '8px 0';
+                            placeholder.replaceWith(iframe);
+                            // Save after insert (replace placeholder with iframe in DOM)
+                            const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                            const doc = documents.find(d => d.id === docId);
+                            if (doc) {
+                                // Wait for DOM update
+                                setTimeout(() => {
+                                    doc.content = document.getElementById('editorArea').innerHTML;
+                                    saveDocuments();
+                                }, 0);
+                            }
+                        }
+                    };
+                    // Insert at caret
+                    const editorArea = document.getElementById('editorArea');
+                    editorArea.focus();
+                    const sel = window.getSelection();
+                    if (sel.rangeCount) {
+                        const range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        range.insertNode(placeholder);
+                    } else {
+                        editorArea.appendChild(placeholder);
+                    }
+                    // Save after insert (with placeholder)
+                    const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                    const doc = documents.find(d => d.id === docId);
+                    if (doc) {
+                        doc.content = editorArea.innerHTML;
+                        saveDocuments();
+                    }
+                    videoInsertModal.remove();
+                    videoInsertModal = null;
+                    showToast('Video inserted.', { type: 'success' });
+                };
+            };
             // Insert from File
             videoInsertModal.querySelector('#insertVideoFromFileBtn').onclick = () => {
             const input = document.createElement('input');
@@ -2126,22 +2301,27 @@ if ('serviceWorker' in navigator) {
             input.onchange = async function() {
             const file = input.files[0];
             if (file) {
-            // Read file as data URL
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                insertVideoAtCaret(ev.target.result, file.name);
-                videoInsertModal.remove();
-                videoInsertModal = null;
-                showToast('Video inserted.', { type: 'success' });
-            };
-            reader.readAsDataURL(file);
+            // Show progress indicator
+            const progressToast = showToast('Preparing video...', { type: 'info', duration: 2000 });
+            
+            // Store video file in IndexedDB
+            const videoId = await addVideoToDB(file);
+            
+            // Use Blob URL for immediate display
+            const blobUrl = URL.createObjectURL(file);
+            
+            if (progressToast && progressToast.remove) progressToast.remove();
+            insertVideoAtCaret(blobUrl, file.name, videoId);
+            videoInsertModal.remove();
+            videoInsertModal = null;
+            showToast('Video inserted.', { type: 'success' });
             }
             };
             input.click();
             };
         }
 
-        function insertVideoAtCaret(dataUrl, alt = '') {
+        function insertVideoAtCaret(dataUrl, alt = '', videoId = null) {
             const editorArea = document.getElementById('editorArea');
             editorArea.focus();
             const video = document.createElement('video');
@@ -2150,6 +2330,9 @@ if ('serviceWorker' in navigator) {
             video.style.maxWidth = '100%';
             video.style.borderRadius = '8px';
             video.style.margin = '8px 0';
+            if (videoId) {
+                video.setAttribute('data-omniwrite-video-id', videoId);
+            }
             video.setAttribute('title', alt || '');
             // Insert at caret
             const sel = window.getSelection();
@@ -2386,12 +2569,8 @@ if ('serviceWorker' in navigator) {
 
         // Upgrade video players on document open and after insert
         upgradeVideoPlayers();
-        editorArea.addEventListener('input', upgradeVideoPlayers);
-        editorArea.addEventListener('DOMNodeInserted', function(e) {
-            if (e.target.nodeName === 'VIDEO') {
-            setTimeout(upgradeVideoPlayers, 10);
-            }
-        });
+        // Note: editorArea event listeners for audio/video are set up once below
+        
         // --- Insert Image Functionality ---
         const insertImageBtn = document.getElementById('insertImageBtn');
         let imageInsertModal = null;
@@ -2480,17 +2659,40 @@ if ('serviceWorker' in navigator) {
             input.onchange = async function() {
                 const file = input.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = async function(ev) {
-                        const dataUrl = ev.target.result;
-                        insertImageAtCaret(dataUrl, file.name);
-                        // Optionally add to library
+                    // Show progress indicator
+                    const progressToast = showToast('Preparing image...', { type: 'info', duration: 2000 });
+                    
+                    // For large files (>5MB), use Blob URL; for smaller files, use data URL
+                    if (file.size > 5 * 1024 * 1024) {
+                        // Large file: use Blob URL
+                        const blobUrl = URL.createObjectURL(file);
+                        if (progressToast && progressToast.remove) progressToast.remove();
+                        insertImageAtCaret(blobUrl, file.name);
                         await addImageToDB(file);
                         imageInsertModal.remove();
                         imageInsertModal = null;
                         showToast('Image inserted and added to library.', { type: 'success' });
-                    };
-                    reader.readAsDataURL(file);
+                    } else {
+                        // Small file: use data URL (better for saving)
+                        const reader = new FileReader();
+                        
+                        reader.onload = async function(ev) {
+                            if (progressToast && progressToast.remove) progressToast.remove();
+                            const dataUrl = ev.target.result;
+                            insertImageAtCaret(dataUrl, file.name);
+                            await addImageToDB(file);
+                            imageInsertModal.remove();
+                            imageInsertModal = null;
+                            showToast('Image inserted and added to library.', { type: 'success' });
+                        };
+                        
+                        reader.onerror = function() {
+                            if (progressToast && progressToast.remove) progressToast.remove();
+                            showToast('Failed to load image file.', { type: 'error' });
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
                 }
             };
             input.click();
@@ -3057,6 +3259,29 @@ if ('serviceWorker' in navigator) {
             showToast('Print dialog opened. Choose "Save as PDF" to download.', { type: 'info' });
             };
         });
+        
+        // Set up global event listeners for editorArea media upgrades (once only)
+        const editorElement = document.getElementById('editorArea');
+        editorElement.addEventListener('input', function() {
+            if (typeof upgradeAudioPlayers === 'function') upgradeAudioPlayers();
+            if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers();
+        });
+        editorElement.addEventListener('DOMNodeInserted', function(e) {
+            if (e.target.nodeName === 'AUDIO' || e.target.nodeName === 'VIDEO') {
+                setTimeout(() => {
+                    if (typeof upgradeAudioPlayers === 'function') upgradeAudioPlayers();
+                    if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers();
+                }, 10);
+            }
+        });
+        
+        } // End of toolbarListenersInitialized check
+        
+        // Always run on document switch: Call upgrade functions if they exist
+        // editorArea already declared above
+        if (typeof upgradeAudioPlayers === 'function') upgradeAudioPlayers();
+        if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers();
+        
         // Set title
         const titleDiv = document.getElementById('documentTitle');
         titleDiv.innerHTML = `<span contenteditable="true" id="editableTitle">${doc.title}</span>`;
@@ -3077,6 +3302,8 @@ if ('serviceWorker' in navigator) {
             }
         });
     }
+    
+    
     // --- More Editor Options Dropdown Functionality ---
     const moreEditorBtn = document.getElementById('moreEditorBtn');
     const editorMoreOptions = document.getElementById('editorMoreOptions');
@@ -3430,6 +3657,90 @@ if ('serviceWorker' in navigator) {
                 }
             });
         }
+    
+    // --- Helper function to get current document and editor ---
+    function getCurrentDocAndEditor() {
+        const hash = window.location.hash;
+        const docMatch = hash.match(/^#\/document\/(.+)$/);
+        if (!docMatch) return { doc: null, editorArea: null };
+        const docId = decodeURIComponent(docMatch[1]);
+        const doc = documents.find(d => d.id === docId);
+        const editorArea = document.getElementById('editorArea');
+        return { doc, editorArea };
+    }
+
+    // --- Text Color Picker Functionality (Global - outside openDocument) ---
+    const textColorBtn = document.getElementById('textColorBtn');
+    const colorPicker = document.getElementById('colorPicker');
+    let colorPickerTarget = null;
+
+    // Show/hide color picker when clicking the palette button
+    textColorBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        // Position color picker below the button
+        const rect = textColorBtn.getBoundingClientRect();
+        colorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        colorPicker.style.left = (rect.left + window.scrollX - 300) + 'px';
+        colorPicker.style.display = colorPicker.style.display === 'flex' ? 'none' : 'flex';
+        colorPickerTarget = 'foreColor';
+    });
+
+    // Hide color picker when clicking outside
+    document.addEventListener('mousedown', function(e) {
+        if (
+        colorPicker.style.display === 'flex' &&
+        !colorPicker.contains(e.target) &&
+        !textColorBtn.contains(e.target)
+        ) {
+        colorPicker.style.display = 'none';
+        }
+    });
+
+    // Color swatch click handler
+    colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', function(e) {
+        // Get click position relative to swatch
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        // Convert x/y to HSV and then to RGB/HEX
+        // Horizontal: hue (0-360), Vertical: value/saturation
+        const hue = (x / rect.width) * 360;
+        const sat = 1 - (y / rect.height) * 0.8; // 0.2-1.0
+        const val = 1 - (y / rect.height) * 0.8; // 0.2-1.0
+
+        // HSV to RGB
+        function hsvToRgb(h, s, v) {
+        let f = (n, k = (n + h / 60) % 6) =>
+            v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+        return [
+            Math.round(f(5) * 255),
+            Math.round(f(3) * 255),
+            Math.round(f(1) * 255)
+        ];
+        }
+        const rgb = hsvToRgb(hue, sat, val);
+        const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+        // Show hex in display
+        document.getElementById('colorHexDisplay').textContent = hex;
+
+        // Apply color to selection
+        if (colorPickerTarget === 'foreColor') {
+        document.execCommand('foreColor', false, hex);
+        } else if (colorPickerTarget === 'hiliteColor') {
+        document.execCommand('hiliteColor', false, hex);
+        }
+        // Save after change - get current document from hash
+        const { doc, editorArea } = getCurrentDocAndEditor();
+        if (doc && editorArea) {
+            doc.content = editorArea.innerHTML;
+            saveDocuments();
+        }
+
+        // Hide picker after pick (optional: comment out if you want it to stay open)
+        colorPicker.style.display = 'none';
+    });
+    
     // --- Templates Logic ---
     // Define 20 templates
     const TEMPLATES = [
@@ -3771,39 +4082,66 @@ if ('serviceWorker' in navigator) {
         switchPage('selectArea');
         hideSidebarIfMobile();
     });
-    // --- Images IndexedDB Store ---
+    // --- Images, Video, and Audio IndexedDB Stores ---
     const IMAGE_STORE = 'images';
     const TRASH_STORE = 'trashImages';
+    const VIDEO_STORE = 'videos';
+    const AUDIO_STORE = 'audios';
 
-    // Upgrade DB for images and trash
-    (function patchDBForImages() {
-        const origOpenDB = openDB;
-        openDB = function() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, DB_VERSION + 1);
-                req.onupgradeneeded = function(e) {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(DOC_STORE)) {
-                        db.createObjectStore(DOC_STORE, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(KEY_STORE)) {
-                        db.createObjectStore(KEY_STORE, { keyPath: 'name' });
-                    }
-                    if (!db.objectStoreNames.contains(IMAGE_STORE)) {
-                        db.createObjectStore(IMAGE_STORE, { keyPath: 'id', autoIncrement: true });
-                    }
-                    if (!db.objectStoreNames.contains(TRASH_STORE)) {
-                        db.createObjectStore(TRASH_STORE, { keyPath: 'id', autoIncrement: true });
-                    }
-                };
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        };
-    })();
+    // Note: DB stores are created in initializeApp() before DB is opened
 
     // --- Images Logic ---
     let imagesTabMode = 'main'; // 'main' or 'trash'
+
+    async function addImageToDB(file) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(IMAGE_STORE, 'readwrite');
+            const store = tx.objectStore(IMAGE_STORE);
+            const imgObj = {
+                name: file.name,
+                type: file.type,
+                created: Date.now(),
+                file
+            };
+            const req = store.add(imgObj);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // --- Video Logic ---
+    async function addVideoToDB(file) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(VIDEO_STORE, 'readwrite');
+            const store = tx.objectStore(VIDEO_STORE);
+            const videoObj = {
+                name: file.name,
+                type: file.type,
+                created: Date.now(),
+                file
+            };
+            const req = store.add(videoObj);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    // --- Audio Logic ---
+    async function addAudioToDB(file) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(AUDIO_STORE, 'readwrite');
+            const store = tx.objectStore(AUDIO_STORE);
+            const audioObj = {
+                name: file.name,
+                type: file.type,
+                created: Date.now(),
+                file
+            };
+            const req = store.add(audioObj);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
 
     async function addImageToDB(file) {
         return new Promise((resolve, reject) => {
@@ -4135,12 +4473,19 @@ if ('serviceWorker' in navigator) {
                         <li><b>How do I restore a backup?</b><br>Go to Settings &gt; Import Backup and select your backup file.</li>
                         <li><b>How do I change the language or theme?</b><br>Go to Settings and select your preferred language or theme.</li>
                     </ul>
+                    <h3>Changelog</h3>
+                    <ul>
+                        <li>v1.0.0 - Initial release of OmniWrite.</li>
+                        <li>v1.0.1 - Fixed a bug when font family/font size wasn't opening after switching documents.</li>
+                        <li>v1.0.2 - Improvements and fixed a bug when text color picker wasn't opening after switching documents.</li>
+                    </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
                         &copy; 2025-2026 Munetios.<br>
                         Munetios OmniWrite is a unregistered trademark of Munetios.<br>
-                        Website <a href="https://munetios.com" target="_blank" style="color:#ffe066;">munetios.com</a>
-                    <br>OmniWrite is open source. See <a href="https://github.com/munetios/omniwrite" target="_self" style="color:#ffe066;">github.com/munetios/omniwrite</a><br>
+                        Website <a href="https://munetios.com" target="_self" style="color:#ffe066;">munetios.com</a>
+                    <br>OmniWrite is open source. See <a href="https://github.com/munetios/omniwrite" target="_self" style="color:#ffe066;">github.com/munetios/omniwrite</a><br> <br>
+                    <a href="https://write.munetios.com/overview" target="_self" style="color:#ffe066;">Overview</a>
                     </div>
                 </div>
             </div>
@@ -4240,6 +4585,52 @@ if ('serviceWorker' in navigator) {
                 'Failed to import DOCX.': 'Failed to import DOCX.',
                 'Importing DOCX...': 'Importing DOCX...',
                 'Please enter a valid image URL.': 'Please enter a valid image URL.',
+                'Search documents...': 'Search documents...',
+                'Untitled Document': 'Untitled Document',
+                'Insert Image': 'Insert Image',
+                'Insert Video': 'Insert Video',
+                'Insert Music': 'Insert Music',
+                'Insert Table': 'Insert Table',
+                'Insert Code Block': 'Insert Code Block',
+                'Insert Quote': 'Insert Quote',
+                'Choose from Library': 'Choose from Library',
+                'Upload File': 'Upload File',
+                'Insert from URL': 'Insert from URL',
+                'Upload Music File': 'Upload Music File',
+                'Upload Video File': 'Upload Video File',
+                'Close': 'Close',
+                'Insert': 'Insert',
+                'Find in Document': 'Find in Document',
+                'Find': 'Find',
+                'Replace': 'Replace',
+                'Replace All': 'Replace All',
+                'Preview': 'Preview',
+                'Bold': 'Bold',
+                'Italic': 'Italic',
+                'Underline': 'Underline',
+                'Font Size': 'Font Size',
+                'Font Family': 'Font Family',
+                'Text Color': 'Text Color',
+                'Align Left': 'Align Left',
+                'Align Center': 'Align Center',
+                'Align Right': 'Align Right',
+                'Bullet List': 'Bullet List',
+                'Numbered List': 'Numbered List',
+                'Undo': 'Undo',
+                'Redo': 'Redo',
+                'Clear Formatting': 'Clear Formatting',
+                'Heading 1': 'Heading 1',
+                'Heading 2': 'Heading 2',
+                'Heading 3': 'Heading 3',
+                'System': 'System',
+                'Light': 'Light',
+                'Dark': 'Dark',
+                'Custom': 'Custom',
+                'Music inserted.': 'Music inserted.',
+                'Video inserted.': 'Video inserted.',
+                'Preparing music...': 'Preparing music...',
+                'Preparing video...': 'Preparing video...',
+                'Preparing image...': 'Preparing image...',
             },
             es: {
                 'Welcome to Munetios OmniWrite': 'Bienvenido a Munetios OmniWrite',
@@ -4301,6 +4692,52 @@ if ('serviceWorker' in navigator) {
                 'Failed to import DOCX.': 'Error al importar DOCX.',
                 'Importing DOCX...': 'Importando DOCX...',
                 'Please enter a valid image URL.': 'Por favor, ingrese una URL de imagen válida.',
+                'Search documents...': 'Buscar documentos...',
+                'Untitled Document': 'Documento sin título',
+                'Insert Image': 'Insertar imagen',
+                'Insert Video': 'Insertar video',
+                'Insert Music': 'Insertar música',
+                'Insert Table': 'Insertar tabla',
+                'Insert Code Block': 'Insertar bloque de código',
+                'Insert Quote': 'Insertar cita',
+                'Choose from Library': 'Elegir de la biblioteca',
+                'Upload File': 'Subir archivo',
+                'Insert from URL': 'Insertar desde URL',
+                'Upload Music File': 'Subir archivo de música',
+                'Upload Video File': 'Subir archivo de video',
+                'Close': 'Cerrar',
+                'Insert': 'Insertar',
+                'Find in Document': 'Buscar en documento',
+                'Find': 'Buscar',
+                'Replace': 'Reemplazar',
+                'Replace All': 'Reemplazar todo',
+                'Preview': 'Vista previa',
+                'Bold': 'Negrita',
+                'Italic': 'Cursiva',
+                'Underline': 'Subrayado',
+                'Font Size': 'Tamaño de fuente',
+                'Font Family': 'Familia de fuente',
+                'Text Color': 'Color de texto',
+                'Align Left': 'Alinear a la izquierda',
+                'Align Center': 'Alinear al centro',
+                'Align Right': 'Alinear a la derecha',
+                'Bullet List': 'Lista de viñetas',
+                'Numbered List': 'Lista numerada',
+                'Undo': 'Deshacer',
+                'Redo': 'Rehacer',
+                'Clear Formatting': 'Borrar formato',
+                'Heading 1': 'Encabezado 1',
+                'Heading 2': 'Encabezado 2',
+                'Heading 3': 'Encabezado 3',
+                'System': 'Sistema',
+                'Light': 'Claro',
+                'Dark': 'Oscuro',
+                'Custom': 'Personalizado',
+                'Music inserted.': 'Música insertada.',
+                'Video inserted.': 'Video insertado.',
+                'Preparing music...': 'Preparando música...',
+                'Preparing video...': 'Preparando video...',
+                'Preparing image...': 'Preparando imagen...',
             },
             fr: {
                 'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
@@ -4545,6 +4982,159 @@ if ('serviceWorker' in navigator) {
                 'Failed to import DOCX.': 'DOCXのインポートに失敗しました。',
                 'Importing DOCX...': 'DOCXをインポート中...',
                 'Please enter a valid image URL.': '有効な画像URLを入力してください。',
+                'Search documents...': 'ドキュメントを検索...',
+                'Untitled Document': '無題のドキュメント',
+                'Insert Image': '画像を挿入',
+                'Insert Video': 'ビデオを挿入',
+                'Insert Music': '音楽を挿入',
+                'Insert Table': 'テーブルを挿入',
+                'Insert Code Block': 'コードブロックを挿入',
+                'Insert Quote': '引用を挿入',
+                'Choose from Library': 'ライブラリから選択',
+                'Upload File': 'ファイルをアップロード',
+                'Insert from URL': 'URLから挿入',
+                'Upload Music File': '音楽ファイルをアップロード',
+                'Upload Video File': 'ビデオファイルをアップロード',
+                'Close': '閉じる',
+                'Insert': '挿入',
+                'Find in Document': 'ドキュメント内を検索',
+                'Find': '検索',
+                'Replace': '置換',
+                'Replace All': 'すべて置換',
+                'Preview': 'プレビュー',
+                'Bold': '太字',
+                'Italic': '斜体',
+                'Underline': '下線',
+                'Font Size': 'フォントサイズ',
+                'Font Family': 'フォント',
+                'Text Color': 'テキストの色',
+                'Align Left': '左揃え',
+                'Align Center': '中央揃え',
+                'Align Right': '右揃え',
+                'Bullet List': '箇条書き',
+                'Numbered List': '番号付きリスト',
+                'Undo': '元に戻す',
+                'Redo': 'やり直し',
+                'Clear Formatting': '書式をクリア',
+                'Heading 1': '見出し1',
+                'Heading 2': '見出し2',
+                'Heading 3': '見出し3',
+                'System': 'システム',
+                'Light': 'ライト',
+                'Dark': 'ダーク',
+                'Custom': 'カスタム',
+                'Music inserted.': '音楽が挿入されました。',
+                'Video inserted.': 'ビデオが挿入されました。',
+                'Preparing music...': '音楽を準備中...',
+                'Preparing video...': 'ビデオを準備中...',
+                'Preparing image...': '画像を準備中...',
+            },
+            ar: {
+                'Welcome to Munetios OmniWrite': 'مرحباً بك في Munetios OmniWrite',
+                'Select or create a new document to get started.': 'اختر أو أنشئ مستنداً جديداً للبدء.',
+                'Images': 'الصور',
+                'Tasks': 'المهام',
+                'Templates': 'القوالب',
+                'Settings': 'الإعدادات',
+                'Help': 'المساعدة',
+                'New Document': 'مستند جديد',
+                'New Image': 'صورة جديدة',
+                'Import File': 'استيراد ملف',
+                'Upload Image': 'رفع صورة',
+                'Download': 'تحميل',
+                'Make a Copy': 'إنشاء نسخة',
+                'Compare Documents': 'مقارنة المستندات',
+                'Share': 'مشاركة',
+                'Delete': 'حذف',
+                'Rename Document': 'إعادة تسمية المستند',
+                'Version History': 'سجل الإصدارات',
+                'Table of Contents': 'جدول المحتويات',
+                'No Images': 'لا توجد صور',
+                'Trash is empty': 'سلة المهملات فارغة',
+                'View Trash': 'عرض سلة المهملات',
+                'Back to Images': 'العودة إلى الصور',
+                'Theme:': 'المظهر:',
+                'Language:': 'اللغة:',
+                'Backup & Restore': 'النسخ الاحتياطي والاستعادة',
+                'Export Backup': 'تصدير النسخة الاحتياطية',
+                'Import Backup': 'استيراد النسخة الاحتياطية',
+                'Danger Zone': 'منطقة الخطر',
+                'Reset Encryption Key': 'إعادة تعيين مفتاح التشفير',
+                'Delete Everything': 'حذف كل شيء',
+                'Delete Document': 'حذف المستند',
+                'Are you sure you want to delete this document? This cannot be undone.': 'هل أنت متأكد من حذف هذا المستند؟ لا يمكن التراجع عن هذا الإجراء.',
+                'Cancel': 'إلغاء',
+                'Restore This Version': 'استعادة هذا الإصدار',
+                'Share this document with others by downloading it as a PDF file.': 'شارك هذا المستند مع الآخرين عن طريق تنزيله كملف PDF.',
+                'Download as PDF': 'تنزيل كملف PDF',
+                'Download a PDF version of this document.': 'تنزيل نسخة PDF من هذا المستند.',
+                'No versions saved yet.': 'لم يتم حفظ أي إصدارات بعد.',
+                'No headings found to build Table of Contents.': 'لم يتم العثور على عناوين لإنشاء جدول المحتويات.',
+                'File imported.': 'تم استيراد الملف.',
+                'Image inserted and added to library.': 'تم إدراج الصورة وإضافتها إلى المكتبة.',
+                'Image uploaded and added to library.': 'تم رفع الصورة وإضافتها إلى المكتبة.',
+                'Document duplicated.': 'تم نسخ المستند.',
+                'Document deleted.': 'تم حذف المستند.',
+                'Backup exported.': 'تم تصدير النسخة الاحتياطية.',
+                'Backup imported.': 'تم استيراد النسخة الاحتياطية.',
+                'Invalid backup file.': 'ملف نسخة احتياطية غير صالح.',
+                'Failed to import backup.': 'فشل استيراد النسخة الاحتياطية.',
+                'Encryption key reset. All documents deleted.': 'تم إعادة تعيين مفتاح التشفير. تم حذف جميع المستندات.',
+                'All data deleted.': 'تم حذف جميع البيانات.',
+                'Theme updated.': 'تم تحديث المظهر.',
+                'Language updated.': 'تم تحديث اللغة.',
+                'Print dialog opened. Choose \"Save as PDF\" to download.': 'تم فتح مربع الطباعة. اختر \"حفظ كملف PDF\" للتنزيل.',
+                'Document downloaded as HTML.': 'تم تنزيل المستند بصيغة HTML.',
+                'Unsupported file type.': 'نوع ملف غير مدعوم.',
+                'Failed to import DOCX.': 'فشل استيراد DOCX.',
+                'Importing DOCX...': 'جارٍ استيراد DOCX...',
+                'Please enter a valid image URL.': 'الرجاء إدخال رابط صورة صالح.',
+                'Search documents...': 'بحث في المستندات...',
+                'Untitled Document': 'مستند بدون عنوان',
+                'Insert Image': 'إدراج صورة',
+                'Insert Video': 'إدراج فيديو',
+                'Insert Music': 'إدراج موسيقى',
+                'Insert Table': 'إدراج جدول',
+                'Insert Code Block': 'إدراج كتلة برمجية',
+                'Insert Quote': 'إدراج اقتباس',
+                'Choose from Library': 'اختر من المكتبة',
+                'Upload File': 'رفع ملف',
+                'Insert from URL': 'إدراج من رابط',
+                'Upload Music File': 'رفع ملف موسيقى',
+                'Upload Video File': 'رفع ملف فيديو',
+                'Close': 'إغلاق',
+                'Insert': 'إدراج',
+                'Find in Document': 'البحث في المستند',
+                'Find': 'بحث',
+                'Replace': 'استبدال',
+                'Replace All': 'استبدال الكل',
+                'Preview': 'معاينة',
+                'Bold': 'غامق',
+                'Italic': 'مائل',
+                'Underline': 'تحته خط',
+                'Font Size': 'حجم الخط',
+                'Font Family': 'نوع الخط',
+                'Text Color': 'لون النص',
+                'Align Left': 'محاذاة لليسار',
+                'Align Center': 'محاذاة للوسط',
+                'Align Right': 'محاذاة لليمين',
+                'Bullet List': 'قائمة نقطية',
+                'Numbered List': 'قائمة مرقمة',
+                'Undo': 'تراجع',
+                'Redo': 'إعادة',
+                'Clear Formatting': 'مسح التنسيق',
+                'Heading 1': 'عنوان 1',
+                'Heading 2': 'عنوان 2',
+                'Heading 3': 'عنوان 3',
+                'System': 'النظام',
+                'Light': 'فاتح',
+                'Dark': 'داكن',
+                'Custom': 'مخصص',
+                'Music inserted.': 'تم إدراج الموسيقى.',
+                'Video inserted.': 'تم إدراج الفيديو.',
+                'Preparing music...': 'جارٍ تحضير الموسيقى...',
+                'Preparing video...': 'جارٍ تحضير الفيديو...',
+                'Preparing image...': 'جارٍ تحضير الصورة...',
             },
         };
         
@@ -4617,7 +5207,7 @@ if ('serviceWorker' in navigator) {
             // Remove any existing modal
             document.querySelectorAll('.modal').forEach(m => m.remove());
             settingsModal = null;
-        
+
             // Create modal
             settingsModal = document.createElement('div');
             settingsModal.className = 'modal';
@@ -4628,23 +5218,11 @@ if ('serviceWorker' in navigator) {
                 <div style="margin:24px 0;">
                     <label style="display:block;margin-bottom:12px;">
                         <b>Theme:</b>
-                        <select id="themeSelect" style="margin-left:8px;padding:6px 12px;border-radius:6px;">
-                            <option value="system">System</option>
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="custom">Custom</option>
-                        </select>
+                        <button id="themeSelectBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;min-width:120px;text-align:left;"></button>
                     </label>
                     <label style="display:block;margin-bottom:12px;">
                         <b>Language:</b>
-                        <select id="languageSelect" style="margin-left:8px;padding:6px 12px;border-radius:6px;">
-                            <option value="en">English</option>
-                            <option value="es">Español</option>
-                            <option value="fr">Français</option>
-                            <option value="de">Deutsch</option>
-                            <option value="zh">中文</option>
-                            <option value="ja">日本語</option>
-                        </select>
+                        <button id="languageSelectBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;min-width:120px;text-align:left;"></button>
                     </label>
                 </div>
                 <div style="margin:24px 0;">
@@ -4665,445 +5243,246 @@ if ('serviceWorker' in navigator) {
             </div>
             `;
             document.body.appendChild(settingsModal);
-        
+
             // Close modal
             settingsModal.querySelector('#closeSettingsModal').onclick = () => {
                 settingsModal.remove();
                 settingsModal = null;
             };
-        
-            // Theme select logic
-            const themeSelect = settingsModal.querySelector('#themeSelect');
-            themeSelect.value = localStorage.getItem('omniwrite-theme') || 'system';
-            themeSelect.onchange = function () {
-                localStorage.setItem('omniwrite-theme', this.value);
-                applyTheme(this.value);
-                showToast('Theme updated.', { type: 'success' });
-                // If custom selected, open modal for custom theme
-                if (this.value === 'custom') {
-                    let customModal = document.getElementById('customThemeModal');
-                    if (!customModal) {
-                        customModal = document.createElement('div');
-                        customModal.id = 'customThemeModal';
-                        customModal.className = 'modal';
-                        customModal.innerHTML = `
-                            <div class="modal-content" style="position:relative;max-width:340px;">
-                                <span class="modal-content-close" id="closeCustomThemeModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
-                                <h2>Custom Theme</h2>
-                                <label style="display:block;margin-bottom:12px;">
-                                    Background Color:
-                                    <input type="color" id="customBgColor" value="${localStorage.getItem('omniwrite-custom-bg') || '#2c2c54'}" style="margin-left:8px;">
-                                </label>
-                                <label style="display:block;margin-bottom:18px;">
-                                    Text Color:
-                                    <input type="color" id="customTextColor" value="${localStorage.getItem('omniwrite-custom-text') || '#ffe066'}" style="margin-left:8px;">
-                                </label>
-                                <button id="applyCustomThemeBtn" style="margin-top:12px;">Apply</button>
-                            </div>
-                        `;
-                        document.body.appendChild(customModal);
-                        customModal.querySelector('#closeCustomThemeModal').onclick = () => customModal.remove();
-                        customModal.querySelector('#applyCustomThemeBtn').onclick = function () {
-                            const bg = customModal.querySelector('#customBgColor').value;
-                            const text = customModal.querySelector('#customTextColor').value;
-                            localStorage.setItem('omniwrite-custom-bg', bg);
-                            localStorage.setItem('omniwrite-custom-text', text);
-                            document.body.style.background = bg;
-                            document.body.style.color = text;
-                            customModal.remove();
-                        };
+
+            // Theme select logic (button + dropdown)
+            const themeOptions = [
+                { value: 'system', label: 'System' },
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+                { value: 'custom', label: 'Custom' }
+            ];
+            const themeSelectBtn = settingsModal.querySelector('#themeSelectBtn');
+            let currentTheme = localStorage.getItem('omniwrite-theme') || 'system';
+            themeSelectBtn.textContent = themeOptions.find(o => o.value === currentTheme)?.label || 'System';
+
+            // Create dropdown
+            let themeDropdown = document.createElement('div');
+            themeDropdown.className = 'dropdown-wrapper liquid-glass';
+            themeDropdown.style.position = 'absolute';
+            themeDropdown.style.minWidth = '120px';
+            themeDropdown.style.display = 'none';
+            themeDropdown.style.zIndex = '1000000';
+            themeDropdown.innerHTML = themeOptions.map(opt =>
+                `<div class="dropdown-item" data-value="${opt.value}">${opt.label}</div>`
+            ).join('');
+            document.body.appendChild(themeDropdown);
+
+            themeSelectBtn.onclick = function (e) {
+                e.preventDefault();
+                const rect = themeSelectBtn.getBoundingClientRect();
+                themeDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                themeDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                themeDropdown.style.display = themeDropdown.style.display === 'block' ? 'none' : 'block';
+            };
+            themeDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.onclick = function () {
+                    const value = this.getAttribute('data-value');
+                    localStorage.setItem('omniwrite-theme', value);
+                    applyTheme(value);
+                    themeSelectBtn.textContent = this.textContent;
+                    themeDropdown.style.display = 'none';
+                    showToast('Theme updated.', { type: 'success' });
+                    // If custom selected, open modal for custom theme
+                    if (value === 'custom') {
+                        let customModal = document.getElementById('customThemeModal');
+                        if (!customModal) {
+                            customModal = document.createElement('div');
+                            customModal.id = 'customThemeModal';
+                            customModal.className = 'modal';
+                            customModal.innerHTML = `
+                                <div class="modal-content" style="position:relative;max-width:340px;">
+                                    <span class="modal-content-close" id="closeCustomThemeModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                                    <h2>Custom Theme</h2>
+                                    <label style="display:block;margin-bottom:12px;">
+                                        Background Color:
+                                        <input type="color" id="customBgColor" value="${localStorage.getItem('omniwrite-custom-bg') || '#2c2c54'}" style="margin-left:8px;">
+                                    </label>
+                                    <label style="display:block;margin-bottom:18px;">
+                                        Text Color:
+                                        <input type="color" id="customTextColor" value="${localStorage.getItem('omniwrite-custom-text') || '#ffe066'}" style="margin-left:8px;">
+                                    </label>
+                                    <button id="applyCustomThemeBtn" style="margin-top:12px;">Apply</button>
+                                </div>
+                            `;
+                            document.body.appendChild(customModal);
+                            customModal.querySelector('#closeCustomThemeModal').onclick = () => customModal.remove();
+                            customModal.querySelector('#applyCustomThemeBtn').onclick = function () {
+                                const bg = customModal.querySelector('#customBgColor').value;
+                                const text = customModal.querySelector('#customTextColor').value;
+                                localStorage.setItem('omniwrite-custom-bg', bg);
+                                localStorage.setItem('omniwrite-custom-text', text);
+                                document.body.style.background = bg;
+                                document.body.style.color = text;
+                                customModal.remove();
+                            };
+                        }
+                        customModal.style.display = 'flex';
                     }
-                    customModal.style.display = 'flex';
+                };
+            });
+            document.addEventListener('mousedown', function (e) {
+                if (
+                    themeDropdown.style.display === 'block' &&
+                    !themeDropdown.contains(e.target) &&
+                    !themeSelectBtn.contains(e.target)
+                ) {
+                    themeDropdown.style.display = 'none';
                 }
-            };
+            });
 
-            // Language select logic
-            const languageSelect = settingsModal.querySelector('#languageSelect');
-            languageSelect.value = localStorage.getItem('omniwrite-lang') || 'en';
-            languageSelect.onchange = function () {
-                localStorage.setItem('omniwrite-lang', this.value);
-                showToast('Language updated.', { type: 'success' });
-                applyTranslations(this.value);
+            // Language select logic (button + dropdown)
+            const languageOptions = [
+                { value: 'en', label: 'English' },
+                { value: 'es', label: 'Español' },
+                { value: 'fr', label: 'Français' },
+                { value: 'de', label: 'Deutsch' },
+                { value: 'zh', label: '中文' },
+                { value: 'ja', label: '日本語' },
+                { value: 'ar', label: 'العربية' }
+            ];
+            const languageSelectBtn = settingsModal.querySelector('#languageSelectBtn');
+            let currentLang = localStorage.getItem('omniwrite-lang') || 'en';
+            languageSelectBtn.textContent = languageOptions.find(o => o.value === currentLang)?.label || 'English';
+
+            // Create dropdown
+            let languageDropdown = document.createElement('div');
+            languageDropdown.className = 'dropdown-wrapper liquid-glass';
+            languageDropdown.style.position = 'absolute';
+            languageDropdown.style.minWidth = '120px';
+            languageDropdown.style.display = 'none';
+            languageDropdown.style.zIndex = '1000000';
+            languageDropdown.innerHTML = languageOptions.map(opt =>
+                `<div class="dropdown-item" data-value="${opt.value}">${opt.label}</div>`
+            ).join('');
+            document.body.appendChild(languageDropdown);
+
+            languageSelectBtn.onclick = function (e) {
+                e.preventDefault();
+                const rect = languageSelectBtn.getBoundingClientRect();
+                languageDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                languageDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                languageDropdown.style.display = languageDropdown.style.display === 'block' ? 'none' : 'block';
+            };
+            languageDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.onclick = function () {
+                    const value = this.getAttribute('data-value');
+                    localStorage.setItem('omniwrite-lang', value);
+                    languageSelectBtn.textContent = this.textContent;
+                    languageDropdown.style.display = 'none';
+                    showToast('Language updated.', { type: 'success' });
+                    applyTranslations(value);
+                    setTimeout(() => {
+                        if (document.getElementById('templatesList')) renderTemplatesList();
+                        if (document.getElementById('documentsList')) {
+                            document.getElementById('documentsList').innerHTML = '';
+                            documents.forEach(doc => addDocumentToList(doc));
+                        }
+                    }, 100);
+                };
+            });
+            document.addEventListener('mousedown', function (e) {
+                if (
+                    languageDropdown.style.display === 'block' &&
+                    !languageDropdown.contains(e.target) &&
+                    !languageSelectBtn.contains(e.target)
+                ) {
+                    languageDropdown.style.display = 'none';
+                }
+            });
+
+            // On load, apply translations
+            applyTranslations(currentLang);
+
+            // Export backup
+            settingsModal.querySelector('#exportBackupBtn').onclick = async function () {
+                // Export all documents as JSON
+                const backup = {
+                    documents: documents,
+                    time: Date.now()
+                };
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'omniwrite-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+                document.body.appendChild(a);
+                a.click();
                 setTimeout(() => {
-                    if (document.getElementById('templatesList')) renderTemplatesList();
-                    if (document.getElementById('documentsList')) {
-                        document.getElementById('documentsList').innerHTML = '';
-                        documents.forEach(doc => addDocumentToList(doc));
-                    }
+                    URL.revokeObjectURL(a.href);
+                    a.remove();
                 }, 100);
+                showToast('Backup exported.', { type: 'success' });
             };
 
-            // Simple translation dictionary for UI text
-            const TRANSLATIONS = {
-                en: {
-                    'Welcome to Munetios OmniWrite': 'Welcome to Munetios OmniWrite',
-                    'Select or create a new document to get started.': 'Select or create a new document to get started.',
-                    'Images': 'Images',
-                    'Tasks': 'Tasks',
-                    'Templates': 'Templates',
-                    'Settings': 'Settings',
-                    'Help': 'Help',
-                    'New Document': 'New Document',
-                    'New Image': 'New Image',
-                    'Import File': 'Import File',
-                    'Upload Image': 'Upload Image',
-                    'Download': 'Download',
-                    'Make a Copy': 'Make a Copy',
-                    'Compare Documents': 'Compare Documents',
-                    'Share': 'Share',
-                    'Delete': 'Delete',
-                    'Rename Document': 'Rename Document',
-                    'Version History': 'Version History',
-                    'Table of Contents': 'Table of Contents',
-                    'No Images': 'No Images',
-                    'Trash is empty': 'Trash is empty',
-                    'View Trash': 'View Trash',
-                    'Back to Images': 'Back to Images',
-                    'Theme:': 'Theme:',
-                    'Language:': 'Language:',
-                    'Backup & Restore': 'Backup & Restore',
-                    'Export Backup': 'Export Backup',
-                    'Import Backup': 'Import Backup',
-                    'Danger Zone': 'Danger Zone',
-                    'Reset Encryption Key': 'Reset Encryption Key',
-                    'Delete Everything': 'Delete Everything',
-                    'Delete Document': 'Delete Document',
-                    'Are you sure you want to delete this document? This cannot be undone.': 'Are you sure you want to delete this document? This cannot be undone.',
-                    'Cancel': 'Cancel',
-                    'Restore This Version': 'Restore This Version',
-                    'Share this document with others by downloading it as a PDF file.': 'Share this document with others by downloading it as a PDF file.',
-                    'Download as PDF': 'Download as PDF',
-                    'Download a PDF version of this document.': 'Download a PDF version of this document.',
-                    'No versions saved yet.': 'No versions saved yet.',
-                    'No headings found to build Table of Contents.': 'No headings found to build Table of Contents.',
-                    'File imported.': 'File imported.',
-                    'Image inserted and added to library.': 'Image inserted and added to library.',
-                    'Image uploaded and added to library.': 'Image uploaded and added to library.',
-                    'Document duplicated.': 'Document duplicated.',
-                    'Document deleted.': 'Document deleted.',
-                    'Backup exported.': 'Backup exported.',
-                    'Backup imported.': 'Backup imported.',
-                    'Invalid backup file.': 'Invalid backup file.',
-                    'Failed to import backup.': 'Failed to import backup.',
-                    'Encryption key reset. All documents deleted.': 'Encryption key reset. All documents deleted.',
-                    'All data deleted.': 'All data deleted.',
-                    'Theme updated.': 'Theme updated.',
-                    'Language updated.': 'Language updated.',
-                    'Print dialog opened. Choose "Save as PDF" to download.': 'Print dialog opened. Choose "Save as PDF" to download.',
-                    'Document downloaded as HTML.': 'Document downloaded as HTML.',
-                    'Unsupported file type.': 'Unsupported file type.',
-                    'Failed to import DOCX.': 'Failed to import DOCX.',
-                    'Importing DOCX...': 'Importing DOCX...',
-                    'Please enter a valid image URL.': 'Please enter a valid image URL.',
-                },
-                es: {
-                    'Welcome to Munetios OmniWrite': 'Bienvenido a Munetios OmniWrite',
-                    'Select or create a new document to get started.': 'Seleccione o cree un nuevo documento para comenzar.',
-                    'Images': 'Imágenes',
-                    'Tasks': 'Tareas',
-                    'Templates': 'Plantillas',
-                    'Settings': 'Configuración',
-                    'Help': 'Ayuda',
-                    'New Document': 'Nuevo Documento',
-                    'New Image': 'Nueva Imagen',
-                    'Import File': 'Importar Archivo',
-                    'Upload Image': 'Subir Imagen',
-                    'Download': 'Descargar',
-                    'Make a Copy': 'Hacer una copia',
-                    'Compare Documents': 'Comparar Documentos',
-                    'Share': 'Compartir',
-                    'Delete': 'Eliminar',
-                    'Rename Document': 'Renombrar Documento',
-                    'Version History': 'Historial de Versiones',
-                    'Table of Contents': 'Tabla de Contenidos',
-                    'No Images': 'Sin Imágenes',
-                    'Trash is empty': 'La papelera está vacía',
-                    'View Trash': 'Ver Papelera',
-                    'Back to Images': 'Volver a Imágenes',
-                    'Theme:': 'Tema:',
-                    'Language:': 'Idioma:',
-                    'Backup & Restore': 'Respaldo y Restauración',
-                    'Export Backup': 'Exportar Respaldo',
-                    'Import Backup': 'Importar Respaldo',
-                    'Danger Zone': 'Zona de Peligro',
-                    'Reset Encryption Key': 'Restablecer Clave de Encriptación',
-                    'Delete Everything': 'Eliminar Todo',
-                    'Delete Document': 'Eliminar Documento',
-                    'Are you sure you want to delete this document? This cannot be undone.': '¿Está seguro de que desea eliminar este documento? Esto no se puede deshacer.',
-                    'Cancel': 'Cancelar',
-                    'Restore This Version': 'Restaurar Esta Versión',
-                    'Share this document with others by downloading it as a PDF file.': 'Comparta este documento con otros descargándolo como archivo PDF.',
-                    'Download as PDF': 'Descargar como PDF',
-                    'Download a PDF version of this document.': 'Descargue una versión PDF de este documento.',
-                    'No versions saved yet.': 'No hay versiones guardadas aún.',
-                    'No headings found to build Table of Contents.': 'No se encontraron encabezados para construir la tabla de contenidos.',
-                    'File imported.': 'Archivo importado.',
-                    'Image inserted and added to library.': 'Imagen insertada y agregada a la biblioteca.',
-                    'Image uploaded and added to library.': 'Imagen subida y agregada a la biblioteca.',
-                    'Document duplicated.': 'Documento duplicado.',
-                    'Document deleted.': 'Documento eliminado.',
-                    'Backup exported.': 'Respaldo exportado.',
-                    'Backup imported.': 'Respaldo importado.',
-                    'Invalid backup file.': 'Archivo de respaldo inválido.',
-                    'Failed to import backup.': 'Error al importar respaldo.',
-                    'Encryption key reset. All documents deleted.': 'Clave de encriptación restablecida. Todos los documentos eliminados.',
-                    'All data deleted.': 'Todos los datos eliminados.',
-                    'Theme updated.': 'Tema actualizado.',
-                    'Language updated.': 'Idioma actualizado.',
-                    'Print dialog opened. Choose "Save as PDF" to download.': 'Diálogo de impresión abierto. Elija "Guardar como PDF" para descargar.',
-                    'Document downloaded as HTML.': 'Documento descargado como HTML.',
-                    'Unsupported file type.': 'Tipo de archivo no soportado.',
-                    'Failed to import DOCX.': 'Error al importar DOCX.',
-                    'Importing DOCX...': 'Importando DOCX...',
-                    'Please enter a valid image URL.': 'Por favor, ingrese una URL de imagen válida.',
-                },
-                // Add more languages here (fr, de, zh, ja, etc.)
-            fr: {
-                'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
-                'Select or create a new document to get started.': 'Sélectionnez ou créez un nouveau document pour commencer.',
-                'Images': 'Images',
-                'Tasks': 'Tâches',
-                'Templates': 'Modèles',
-                'Settings': 'Paramètres',
-                'Help': 'Aide',
-                'New Document': 'Nouveau Document',
-                'New Image': 'Nouvelle Image',
-                'Import File': 'Importer un fichier',
-                'Upload Image': 'Télécharger une image',
-                'Download': 'Télécharger',
-                'Make a Copy': 'Faire une copie',
-                'Compare Documents': 'Comparer les documents',
-                'Share': 'Partager',
-                'Delete': 'Supprimer',
-                'Rename Document': 'Renommer le document',
-                'Version History': 'Historique des versions',
-                'Table of Contents': 'Table des matières',
-                'No Images': 'Aucune image',
-                'Trash is empty': 'La corbeille est vide',
-                'View Trash': 'Voir la corbeille',
-                'Back to Images': 'Retour aux images',
-                'Theme:': 'Thème :',
-                'Language:': 'Langue :',
-                'Backup & Restore': 'Sauvegarde et restauration',
-                'Export Backup': 'Exporter la sauvegarde',
-                'Import Backup': 'Importer la sauvegarde',
-                'Danger Zone': 'Zone dangereuse',
-                'Reset Encryption Key': 'Réinitialiser la clé de chiffrement',
-                'Delete Everything': 'Tout supprimer',
-                'Delete Document': 'Supprimer le document',
-                'Are you sure you want to delete this document? This cannot be undone.': 'Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.',
-                'Cancel': 'Annuler',
-                'Restore This Version': 'Restaurer cette version',
-                'Share this document with others by downloading it as a PDF file.': 'Partagez ce document en le téléchargeant au format PDF.',
-                'Download as PDF': 'Télécharger en PDF',
-                'Download a PDF version of this document.': 'Téléchargez une version PDF de ce document.',
-                'No versions saved yet.': 'Aucune version enregistrée.',
-                'No headings found to build Table of Contents.': 'Aucun titre trouvé pour créer la table des matières.',
-                'File imported.': 'Fichier importé.',
-                'Image inserted and added to library.': 'Image insérée et ajoutée à la bibliothèque.',
-                'Image uploaded and added to library.': 'Image téléchargée et ajoutée à la bibliothèque.',
-                'Document duplicated.': 'Document dupliqué.',
-                'Document deleted.': 'Document supprimé.',
-                'Backup exported.': 'Sauvegarde exportée.',
-                'Backup imported.': 'Sauvegarde importée.',
-                'Invalid backup file.': 'Fichier de sauvegarde invalide.',
-                'Failed to import backup.': 'Échec de l\'importation de la sauvegarde.',
-                'Encryption key reset. All documents deleted.': 'Clé de chiffrement réinitialisée. Tous les documents ont été supprimés.',
-                'All data deleted.': 'Toutes les données ont été supprimées.',
-                'Theme updated.': 'Thème mis à jour.',
-                'Language updated.': 'Langue mise à jour.',
-                'Print dialog opened. Choose "Save as PDF" to download.': 'Dialogue d\'impression ouvert. Choisissez "Enregistrer en PDF" pour télécharger.',
-                'Document downloaded as HTML.': 'Document téléchargé en HTML.',
-                'Unsupported file type.': 'Type de fichier non pris en charge.',
-                'Failed to import DOCX.': 'Échec de l\'importation du DOCX.',
-                'Importing DOCX...': 'Importation du DOCX...',
-                'Please enter a valid image URL.': 'Veuillez entrer une URL d\'image valide.',
-            },
-            de: {
-                'Welcome to Munetios OmniWrite': 'Willkommen bei Munetios OmniWrite',
-                'Select or create a new document to get started.': 'Wählen Sie ein Dokument aus oder erstellen Sie ein neues, um zu beginnen.',
-                'Images': 'Bilder',
-                'Tasks': 'Aufgaben',
-                'Templates': 'Vorlagen',
-                'Settings': 'Einstellungen',
-                'Help': 'Hilfe',
-                'New Document': 'Neues Dokument',
-                'New Image': 'Neues Bild',
-                'Import File': 'Datei importieren',
-                'Upload Image': 'Bild hochladen',
-                'Download': 'Herunterladen',
-                'Make a Copy': 'Kopie erstellen',
-                'Compare Documents': 'Dokumente vergleichen',
-                'Share': 'Teilen',
-                'Delete': 'Löschen',
-                'Rename Document': 'Dokument umbenennen',
-                'Version History': 'Versionsverlauf',
-                'Table of Contents': 'Inhaltsverzeichnis',
-                'No Images': 'Keine Bilder',
-                'Trash is empty': 'Papierkorb ist leer',
-                'View Trash': 'Papierkorb anzeigen',
-                'Back to Images': 'Zurück zu Bildern',
-                'Theme:': 'Thema:',
-                'Language:': 'Sprache:',
-                'Backup & Restore': 'Backup & Wiederherstellung',
-                'Export Backup': 'Backup exportieren',
-                'Import Backup': 'Backup importieren',
-                'Danger Zone': 'Gefahrenzone',
-                'Reset Encryption Key': 'Verschlüsselungsschlüssel zurücksetzen',
-                'Delete Everything': 'Alles löschen',
-                'Delete Document': 'Dokument löschen',
-                'Are you sure you want to delete this document? This cannot be undone.': 'Sind Sie sicher, dass Sie dieses Dokument löschen möchten? Dies kann nicht rückgängig gemacht werden.',
-                'Cancel': 'Abbrechen',
-                'Restore This Version': 'Diese Version wiederherstellen',
-                'Share this document with others by downloading it as a PDF file.': 'Teilen Sie dieses Dokument, indem Sie es als PDF herunterladen.',
-                'Download as PDF': 'Als PDF herunterladen',
-                'Download a PDF version of this document.': 'Laden Sie eine PDF-Version dieses Dokuments herunter.',
-                'No versions saved yet.': 'Noch keine Versionen gespeichert.',
-                'No headings found to build Table of Contents.': 'Keine Überschriften für das Inhaltsverzeichnis gefunden.',
-                'File imported.': 'Datei importiert.',
-                'Image inserted and added to library.': 'Bild eingefügt und zur Bibliothek hinzugefügt.',
-                'Image uploaded and added to library.': 'Bild hochgeladen und zur Bibliothek hinzugefügt.',
-                'Document duplicated.': 'Dokument dupliziert.',
-                'Document deleted.': 'Dokument gelöscht.',
-                'Backup exported.': 'Backup exportiert.',
-                'Backup imported.': 'Backup importiert.',
-                'Invalid backup file.': 'Ungültige Backup-Datei.',
-                'Failed to import backup.': 'Backup konnte nicht importiert werden.',
-                'Encryption key reset. All documents deleted.': 'Verschlüsselungsschlüssel zurückgesetzt. Alle Dokumente gelöscht.',
-                'All data deleted.': 'Alle Daten gelöscht.',
-                'Theme updated.': 'Thema aktualisiert.',
-                'Language updated.': 'Sprache aktualisiert.',
-                'Print dialog opened. Choose "Save as PDF" to download.': 'Druckdialog geöffnet. Wählen Sie "Als PDF speichern" zum Herunterladen.',
-                'Document downloaded as HTML.': 'Dokument als HTML heruntergeladen.',
-                'Unsupported file type.': 'Nicht unterstützter Dateityp.',
-                'Failed to import DOCX.': 'DOCX konnte nicht importiert werden.',
-                'Importing DOCX...': 'DOCX wird importiert...',
-                'Please enter a valid image URL.': 'Bitte geben Sie eine gültige Bild-URL ein.',
-            },
-            zh: {
-                'Welcome to Munetios OmniWrite': '欢迎使用 Munetios OmniWrite',
-                'Select or create a new document to get started.': '请选择或创建新文档以开始。',
-                'Images': '图片',
-                'Tasks': '任务',
-                'Templates': '模板',
-                'Settings': '设置',
-                'Help': '帮助',
-                'New Document': '新建文档',
-                'New Image': '新建图片',
-                'Import File': '导入文件',
-                'Upload Image': '上传图片',
-                'Download': '下载',
-                'Make a Copy': '复制',
-                'Compare Documents': '比较文档',
-                'Share': '分享',
-                'Delete': '删除',
-                'Rename Document': '重命名文档',
-                'Version History': '版本历史',
-                'Table of Contents': '目录',
-                'No Images': '没有图片',
-                'Trash is empty': '回收站为空',
-                'View Trash': '查看回收站',
-                'Back to Images': '返回图片',
-                'Theme:': '主题：',
-                'Language:': '语言：',
-                'Backup & Restore': '备份与恢复',
-                'Export Backup': '导出备份',
-                'Import Backup': '导入备份',
-                'Danger Zone': '危险区域',
-                'Reset Encryption Key': '重置加密密钥',
-                'Delete Everything': '全部删除',
-                'Delete Document': '删除文档',
-                'Are you sure you want to delete this document? This cannot be undone.': '确定要删除此文档吗？此操作无法撤销。',
-                'Cancel': '取消',
-                'Restore This Version': '恢复此版本',
-                'Share this document with others by downloading it as a PDF file.': '通过下载 PDF 文件与他人分享此文档。',
-                'Download as PDF': '下载为 PDF',
-                'Download a PDF version of this document.': '下载此文档的 PDF 版本。',
-                'No versions saved yet.': '尚未保存任何版本。',
-                'No headings found to build Table of Contents.': '未找到可用于生成目录的标题。',
-                'File imported.': '文件已导入。',
-                'Image inserted and added to library.': '图片已插入并添加到库中。',
-                'Image uploaded and added to library.': '图片已上传并添加到库中。',
-                'Document duplicated.': '文档已复制。',
-                'Document deleted.': '文档已删除。',
-                'Backup exported.': '备份已导出。',
-                'Backup imported.': '备份已导入。',
-                'Invalid backup file.': '备份文件无效。',
-                'Failed to import backup.': '导入备份失败。',
-                'Encryption key reset. All documents deleted.': '加密密钥已重置。所有文档已删除。',
-                'All data deleted.': '所有数据已删除。',
-                'Theme updated.': '主题已更新。',
-                'Language updated.': '语言已更新。',
-                'Print dialog opened. Choose "Save as PDF" to download.': '打印对话框已打开。选择“另存为 PDF”进行下载。',
-                'Document downloaded as HTML.': '文档已下载为 HTML。',
-                'Unsupported file type.': '不支持的文件类型。',
-                'Failed to import DOCX.': 'DOCX 导入失败。',
-                'Importing DOCX...': '正在导入 DOCX...',
-                'Please enter a valid image URL.': '请输入有效的图片链接。',
-            },
-            ja: {
-                'Welcome to Munetios OmniWrite': 'Munetios OmniWrite へようこそ',
-                'Select or create a new document to get started.': '開始するにはドキュメントを選択するか新規作成してください。',
-                'Images': '画像',
-                'Tasks': 'タスク',
-                'Templates': 'テンプレート',
-                'Settings': '設定',
-                'Help': 'ヘルプ',
-                'New Document': '新規ドキュメント',
-                'New Image': '新規画像',
-                'Import File': 'ファイルをインポート',
-                'Upload Image': '画像をアップロード',
-                'Download': 'ダウンロード',
-                'Make a Copy': 'コピーを作成',
-                'Compare Documents': 'ドキュメントを比較',
-                'Share': '共有',
-                'Delete': '削除',
-                'Rename Document': 'ドキュメント名を変更',
-                'Version History': 'バージョン履歴',
-                'Table of Contents': '目次',
-                'No Images': '画像がありません',
-                'Trash is empty': 'ゴミ箱は空です',
-                'View Trash': 'ゴミ箱を見る',
-                'Back to Images': '画像に戻る',
-                'Theme:': 'テーマ：',
-                'Language:': '言語：',
-                'Backup & Restore': 'バックアップと復元',
-                'Export Backup': 'バックアップをエクスポート',
-                'Import Backup': 'バックアップをインポート',
-                'Danger Zone': '危険ゾーン',
-                'Reset Encryption Key': '暗号化キーをリセット',
-                'Delete Everything': 'すべて削除',
-                'Delete Document': 'ドキュメントを削除',
-                'Are you sure you want to delete this document? This cannot be undone.': 'このドキュメントを削除してもよろしいですか？元に戻せません。',
-                'Cancel': 'キャンセル',
-                'Restore This Version': 'このバージョンを復元',
-                'Share this document with others by downloading it as a PDF file.': 'PDFファイルとしてダウンロードして共有できます。',
-                'Download as PDF': 'PDFとしてダウンロード',
-                'Download a PDF version of this document.': 'このドキュメントのPDF版をダウンロードします。',
-                'No versions saved yet.': 'バージョンはまだ保存されていません。',
-                'No headings found to build Table of Contents.': '目次を作成する見出しがありません。',
-                'File imported.': 'ファイルがインポートされました。',
-                'Image inserted and added to library.': '画像が挿入され、ライブラリに追加されました。',
-                'Image uploaded and added to library.': '画像がアップロードされ、ライブラリに追加されました。',
-                'Document duplicated.': 'ドキュメントが複製されました。',
-                'Document deleted.': 'ドキュメントが削除されました。',
-                'Backup exported.': 'バックアップがエクスポートされました。',
-                'Backup imported.': 'バックアップがインポートされました。',
-                'Invalid backup file.': '無効なバックアップファイルです。',
-                'Failed to import backup.': 'バックアップのインポートに失敗しました。',
-                'Encryption key reset. All documents deleted.': '暗号化キーがリセットされました。すべてのドキュメントが削除されました。',
-                'All data deleted.': 'すべてのデータが削除されました。',
-                'Theme updated.': 'テーマが更新されました。',
-                'Language updated.': '言語が更新されました。',
-                'Print dialog opened. Choose "Save as PDF" to download.': '印刷ダイアログが開きました。「PDFとして保存」を選択してください。',
-                'Document downloaded as HTML.': 'ドキュメントがHTMLとしてダウンロードされました。',
-                'Unsupported file type.': 'サポートされていないファイルタイプです。',
-                'Failed to import DOCX.': 'DOCXのインポートに失敗しました。',
-                'Importing DOCX...': 'DOCXをインポート中...',
-                'Please enter a valid image URL.': '有効な画像URLを入力してください。',
-            },
+            // Import backup
+            const importInput = settingsModal.querySelector('#importBackupInput');
+            settingsModal.querySelector('#importBackupBtn').onclick = function () {
+                importInput.click();
+            };
+            importInput.onchange = async function (e) {
+                const file = importInput.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async function (ev) {
+                    try {
+                        const backup = JSON.parse(ev.target.result);
+                        if (!backup.documents || !Array.isArray(backup.documents)) {
+                            throw new Error('Invalid backup format');
+                        }
+                        // Import all documents
+                        for (const doc of backup.documents) {
+                            await saveDocument(doc);
+                            documents.push(doc);
+                            addDocumentToList(doc);
+                        }
+                        showToast('Backup imported.', { type: 'success' });
+                    } catch (err) {
+                        console.error(err);
+                        showToast('Failed to import backup.', { type: 'error' });
+                    }
+                };
+                reader.readAsText(file);
             };
 
+            // Danger Zone: Reset Encryption Key
+            settingsModal.querySelector('#resetKeyBtn').onclick = async function () {
+                // Use a custom modal for confirmation since window.confirm is patched
+                let confirmModal = document.createElement('div');
+                confirmModal.className = 'modal';
+                confirmModal.innerHTML = `
+                    <div class="modal-content" style="position:relative;max-width:340px;">
+                        <span class="modal-content-close" id="closeResetKeyModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                        <h2>Reset Encryption Key</h2>
+                        <p>Resetting the encryption key will make all existing documents unreadable. Continue?</p>
+                        <div style="margin-top:18px;display:flex;gap:12px;">
+                            <button id="confirmResetKeyBtn" style="background:#ffe066;color:#110736;">Reset Key</button>
+                            <button id="cancelResetKeyBtn">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmModal);
+                confirmModal.style.display = 'flex';
+
+                confirmModal.querySelector('#closeResetKeyModal').onclick = () => confirmModal.remove();
+                confirmModal.querySelector('#cancelResetKeyBtn').onclick = () => confirmModal.remove();
+
+                confirmModal.querySelector('#confirmResetKeyBtn').onclick = async function () {
+                    // Delete key from IndexedDB (documents will remain but become unreadable)
+                    const tx = db.transaction(KEY_STORE, 'readwrite');
+                    tx.objectStore(KEY_STORE).delete('main');
+                    showToast('Encryption key reset. Existing documents are now unreadable.', { type: 'success' });
+                    confirmModal.remove();
+                    settingsModal.remove();
+                    setTimeout(() => window.location.reload(), 1200);
+                };
+            };
+
+            
             function applyTranslations(lang) {
                 const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
                 // Translate static text elements
@@ -5195,70 +5574,7 @@ if ('serviceWorker' in navigator) {
                 showToast('Backup exported.', { type: 'success' });
             };
 
-            // Import backup
-            const importInput = settingsModal.querySelector('#importBackupInput');
-            settingsModal.querySelector('#importBackupBtn').onclick = function () {
-                importInput.click();
-            };
-            importInput.onchange = async function (e) {
-                const file = importInput.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async function (ev) {
-                    try {
-                        const backup = JSON.parse(ev.target.result);
-                        if (Array.isArray(backup.documents)) {
-                            // Replace all documents
-                            documents = backup.documents;
-                            // Save to IndexedDB
-                            await saveDocuments();
-                            // Refresh sidebar
-                            const list = document.getElementById('documentsList');
-                            list.innerHTML = '';
-                            documents.forEach(doc => addDocumentToList(doc));
-                            showToast('Backup imported.', { type: 'success' });
-                        } else {
-                            showToast('Invalid backup file.', { type: 'error' });
-                        }
-                    } catch (err) {
-                        showToast('Failed to import backup.', { type: 'error' });
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-            // Danger Zone: Reset Encryption Key
-            settingsModal.querySelector('#resetKeyBtn').onclick = async function () {
-                // Use a custom modal for confirmation since window.confirm is patched
-                let confirmModal = document.createElement('div');
-                confirmModal.className = 'modal';
-                confirmModal.innerHTML = `
-                    <div class="modal-content" style="position:relative;max-width:340px;">
-                        <span class="modal-content-close" id="closeResetKeyModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
-                        <h2>Reset Encryption Key</h2>
-                        <p>Resetting the encryption key will make all existing documents unreadable. Continue?</p>
-                        <div style="margin-top:18px;display:flex;gap:12px;">
-                            <button id="confirmResetKeyBtn" style="background:#ffe066;color:#110736;">Reset Key</button>
-                            <button id="cancelResetKeyBtn">Cancel</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmModal);
-                confirmModal.querySelector('#closeResetKeyModal').onclick = () => confirmModal.remove();
-                confirmModal.querySelector('#cancelResetKeyBtn').onclick = () => confirmModal.remove();
-                confirmModal.querySelector('#confirmResetKeyBtn').onclick = async function () {
-                    // Delete key from IndexedDB
-                    const tx = db.transaction(KEY_STORE, 'readwrite');
-                    tx.objectStore(KEY_STORE).delete('main');
-                    // Clear all documents
-                    documents = [];
-                    const docTx = db.transaction(DOC_STORE, 'readwrite');
-                    docTx.objectStore(DOC_STORE).clear();
-                    showToast('Encryption key reset. All documents deleted.', { type: 'success' });
-                    confirmModal.remove();
-                    setTimeout(() => window.location.reload(), 1200);
-                };
-            };
+       
             
             // Danger Zone: Delete Everything
             settingsModal.querySelector('#deleteEverythingBtn').onclick = async function () {
@@ -5316,9 +5632,17 @@ if ('serviceWorker' in navigator) {
         window.confirm = function() { return false; };
         window.prompt = function() { return null; };
 
-        //
+    window.addEventListener('error', function (e) {
+        if (e && e.message && /out of memory/i.test(e.message)) {
+            window.location.href = '/out-of-memory.html';
+        }
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+        if (e && e.reason && e.reason.message && /out of memory/i.test(e.reason.message)) {
+            window.location.href = '/out-of-memory.html';
+        }
+    });
     </script>
 </body>
 </html>
-
 
