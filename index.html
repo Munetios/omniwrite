@@ -5642,6 +5642,115 @@ if ('serviceWorker' in navigator) {
             window.location.href = '/out-of-memory.html';
         }
     });
+    (function showUnsupportedBrowser() {
+        const ua = navigator.userAgent;
+        const isFirefox = ua.includes('Firefox');
+        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        if (isFirefox || isSafari) {
+            // Remove any existing modals
+            document.querySelectorAll('.modal').forEach(m => m.remove());
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="position:relative;max-width:580px;">
+                    <span class="modal-content-close" id="closeUnsupportedModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                    <h2 style="color:#e74c3c;">Unsupported Browser</h2>
+                    <p>Due to saving not working reliably, Munetios OmniWrite no longer supports Firefox or Safari.</p>
+                    <p>If you want to use OmniWrite, please use Chrome, Edge, or Chromium-based browsers.</p>
+                    <p style="margin-top:18px;">If you want to risk losing your data, you can try OmniWrite anyway:</p>
+                    <div style="margin-top:18px;display:flex;flex-direction:column;gap:12px;">
+                        <button id="useLocalStorageBtn" style="background:#ffe066;color:#110736;">Use in LocalStorage (Not secure for documents)</button>
+                        <button id="useLimitedIndexedDBBtn" style="background:#52a2ea;color:#fff;">Use in limited encryption/indexedDB</button>
+                        <button id="useFullAccessBtn" style="background:#46c48b;color:#fff;">Use in Full Access (may lose data)</button>
+                    </div>
+                    <div style="font-size:13px;opacity:0.7;margin-top:16px;">
+                        <b>Warning:</b> Data loss may occur. We recommend switching browsers.
+                    </div>
+                    <div style="margin-top:24px;">
+                        <h3>Download Supported Browsers:</h3>
+                        <ul style="margin-left:18px;">
+                            <li><a href="https://www.google.com/chrome/" target="_self" style="color:#52a2ea;">Download Google Chrome</a></li>
+                            <li><a href="https://www.microsoft.com/edge" target="_self" style="color:#52a2ea;">Download Microsoft Edge</a></li>
+                            <li><a href="https://www.chromium.org/getting-involved/download-chromium/" target="_self" style="color:#52a2ea;">Download Chromium</a></li>
+                            <li><a href="https://brave.com/download/" target="_self" style="color:#52a2ea;">Download Brave Browser</a></li>
+                            <li><a href="https://www.opera.com/download" target="_self" style="color:#52a2ea;">Download Opera Browser</a></li>
+                        </ul>
+                        <div style="font-size:13px;opacity:0.7;margin-top:8px;">
+                            These browsers are supported and recommended for Munetios OmniWrite.
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Close modal
+            modal.querySelector('#closeUnsupportedModal').onclick = () => {
+                modal.remove();
+            };
+
+            // Option handlers
+            modal.querySelector('#useLocalStorageBtn').onclick = function() {
+                modal.remove();
+                showToast('LocalStorage mode enabled. Saving is not secure.', { type: 'info' });
+                // Patch saveDocuments to use localStorage
+                window.saveDocuments = async function() {
+                    try {
+                        localStorage.setItem('omniwrite-documents', JSON.stringify(documents));
+                    } catch (e) {}
+                };
+                window.loadDocuments = async function() {
+                    documents = [];
+                    try {
+                        const docs = JSON.parse(localStorage.getItem('omniwrite-documents') || '[]');
+                        documents = Array.isArray(docs) ? docs : [];
+                        documents.forEach(addDocumentToList);
+                    } catch (e) {}
+                };
+                loadDocuments();
+            };
+
+            modal.querySelector('#useLimitedIndexedDBBtn').onclick = function() {
+                modal.remove();
+                showToast('Limited IndexedDB mode enabled. Some features may not work.', { type: 'info' });
+                // Patch saveDocuments/loadDocuments to skip encryption
+                window.saveDocuments = async function() {
+                    const tx = db.transaction(DOC_STORE, 'readwrite');
+                    const store = tx.objectStore(DOC_STORE);
+                    for (const doc of documents) {
+                        store.put({ id: doc.id, enc: { iv: [], data: Array.from(new TextEncoder().encode(JSON.stringify(doc))) } });
+                    }
+                };
+                window.loadDocuments = async function() {
+                    documents = [];
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction(DOC_STORE, 'readonly');
+                        const store = tx.objectStore(DOC_STORE);
+                        const req = store.getAll();
+                        req.onsuccess = async function() {
+                            for (const item of req.result) {
+                                try {
+                                    const docStr = new TextDecoder().decode(new Uint8Array(item.enc.data));
+                                    const doc = JSON.parse(docStr);
+                                    documents.push(doc);
+                                    addDocumentToList(doc);
+                                } catch (e) {}
+                            }
+                            resolve();
+                        };
+                        req.onerror = () => reject(req.error);
+                    });
+                };
+                loadDocuments();
+            };
+
+            modal.querySelector('#useFullAccessBtn').onclick = function() {
+                modal.remove();
+                showToast('Full access enabled. Data loss may occur.', { type: 'error' });
+                // Do nothing, allow default logic (may fail)
+            };
+        }
+    })();
     </script>
 </body>
 </html>
