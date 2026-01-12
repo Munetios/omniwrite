@@ -1116,15 +1116,20 @@ if ('serviceWorker' in navigator) {
                     resolve(key);
                 } else {
                     // Generate new key
-                    window.crypto.subtle.generateKey(
+                    const key = await window.crypto.subtle.generateKey(
                         { name: 'AES-GCM', length: 256 },
                         true, // Set extractable to true so we can export the key
                         ['encrypt', 'decrypt']
-                    ).then(async key => {
-                        const raw = await window.crypto.subtle.exportKey('raw', key);
-                        store.put({ name: 'main', key: raw });
-                        resolve(key);
-                    });
+                    );
+                    const raw = await window.crypto.subtle.exportKey('raw', key);
+                    
+                    // Start a new transaction for writing (Firefox/Safari require this)
+                    const writeTx = db.transaction(KEY_STORE, 'readwrite');
+                    const writeStore = writeTx.objectStore(KEY_STORE);
+                    writeStore.put({ name: 'main', key: raw });
+                    
+                    writeTx.oncomplete = () => resolve(key);
+                    writeTx.onerror = () => reject(writeTx.error);
                 }
             };
             getReq.onerror = () => reject(getReq.error);
@@ -1156,12 +1161,23 @@ if ('serviceWorker' in navigator) {
 
     // Save all documents to IndexedDB (encrypted)
     async function saveDocuments() {
-        const tx = db.transaction(DOC_STORE, 'readwrite');
-        const store = tx.objectStore(DOC_STORE);
+        // Pre-encrypt all documents before opening transaction (Firefox/Safari compatibility)
+        const encryptedDocs = [];
         for (const doc of documents) {
             const encDoc = await encryptData(JSON.stringify(doc));
-            store.put({ id: doc.id, enc: encDoc });
+            encryptedDocs.push({ id: doc.id, enc: encDoc });
         }
+        
+        // Now write all at once in a single transaction
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(DOC_STORE, 'readwrite');
+            const store = tx.objectStore(DOC_STORE);
+            for (const encDoc of encryptedDocs) {
+                store.put(encDoc);
+            }
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
     }
 
     // Load all documents from IndexedDB (decrypt)
@@ -1180,6 +1196,27 @@ if ('serviceWorker' in navigator) {
                         addDocumentToList(doc);
                     } catch (e) {
                         console.error('Failed to decrypt document', item.id, e);
+                        // Show a "garbage" document with shuffled or random text
+                        // Use the encrypted data as a fallback, shuffled for visual randomness
+                        let fallbackText = '';
+                        if (item.enc && Array.isArray(item.enc.data)) {
+                            // Shuffle the bytes and convert to hex string
+                            const arr = item.enc.data.slice();
+                            for (let i = arr.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [arr[i], arr[j]] = [arr[j], arr[i]];
+                            }
+                            fallbackText = arr.map(b => String.fromCharCode(33 + (b % 94))).join('');
+                        } else {
+                            fallbackText = '[Corrupted Document]';
+                        }
+                        const doc = {
+                            id: item.id,
+                            title: 'Corrupted Document',
+                            content: `<pre style="color:#e74c3c;word-break:break-all;">${fallbackText}</pre>`
+                        };
+                        documents.push(doc);
+                        addDocumentToList(doc);
                     }
                 }
                 resolve();
@@ -5642,115 +5679,6 @@ if ('serviceWorker' in navigator) {
             window.location.href = '/out-of-memory.html';
         }
     });
-    (function showUnsupportedBrowser() {
-        const ua = navigator.userAgent;
-        const isFirefox = ua.includes('Firefox');
-        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-        if (isFirefox || isSafari) {
-            // Remove any existing modals
-            document.querySelectorAll('.modal').forEach(m => m.remove());
-            // Create modal
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content" style="position:relative;max-width:580px;">
-                    <span class="modal-content-close" id="closeUnsupportedModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
-                    <h2 style="color:#e74c3c;">Unsupported Browser</h2>
-                    <p>Due to saving not working reliably, Munetios OmniWrite no longer supports Firefox or Safari.</p>
-                    <p>If you want to use OmniWrite, please use Chrome, Edge, or Chromium-based browsers.</p>
-                    <p style="margin-top:18px;">If you want to risk losing your data, you can try OmniWrite anyway:</p>
-                    <div style="margin-top:18px;display:flex;flex-direction:column;gap:12px;">
-                        <button id="useLocalStorageBtn" style="background:#ffe066;color:#110736;">Use in LocalStorage (Not secure for documents)</button>
-                        <button id="useLimitedIndexedDBBtn" style="background:#52a2ea;color:#fff;">Use in limited encryption/indexedDB</button>
-                        <button id="useFullAccessBtn" style="background:#46c48b;color:#fff;">Use in Full Access (may lose data)</button>
-                    </div>
-                    <div style="font-size:13px;opacity:0.7;margin-top:16px;">
-                        <b>Warning:</b> Data loss may occur. We recommend switching browsers.
-                    </div>
-                    <div style="margin-top:24px;">
-                        <h3>Download Supported Browsers:</h3>
-                        <ul style="margin-left:18px;">
-                            <li><a href="https://www.google.com/chrome/" target="_self" style="color:#52a2ea;">Download Google Chrome</a></li>
-                            <li><a href="https://www.microsoft.com/edge" target="_self" style="color:#52a2ea;">Download Microsoft Edge</a></li>
-                            <li><a href="https://www.chromium.org/getting-involved/download-chromium/" target="_self" style="color:#52a2ea;">Download Chromium</a></li>
-                            <li><a href="https://brave.com/download/" target="_self" style="color:#52a2ea;">Download Brave Browser</a></li>
-                            <li><a href="https://www.opera.com/download" target="_self" style="color:#52a2ea;">Download Opera Browser</a></li>
-                        </ul>
-                        <div style="font-size:13px;opacity:0.7;margin-top:8px;">
-                            These browsers are supported and recommended for Munetios OmniWrite.
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            // Close modal
-            modal.querySelector('#closeUnsupportedModal').onclick = () => {
-                modal.remove();
-            };
-
-            // Option handlers
-            modal.querySelector('#useLocalStorageBtn').onclick = function() {
-                modal.remove();
-                showToast('LocalStorage mode enabled. Saving is not secure.', { type: 'info' });
-                // Patch saveDocuments to use localStorage
-                window.saveDocuments = async function() {
-                    try {
-                        localStorage.setItem('omniwrite-documents', JSON.stringify(documents));
-                    } catch (e) {}
-                };
-                window.loadDocuments = async function() {
-                    documents = [];
-                    try {
-                        const docs = JSON.parse(localStorage.getItem('omniwrite-documents') || '[]');
-                        documents = Array.isArray(docs) ? docs : [];
-                        documents.forEach(addDocumentToList);
-                    } catch (e) {}
-                };
-                loadDocuments();
-            };
-
-            modal.querySelector('#useLimitedIndexedDBBtn').onclick = function() {
-                modal.remove();
-                showToast('Limited IndexedDB mode enabled. Some features may not work.', { type: 'info' });
-                // Patch saveDocuments/loadDocuments to skip encryption
-                window.saveDocuments = async function() {
-                    const tx = db.transaction(DOC_STORE, 'readwrite');
-                    const store = tx.objectStore(DOC_STORE);
-                    for (const doc of documents) {
-                        store.put({ id: doc.id, enc: { iv: [], data: Array.from(new TextEncoder().encode(JSON.stringify(doc))) } });
-                    }
-                };
-                window.loadDocuments = async function() {
-                    documents = [];
-                    return new Promise((resolve, reject) => {
-                        const tx = db.transaction(DOC_STORE, 'readonly');
-                        const store = tx.objectStore(DOC_STORE);
-                        const req = store.getAll();
-                        req.onsuccess = async function() {
-                            for (const item of req.result) {
-                                try {
-                                    const docStr = new TextDecoder().decode(new Uint8Array(item.enc.data));
-                                    const doc = JSON.parse(docStr);
-                                    documents.push(doc);
-                                    addDocumentToList(doc);
-                                } catch (e) {}
-                            }
-                            resolve();
-                        };
-                        req.onerror = () => reject(req.error);
-                    });
-                };
-                loadDocuments();
-            };
-
-            modal.querySelector('#useFullAccessBtn').onclick = function() {
-                modal.remove();
-                showToast('Full access enabled. Data loss may occur.', { type: 'error' });
-                // Do nothing, allow default logic (may fail)
-            };
-        }
-    })();
     </script>
 </body>
 </html>
