@@ -5589,7 +5589,7 @@ if ('serviceWorker' in navigator) {
             }
 
             // On load, apply translations
-            applyTranslations(languageSelect.value);
+            applyTranslations(currentLang);
 
             // Export backup
             settingsModal.querySelector('#exportBackupBtn').onclick = async function () {
@@ -5635,28 +5635,29 @@ if ('serviceWorker' in navigator) {
                 confirmModal.querySelector('#confirmDeleteAllBtn').onclick = async function () {
                     documents = [];
                     // Clear all stores using transactions
-                    await Promise.all([
-                        new Promise(res => {
-                            const tx = db.transaction(DOC_STORE, 'readwrite');
-                            tx.objectStore(DOC_STORE).clear();
-                            tx.oncomplete = res;
-                        }),
-                        new Promise(res => {
-                            const tx = db.transaction(IMAGE_STORE, 'readwrite');
-                            tx.objectStore(IMAGE_STORE).clear();
-                            tx.oncomplete = res;
-                        }),
-                        new Promise(res => {
-                            const tx = db.transaction(TRASH_STORE, 'readwrite');
-                            tx.objectStore(TRASH_STORE).clear();
-                            tx.oncomplete = res;
-                        }),
-                        new Promise(res => {
-                            const tx = db.transaction(KEY_STORE, 'readwrite');
-                            tx.objectStore(KEY_STORE).clear();
-                            tx.oncomplete = res;
-                        })
-                    ]);
+                    const storesToClear = ['documents', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
+                    const clearPromises = [];
+                    
+                    for (const storeName of storesToClear) {
+                        // Check if store exists before trying to clear it
+                        if (db.objectStoreNames.contains(storeName)) {
+                            clearPromises.push(
+                                new Promise((res, rej) => {
+                                    try {
+                                        const tx = db.transaction(storeName, 'readwrite');
+                                        tx.objectStore(storeName).clear();
+                                        tx.oncomplete = () => res();
+                                        tx.onerror = () => rej(tx.error);
+                                    } catch (e) {
+                                        console.warn('Could not clear store:', storeName, e);
+                                        res(); // Continue even if one fails
+                                    }
+                                })
+                            );
+                        }
+                    }
+                    
+                    await Promise.all(clearPromises);
                     document.getElementById('documentsList').innerHTML = '';
                     showToast('All data deleted.', { type: 'success' });
                     confirmModal.remove();
