@@ -36,7 +36,7 @@ if ('serviceWorker' in navigator) {
     default-src 'self';
      style-src 'self' https://fonts.googleapis.com https://api.munetios.com 'unsafe-inline';
       font-src 'self' https://fonts.gstatic.com;
-    script-src 'self' https://cdnjs.cloudflare.com https://api.munetios.com 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
+    script-src 'self' https://cdnjs.cloudflare.com https://api.munetios.com https://cdn.jsdelivr.net 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
        media-src 'self' blob: data:;  img-src 'self' https: data: blob:; connect-src 'self';
         frame-src 'self' https://www.munetios.com https://calendar.munetios.com https://www.youtube-nocookie.com;
         ">
@@ -416,6 +416,100 @@ if ('serviceWorker' in navigator) {
                 display: flex !important;
             }            
         }
+        
+        /* Floating Mic Button */
+        .floating-mic-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea77 0%, #764ba257 100%);
+            backdrop-filter: blur(2px);
+            border: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+        .floating-mic-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        }
+        .floating-mic-btn.recording {
+            background: linear-gradient(135deg, #f093fb77 0%, #f5576c57 100%);
+            animation: pulse 1.5s infinite;
+        }
+        .floating-mic-btn icon {
+            font-size: 28px;
+            color: white;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Split Screen Styles */
+        .split-screen-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .split-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 200px;
+        }
+        .split-pane .content-area {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .split-divider {
+            width: 8px;
+            background: rgba(255,255,255,0.1);
+            cursor: col-resize;
+            position: relative;
+            transition: background 0.2s;
+        }
+        .split-divider:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+        .split-divider::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 40px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 2px;
+        }
+        .split-pane .navbar {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .split-close-btn {
+            margin-left: auto;
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .split-close-btn:hover {
+            background: rgba(231, 76, 60, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -545,15 +639,18 @@ if ('serviceWorker' in navigator) {
                             <div class="liquid-glass" id="documentTitle" style="padding: 16px 14px;"></div>
                 </div>
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
-                    <icon id="findInDocumentBtn">search</icon>
                     <icon id="versionHistoryBtn">history</icon>
                     <icon id="previewBtn" >visibility</icon>
+                    <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
                     <icon id="shareDocumentBtn">share</icon>
                     <icon id="moreEditorBtn">more_vert</icon>
                 </div>
             </div>
             <div class="editor-content-editor">
                 <div class="toolbar liquid-glass">
+                    <div class="toolbar-item" id="findInDocumentBtn">
+                        <icon>search</icon>
+                    </div>
                     <div class="toolbar-item" id="boldBtn" title="Bold">
                         <icon>format_bold</icon>
                     </div>
@@ -4447,7 +4544,7 @@ if ('serviceWorker' in navigator) {
             toast.style.transition = 'opacity 0.2s';
 
             // Set background color based on type
-            let bg = 'rgba(30,30,40,0.92)';
+            let bg = 'rgba(30,30,40,0.01)';
             let color = '#fff';
             if (options.type === 'success') {
                 bg = 'rgba(46, 204, 113, 0.88)';
@@ -4515,6 +4612,7 @@ if ('serviceWorker' in navigator) {
                         <li>v1.0.0 - Initial release of OmniWrite.</li>
                         <li>v1.0.1 - Fixed a bug when font family/font size wasn't opening after switching documents.</li>
                         <li>v1.0.2 - Improvements and fixed a bug when text color picker wasn't opening after switching documents.</li>
+                        <li>v1.0.3 - Added voice-to-text writing and split screen for enhanced productivity.</li>
                     </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
@@ -5210,7 +5308,7 @@ if ('serviceWorker' in navigator) {
                 toast.style.zIndex = 999999;
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.2s';
-                let bg = 'rgba(30,30,40,0.92)';
+                let bg = 'rgba(30,30,40,0.01)';
                 let color = '#fff';
                 if (options.type === 'success') {
                     bg = 'rgba(46, 204, 113, 0.88)';
@@ -5680,6 +5778,363 @@ if ('serviceWorker' in navigator) {
             window.location.href = '/out-of-memory.html';
         }
     });
+    
+    // --- Floating Mic Button (Voice to Text) ---
+    const floatingMicBtn = document.createElement('button');
+    floatingMicBtn.className = 'floating-mic-btn';
+    floatingMicBtn.innerHTML = '<icon>mic</icon>';
+    floatingMicBtn.title = 'Voice to Text (Click to start/stop)';
+    document.body.appendChild(floatingMicBtn);
+    // Play sound
+    function playSound(type) {
+        if (typeof Tone === "undefined") {
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js";
+            script.onload = () => playSound(type);
+            document.head.appendChild(script);
+            return;
+        }
+        let synth = window._voiceSynth;
+        if (!synth) {
+            synth = new Tone.PolySynth({
+                voice: Tone.Synth,
+                oscillator: { type: "triangle" },
+                envelope: {
+                    attack: 0.01,
+                    decay: 0.1,
+                    sustain: 0.1,
+                    release: 0.2,
+                },
+                maxPolyphony: 170
+            }).toDestination();
+            synth.volume.value = -14; // Lower volume (default is 0, -18 is much quieter)
+            window._voiceSynth = synth;
+        }
+        let note = null;
+        if (type === "listening") {
+            note = "C5";
+            synth.triggerAttackRelease(note, "8n");
+        } else if (type === "done") {
+            note = "C3";
+            synth.triggerAttackRelease(note, "8n");
+        } else if (type === "denied") {
+            note = "C4";
+            synth.triggerAttackRelease(note, "8n");
+        }
+        if (note) {
+            setTimeout(() => synth.triggerRelease(note), 300);
+        }
+    }
+
+    let recognition = null;
+    let isRecording = false;
+
+    // Check if browser supports Speech Recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        let finalTranscript = '';
+
+        recognition.onresult = function(event) {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            // Insert text at cursor position in editor
+            const editorArea = document.getElementById('editorArea');
+            if (editorArea && finalTranscript) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const textNode = document.createTextNode(finalTranscript);
+                    range.insertNode(textNode);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    // Trigger input event to save
+                    editorArea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                finalTranscript = '';
+            }
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+            if (event.error === 'no-speech') {
+                return; // Just continue
+            }
+            isRecording = false;
+            floatingMicBtn.classList.remove('recording');
+            floatingMicBtn.querySelector('icon').textContent = 'mic';
+            if (event.error === 'not-allowed' || event.error === 'denied') {
+                playSound('denied');
+                showToast('Enable mic access to write document using your voice', { type: 'error' });
+            }
+        };
+
+        recognition.onend = function() {
+            if (isRecording) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    isRecording = false;
+                    floatingMicBtn.classList.remove('recording');
+                    floatingMicBtn.querySelector('icon').textContent = 'mic';
+                }
+            } else {
+                playSound('done');
+            }
+        };
+    }
+
+    floatingMicBtn.addEventListener('click', function() {
+        if (!recognition) {
+            showToast('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+        const editorArea = document.getElementById('editorArea');
+        if (!editorArea || window.location.hash.indexOf('#/document/') !== 0) {
+            showToast('Please open a document first.');
+            return;
+        }
+        if (isRecording) {
+            recognition.stop();
+            isRecording = false;
+            floatingMicBtn.classList.remove('recording');
+            floatingMicBtn.querySelector('icon').textContent = 'mic';
+            playSound('done');
+        } else {
+            editorArea.focus();
+            try {
+                recognition.start();
+                isRecording = true;
+                floatingMicBtn.classList.add('recording');
+                floatingMicBtn.querySelector('icon').textContent = 'mic_off';
+                playSound('listening');
+            } catch (e) {
+                console.error('Error starting recognition:', e);
+            }
+        }
+    });
+    
+    // --- Split Screen Functionality ---
+    const splitScreenBtn = document.getElementById('splitScreenBtn');
+    let isSplitMode = false;
+    let splitContainer = null;
+    let leftPane = null;
+    let rightPane = null;
+    let divider = null;
+    let rightPaneDocId = null;
+    
+    if (splitScreenBtn) {
+        splitScreenBtn.style.cursor = 'pointer';
+        splitScreenBtn.addEventListener('click', function() {
+            if (!isSplitMode) {
+                enableSplitScreen();
+            } else {
+                disableSplitScreen();
+            }
+        });
+    }
+    
+    function enableSplitScreen() {
+        const mainContainer = document.querySelector('.main-container');
+        const currentContent = mainContainer.innerHTML;
+        
+        // Create split container
+        splitContainer = document.createElement('div');
+        splitContainer.className = 'split-screen-container';
+        
+        // Create left pane (current document)
+        leftPane = document.createElement('div');
+        leftPane.className = 'split-pane';
+        leftPane.innerHTML = currentContent;
+        
+        // Create divider
+        divider = document.createElement('div');
+        divider.className = 'split-divider';
+        
+        // Create right pane
+        rightPane = document.createElement('div');
+        rightPane.className = 'split-pane';
+        rightPane.innerHTML = `
+            <div class="navbar-container">
+                <div class="navbar liquid-glass">
+                    <div class="navbar__left">
+                        <div id="documentTitle2" style="font-size: 20px; font-weight: 500; padding: 16px 14px;">Select a document</div>
+                    </div>
+                    <div class="navbar__right" style="padding: 11px 14px;">
+                        <button class="split-close-btn" id="closeSplitBtn">
+                            <icon>close</icon> Close Split
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="content-area">
+                <div class="select-area" id="selectArea2" style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;">
+                    <icon style="font-size: 72px; margin-bottom: 20px;">description</icon>
+                    <p style="font-size: 18px;">Click a document in the sidebar</p>
+                    <p style="font-size: 14px; opacity: 0.7; margin-top: 10px;">Ctrl+Click (Cmd+Click on Mac) to open here</p>
+                </div>
+            </div>
+        `;
+        
+        // Assemble split view
+        splitContainer.appendChild(leftPane);
+        splitContainer.appendChild(divider);
+        splitContainer.appendChild(rightPane);
+        
+        // Replace main container content
+        mainContainer.innerHTML = '';
+        mainContainer.appendChild(splitContainer);
+        
+        // Re-attach event listeners for left pane buttons
+        reattachEditorEventListeners(leftPane);
+        
+        // Setup close button
+        document.getElementById('closeSplitBtn').addEventListener('click', disableSplitScreen);
+        
+        // Setup resizable divider
+        setupResizableDivider();
+        
+        // Setup document click handlers for right pane
+        setupRightPaneDocumentSelection();
+        
+        isSplitMode = true;
+        splitScreenBtn.style.background = 'rgba(102, 126, 234, 0.3)';
+    }
+    
+    function disableSplitScreen() {
+        if (!leftPane) return;
+        
+        const mainContainer = document.querySelector('.main-container');
+        mainContainer.innerHTML = leftPane.innerHTML;
+        
+        // Re-attach event listeners
+        reattachEditorEventListeners(mainContainer);
+        
+        splitContainer = null;
+        leftPane = null;
+        rightPane = null;
+        divider = null;
+        rightPaneDocId = null;
+        isSplitMode = false;
+        splitScreenBtn.style.background = '';
+    }
+    
+    function reattachEditorEventListeners(container) {
+        // Re-attach the split screen button listener
+        const splitBtn = container.querySelector('#splitScreenBtn');
+        if (splitBtn) {
+            splitBtn.style.cursor = 'pointer';
+            splitBtn.addEventListener('click', function() {
+                if (!isSplitMode) {
+                    enableSplitScreen();
+                } else {
+                    disableSplitScreen();
+                }
+            });
+        }
+    }
+    
+    function setupResizableDivider() {
+        let isDragging = false;
+        let startX = 0;
+        let startLeftWidth = 0;
+        
+        divider.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            startX = e.clientX;
+            startLeftWidth = leftPane.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - startX;
+            const newLeftWidth = startLeftWidth + deltaX;
+            const containerWidth = splitContainer.offsetWidth;
+            const minWidth = 250;
+            
+            if (newLeftWidth > minWidth && (containerWidth - newLeftWidth - 8) > minWidth) {
+                const leftPercent = (newLeftWidth / containerWidth) * 100;
+                const rightPercent = 100 - leftPercent - 1;
+                
+                leftPane.style.flex = `0 0 ${leftPercent}%`;
+                rightPane.style.flex = `0 0 ${rightPercent}%`;
+            }
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+    
+    function setupRightPaneDocumentSelection() {
+        document.getElementById('documentsList').addEventListener('click', function(e) {
+            if (!isSplitMode) return;
+            
+            const docItem = e.target.closest('.document-item');
+            if (!docItem) return;
+            
+            // Check if Ctrl/Cmd key is pressed to open in right pane
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                const docId = docItem.dataset.docId;
+                openDocumentInRightPane(docId);
+            }
+        });
+    }
+    
+    function openDocumentInRightPane(docId) {
+        const doc = documents.find(d => d.id === docId);
+        if (!doc || !rightPane) return;
+        
+        rightPaneDocId = docId;
+        const contentArea = rightPane.querySelector('.content-area');
+        const titleDiv = rightPane.querySelector('#documentTitle2');
+        
+        titleDiv.innerHTML = `<span contenteditable="true" id="editableTitle2">${doc.title}</span>`;
+        
+        // Handle title editing
+        const editable = titleDiv.querySelector('#editableTitle2');
+        editable.addEventListener('blur', async function() {
+            doc.title = this.textContent.trim() || 'Untitled';
+            const docItem = document.querySelector(`.document-item[data-doc-id="${docId}"] .menu-text`);
+            if (docItem) docItem.textContent = doc.title;
+            await saveDocuments();
+        });
+        
+        contentArea.innerHTML = `
+            <div class="page active" id="editorContent2">
+                <div class="editor-content-editor" id="editorArea2" contenteditable="true" style="padding: 20px; min-height: 100%;">${doc.content || ''}</div>
+            </div>
+        `;
+        
+        const editorArea2 = document.getElementById('editorArea2');
+        editorArea2.oninput = async function() {
+            doc.content = editorArea2.innerHTML;
+            await saveDocuments();
+        };
+    }
+    
     </script>
 </body>
 </html>
