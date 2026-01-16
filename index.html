@@ -641,7 +641,7 @@ if ('serviceWorker' in navigator) {
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
                     <icon id="versionHistoryBtn">history</icon>
                     <icon id="previewBtn" >visibility</icon>
-                    <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
+                    <icon disabled style="cursor: not-allowed; opacity: 0.7; pointer-events: none;" title="Split Screen is temporarily unavaliable" id="splitScreenBtn" title="Split Screen">vertical_split</icon>
                     <icon id="shareDocumentBtn">share</icon>
                     <icon id="moreEditorBtn">more_vert</icon>
                 </div>
@@ -6138,5 +6138,6 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
+
 
 
