@@ -725,7 +725,7 @@ if ('serviceWorker' in navigator) {
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
                     <icon id="versionHistoryBtn">history</icon>
                     <icon id="previewBtn" >visibility</icon>
-                    <icon disabled style="cursor: not-allowed; opacity: 0.7; pointer-events: none;" title="Split Screen is temporarily unavaliable" id="splitScreenBtn" title="Split Screen">vertical_split</icon>
+                    <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
                     <icon id="shareDocumentBtn">share</icon>
                     <icon id="moreEditorBtn">more_vert</icon>
                 </div>
@@ -1407,15 +1407,25 @@ if ('serviceWorker' in navigator) {
         const docMatch = hash.match(/^#\/document\/(.+)$/);
         if (docMatch) {
             const docId = docMatch[1];
+            // Exit split view when navigating away
+            if (isSplitView) {
+                exitSplitView();
+            }
             openDocument(docId);
-        } else if (hash === '#/tasks') {
-            switchPage('tasksApp');
-        } else if (hash === '#/images') {
-            switchPage('imagesApp');
-        } else if (hash === '#/templates') {
-            switchPage('templatesApp');
         } else {
-            switchPage('selectArea');
+            // Exit split view when leaving document view
+            if (isSplitView) {
+                exitSplitView();
+            }
+            if (hash === '#/tasks') {
+                switchPage('tasksApp');
+            } else if (hash === '#/images') {
+                switchPage('imagesApp');
+            } else if (hash === '#/templates') {
+                switchPage('templatesApp');
+            } else {
+                switchPage('selectArea');
+            }
         }
     }
     // Remove any duplicate or conflicting hashchange listeners
@@ -1476,6 +1486,10 @@ if ('serviceWorker' in navigator) {
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        // Exit split view if active
+        if (isSplitView) {
+            exitSplitView();
+        }
         // Update hash only if not already set
         if (window.location.hash !== '#/document/' + docId) {
             window.location.hash = '#/document/' + docId;
@@ -1485,6 +1499,7 @@ if ('serviceWorker' in navigator) {
         switchPage('editorContent');
         // Set editor content
         const editorArea = document.getElementById('editorArea');
+        editorArea.contentEditable = 'true';
         editorArea.innerHTML = doc.content || '';
         // Re-attach font pickers for this document/editor (ensure DOM is ready)
         setTimeout(() => {
@@ -3667,6 +3682,230 @@ if ('serviceWorker' in navigator) {
             modal.remove();
         };
     });
+    // --- Split Screen Functionality ---
+    const splitScreenBtn = document.getElementById('splitScreenBtn');
+    let isSplitView = false;
+    let splitLeftDocId = null;
+    let splitRightDocId = null;
+
+    splitScreenBtn.addEventListener('click', function() {
+        if (isSplitView) {
+            // Exit split view
+            exitSplitView();
+        } else {
+            // Enter split view
+            enterSplitView();
+        }
+    });
+
+    function enterSplitView() {
+        // Get current document
+        const currentDocId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        if (!currentDocId) {
+            showToast('Please open a document first.', { type: 'info' });
+            return;
+        }
+
+        // Show modal to select second document
+        let modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="position:relative;max-width:500px;">
+                <span class="modal-content-close" id="closeSplitSelectModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                <h2>Select Document for Split View</h2>
+                <div style="margin:18px 0;max-height:300px;overflow-y:auto;">
+                    ${documents.filter(d => d.id !== currentDocId).map(d => 
+                        `<div class="sidebarnav__item" data-doc-id="${d.id}" style="cursor:pointer;margin-bottom:8px;">
+                            <icon>description</icon>
+                            <div class="menu-text">${d.title}</div>
+                        </div>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('#closeSplitSelectModal').onclick = () => modal.remove();
+
+        modal.querySelectorAll('.sidebarnav__item').forEach(item => {
+            item.onclick = function() {
+                const selectedDocId = this.getAttribute('data-doc-id');
+                modal.remove();
+                activateSplitView(currentDocId, selectedDocId);
+            };
+        });
+    }
+
+    function activateSplitView(leftDocId, rightDocId) {
+        isSplitView = true;
+        splitLeftDocId = leftDocId;
+        splitRightDocId = rightDocId;
+
+        const editorArea = document.getElementById('editorArea');
+        const leftDoc = documents.find(d => d.id === leftDocId);
+        const rightDoc = documents.find(d => d.id === rightDocId);
+
+        if (!leftDoc || !rightDoc) return;
+
+        // Save original content
+        editorArea.dataset.originalContent = editorArea.innerHTML;
+
+        // Create split container
+        editorArea.innerHTML = `
+            <div class="split-screen-container">
+                <div class="split-pane" id="splitLeft">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:12px;">
+                        <span style="font-size:16px;font-weight:500;">${leftDoc.title}</span>
+                    </div>
+                    <div contenteditable="true" class="split-editor" data-doc-id="${leftDocId}" style="padding:20px;min-height:calc(100vh - 300px);outline:none;border-radius:8px;background-color:#1a0f3c;color:#FFFFFF;font-size:18px;line-height:1.9;overflow-y:auto;">${leftDoc.content || ''}</div>
+                </div>
+                <div class="split-divider" id="splitDivider"></div>
+                <div class="split-pane" id="splitRight">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:12px;">
+                        <span style="font-size:16px;font-weight:500;">${rightDoc.title}</span>
+                        <button class="split-close-btn" id="closeSplitBtn">
+                            <icon>close</icon> Exit Split View
+                        </button>
+                    </div>
+                    <div contenteditable="true" class="split-editor" data-doc-id="${rightDocId}" style="padding:20px;min-height:calc(100vh - 300px);outline:none;border-radius:8px;background-color:#1a0f3c;color:#FFFFFF;font-size:18px;line-height:1.9;overflow-y:auto;">${rightDoc.content || ''}</div>
+                </div>
+            </div>
+        `;
+
+        // Add input handlers for both editors
+        document.querySelectorAll('.split-editor').forEach(editor => {
+            editor.oninput = function() {
+                const docId = this.getAttribute('data-doc-id');
+                const doc = documents.find(d => d.id === docId);
+                if (doc) {
+                    doc.content = this.innerHTML;
+                    saveDocuments();
+                }
+            };
+        });
+
+        // Resolve images, videos, and audio in both editors
+        document.querySelectorAll('.split-editor').forEach(editor => {
+            // Resolve images
+            editor.querySelectorAll('img[data-omniwrite-image-id]').forEach(img => {
+                const imageId = Number(img.getAttribute('data-omniwrite-image-id'));
+                if (!isNaN(imageId)) {
+                    const tx = db.transaction('images', 'readonly');
+                    const store = tx.objectStore('images');
+                    const req = store.get(imageId);
+                    req.onsuccess = function() {
+                        if (req.result && req.result.file) {
+                            const url = URL.createObjectURL(req.result.file);
+                            img.src = url;
+                        }
+                    };
+                }
+            });
+
+            // Resolve videos
+            editor.querySelectorAll('video[data-omniwrite-video-id]').forEach(video => {
+                const videoId = Number(video.getAttribute('data-omniwrite-video-id'));
+                if (!isNaN(videoId)) {
+                    const tx = db.transaction(VIDEO_STORE, 'readonly');
+                    const store = tx.objectStore(VIDEO_STORE);
+                    const req = store.get(videoId);
+                    req.onsuccess = function() {
+                        if (req.result && req.result.file) {
+                            video.src = URL.createObjectURL(req.result.file);
+                        }
+                    };
+                }
+            });
+
+            // Resolve audio
+            editor.querySelectorAll('audio[data-omniwrite-audio-id]').forEach(audio => {
+                const audioId = Number(audio.getAttribute('data-omniwrite-audio-id'));
+                if (!isNaN(audioId)) {
+                    const tx = db.transaction(AUDIO_STORE, 'readonly');
+                    const store = tx.objectStore(AUDIO_STORE);
+                    const req = store.get(audioId);
+                    req.onsuccess = function() {
+                        if (req.result && req.result.file) {
+                            audio.src = URL.createObjectURL(req.result.file);
+                        }
+                    };
+                }
+            });
+        });
+
+        // Setup resizable divider
+        setupSplitDivider();
+
+        // Close button handler
+        document.getElementById('closeSplitBtn').onclick = exitSplitView;
+
+        // Update split screen button icon
+        splitScreenBtn.querySelector('icon').textContent = 'close_fullscreen';
+        splitScreenBtn.title = 'Exit Split Screen';
+    }
+
+    function exitSplitView() {
+        isSplitView = false;
+        const editorArea = document.getElementById('editorArea');
+        
+        // Restore original editor
+        const currentDocId = splitLeftDocId || window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        const doc = documents.find(d => d.id === currentDocId);
+        
+        if (doc) {
+            editorArea.contentEditable = 'true';
+            editorArea.innerHTML = doc.content || '';
+            editorArea.oninput = async function() {
+                doc.content = editorArea.innerHTML;
+                await saveDocuments();
+            };
+        }
+
+        // Reset split view state
+        splitLeftDocId = null;
+        splitRightDocId = null;
+
+        // Update split screen button icon
+        splitScreenBtn.querySelector('icon').textContent = 'vertical_split';
+        splitScreenBtn.title = 'Split Screen';
+
+        showToast('Exited split view.', { type: 'info' });
+    }
+
+    function setupSplitDivider() {
+        const divider = document.getElementById('splitDivider');
+        const leftPane = document.getElementById('splitLeft');
+        const rightPane = document.getElementById('splitRight');
+        
+        let isDragging = false;
+
+        divider.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            document.body.style.cursor = 'col-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+
+            const container = divider.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+            // Limit resize between 20% and 80%
+            if (newLeftWidth > 20 && newLeftWidth < 80) {
+                leftPane.style.flex = `0 0 ${newLeftWidth}%`;
+                rightPane.style.flex = `0 0 ${100 - newLeftWidth}%`;
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.cursor = '';
+            }
+        });
+    }
         // Font Size and Font Family Picker logic as functions to re-attach event listeners
         function setupFontPickers(doc, editorArea) {
             // Always get fresh references after cloning
@@ -4583,10 +4822,10 @@ if ('serviceWorker' in navigator) {
                 bg = 'rgba(46, 204, 113, 0.88)';
                 color = '#fff';
             } else if (options.type === 'error') {
-                bg = 'rgba(231, 76, 60, 0.88)';
+                bg = 'rgba(231, 76, 60, 0.78)';
                 color = '#fff';
             } else if (options.type === 'info') {
-                bg = 'rgba(52, 152, 219, 0.88)';
+                bg = 'rgba(52, 152, 219, 0.78)';
                 color = '#fff';
             }
             toast.style.background = bg;
@@ -4647,6 +4886,7 @@ if ('serviceWorker' in navigator) {
                         <li>v1.0.2 - Improvements and fixed a bug when text color picker wasn't opening after switching documents.</li>
                         <li>v1.0.3 - Added voice-to-text writing and split screen for enhanced productivity.</li>
                         <li>v1.0.4 - Fix the font family bug</li>
+                        <li>v1.0.5 - Add Split Screen functionality, Add sidebar position settings, Add reduce transparency and compact mode settings</li>
                     </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
@@ -4689,6 +4929,98 @@ if ('serviceWorker' in navigator) {
                 // Only set colors, do NOT open modal on load
                 document.body.style.background = localStorage.getItem('omniwrite-custom-bg') || '#2c2c54';
                 document.body.style.color = localStorage.getItem('omniwrite-custom-text') || '#ffe066';
+            }
+        }
+        
+        // Apply sidebar position
+        function applySidebarPosition(position) {
+            const app = document.querySelector('.app');
+            const sidebarContainer = document.querySelector('.sidebar__container');
+            const mainContainer = document.querySelector('.main-container');
+            
+            if (position === 'right') {
+                app.style.flexDirection = 'row-reverse';
+                if (window.innerWidth <= 1150) {
+                    // Mobile/tablet: overlay from right
+                    if (sidebarContainer.style.left === '0px') {
+                        sidebarContainer.style.left = '';
+                        sidebarContainer.style.right = '0';
+                    }
+                }
+            } else {
+                app.style.flexDirection = 'row';
+                if (window.innerWidth <= 1150) {
+                    // Mobile/tablet: overlay from left
+                    if (sidebarContainer.style.right === '0') {
+                        sidebarContainer.style.right = '';
+                        sidebarContainer.style.left = '0';
+                    }
+                }
+            }
+        }
+        
+        // Apply reduce transparency
+        function applyReduceTransparency(enabled) {
+            const elements = document.querySelectorAll('.liquid-glass, .sidebar, .navbar, .dropdown-wrapper, .modal-content, button');
+            if (enabled) {
+                elements.forEach(el => {
+                    el.style.backdropFilter = 'none';
+                    el.style.webkitBackdropFilter = 'none';
+                    el.style.background = 'rgba(17, 7, 54, 0.98)';
+                });
+            } else {
+                elements.forEach(el => {
+                    el.style.backdropFilter = '';
+                    el.style.webkitBackdropFilter = '';
+                    el.style.background = '';
+                });
+            }
+        }
+        
+        // Apply compact mode
+        function applyCompactMode(enabled) {
+            const sidebar = document.querySelector('.sidebar');
+            const toolbar = document.querySelector('.toolbar');
+            const navbar = document.querySelector('.navbar');
+            
+            if (enabled) {
+                if (sidebar) {
+                    document.querySelectorAll('.sidebarnav__item').forEach(item => {
+                        item.style.padding = '8px 12px';
+                        item.style.fontSize = '13px';
+                    });
+                    document.querySelector('.sidebar__header h3').style.fontSize = '18px';
+                }
+                if (toolbar) {
+                    toolbar.style.padding = '6px';
+                    toolbar.querySelectorAll('button').forEach(btn => {
+                        btn.style.padding = '6px';
+                        const icon = btn.querySelector('icon');
+                        if (icon) icon.style.fontSize = '18px';
+                    });
+                }
+                if (navbar) {
+                    navbar.style.padding = '8px 16px';
+                }
+            } else {
+                if (sidebar) {
+                    document.querySelectorAll('.sidebarnav__item').forEach(item => {
+                        item.style.padding = '';
+                        item.style.fontSize = '';
+                    });
+                    document.querySelector('.sidebar__header h3').style.fontSize = '';
+                }
+                if (toolbar) {
+                    toolbar.style.padding = '';
+                    toolbar.querySelectorAll('button').forEach(btn => {
+                        btn.style.padding = '';
+                        const icon = btn.querySelector('icon');
+                        if (icon) icon.style.fontSize = '';
+                    });
+                }
+                if (navbar) {
+                    navbar.style.padding = '';
+                }
             }
         }
         
@@ -5371,6 +5703,9 @@ if ('serviceWorker' in navigator) {
         // On page load, apply theme and translations from localStorage
         applyTheme(localStorage.getItem('omniwrite-theme') || 'system');
         applyTranslations(localStorage.getItem('omniwrite-lang') || 'en');
+        applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left');
+        applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true');
+        applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true');
         
         settingsItem.addEventListener('click', function () {
             // Remove any existing modal
@@ -5381,7 +5716,7 @@ if ('serviceWorker' in navigator) {
             settingsModal = document.createElement('div');
             settingsModal.className = 'modal';
             settingsModal.innerHTML = `
-            <div class="modal-content" style="position:relative;max-width:520px;">
+            <div class="modal-content" style="position:relative;max-width:520px;max-height:80vh;overflow-y:auto;">
                 <span class="modal-content-close" id="closeSettingsModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
                 <h2>Settings</h2>
                 <div style="margin:24px 0;">
@@ -5392,6 +5727,18 @@ if ('serviceWorker' in navigator) {
                     <label style="display:block;margin-bottom:12px;">
                         <b>Language:</b>
                         <button id="languageSelectBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;min-width:120px;text-align:left;"></button>
+                    </label>
+                    <label style="display:block;margin-bottom:12px;">
+                        <b>Sidebar Position:</b>
+                        <button id="sidebarPositionBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;min-width:120px;text-align:left;"></button>
+                    </label>
+                    <label style="display:flex;align-items:center;margin-bottom:12px;cursor:pointer;">
+                        <input type="checkbox" id="reduceTransparencyToggle" style="margin-right:8px;cursor:pointer;">
+                        <b>Reduce Transparency</b>
+                    </label>
+                    <label style="display:flex;align-items:center;margin-bottom:12px;cursor:pointer;">
+                        <input type="checkbox" id="compactModeToggle" style="margin-right:8px;cursor:pointer;">
+                        <b>Compact Mode</b>
                     </label>
                 </div>
                 <div style="margin:24px 0;">
@@ -5457,7 +5804,7 @@ if ('serviceWorker' in navigator) {
                     themeSelectBtn.textContent = this.textContent;
                     themeDropdown.style.display = 'none';
                     showToast('Theme updated.', { type: 'success' });
-                    // If custom selected, open modal for custom theme
+                    // If custom selected, open modal for custom theme with custom color picker
                     if (value === 'custom') {
                         let customModal = document.getElementById('customThemeModal');
                         if (!customModal) {
@@ -5465,30 +5812,125 @@ if ('serviceWorker' in navigator) {
                             customModal.id = 'customThemeModal';
                             customModal.className = 'modal';
                             customModal.innerHTML = `
-                                <div class="modal-content" style="position:relative;max-width:340px;">
+                                <div class="modal-content" style="position:relative;max-width:420px;">
                                     <span class="modal-content-close" id="closeCustomThemeModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
                                     <h2>Custom Theme</h2>
-                                    <label style="display:block;margin-bottom:12px;">
-                                        Background Color:
-                                        <input type="color" id="customBgColor" value="${localStorage.getItem('omniwrite-custom-bg') || '#2c2c54'}" style="margin-left:8px;">
-                                    </label>
-                                    <label style="display:block;margin-bottom:18px;">
-                                        Text Color:
-                                        <input type="color" id="customTextColor" value="${localStorage.getItem('omniwrite-custom-text') || '#ffe066'}" style="margin-left:8px;">
-                                    </label>
-                                    <button id="applyCustomThemeBtn" style="margin-top:12px;">Apply</button>
+                                    <div style="margin-bottom:18px;">
+                                        <label style="display:block;margin-bottom:8px;"><b>Background Color:</b></label>
+                                        <button id="pickBgColorBtn" style="padding:8px 16px;width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;">
+                                            <span id="bgColorLabel">${localStorage.getItem('omniwrite-custom-bg') || '#2c2c54'}</span>
+                                            <span style="width:32px;height:32px;border-radius:4px;background:${localStorage.getItem('omniwrite-custom-bg') || '#2c2c54'};border:2px solid rgba(255,255,255,0.3);"></span>
+                                        </button>
+                                    </div>
+                                    <div style="margin-bottom:18px;">
+                                        <label style="display:block;margin-bottom:8px;"><b>Text Color:</b></label>
+                                        <button id="pickTextColorBtn" style="padding:8px 16px;width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;">
+                                            <span id="textColorLabel">${localStorage.getItem('omniwrite-custom-text') || '#ffe066'}</span>
+                                            <span style="width:32px;height:32px;border-radius:4px;background:${localStorage.getItem('omniwrite-custom-text') || '#ffe066'};border:2px solid rgba(255,255,255,0.3);"></span>
+                                        </button>
+                                    </div>
+                                    <button id="applyCustomThemeBtn" style="margin-top:12px;width:100%;">Apply Theme</button>
                                 </div>
                             `;
                             document.body.appendChild(customModal);
-                            customModal.querySelector('#closeCustomThemeModal').onclick = () => customModal.remove();
-                            customModal.querySelector('#applyCustomThemeBtn').onclick = function () {
-                                const bg = customModal.querySelector('#customBgColor').value;
-                                const text = customModal.querySelector('#customTextColor').value;
-                                localStorage.setItem('omniwrite-custom-bg', bg);
-                                localStorage.setItem('omniwrite-custom-text', text);
-                                document.body.style.background = bg;
-                                document.body.style.color = text;
+                            
+                            let selectedBgColor = localStorage.getItem('omniwrite-custom-bg') || '#2c2c54';
+                            let selectedTextColor = localStorage.getItem('omniwrite-custom-text') || '#ffe066';
+                            let currentPickerTarget = null;
+                            
+                            // Create custom color picker elements (reuse existing color picker structure)
+                            let customColorPicker = document.createElement('div');
+                            customColorPicker.className = 'color-picker-wrapper liquid-glass';
+                            customColorPicker.style.position = 'fixed';
+                            customColorPicker.style.display = 'none';
+                            customColorPicker.style.zIndex = '1000001';
+                            customColorPicker.innerHTML = `
+                                <div class="color-swatch-gradient"></div>
+                                <div id="customColorHexDisplay" style="margin-top:10px;font-family:monospace;font-size:14px;text-align:center;">#FFFFFF</div>
+                            `;
+                            document.body.appendChild(customColorPicker);
+                            
+                            customModal.querySelector('#closeCustomThemeModal').onclick = () => {
+                                customColorPicker.remove();
                                 customModal.remove();
+                            };
+                            
+                            // Background color picker button
+                            customModal.querySelector('#pickBgColorBtn').onclick = function(e) {
+                                e.preventDefault();
+                                currentPickerTarget = 'bg';
+                                const rect = this.getBoundingClientRect();
+                                customColorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                                customColorPicker.style.left = (rect.left + window.scrollX) + 'px';
+                                customColorPicker.style.display = 'flex';
+                                customColorPicker.querySelector('#customColorHexDisplay').textContent = selectedBgColor;
+                            };
+                            
+                            // Text color picker button
+                            customModal.querySelector('#pickTextColorBtn').onclick = function(e) {
+                                e.preventDefault();
+                                currentPickerTarget = 'text';
+                                const rect = this.getBoundingClientRect();
+                                customColorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                                customColorPicker.style.left = (rect.left + window.scrollX) + 'px';
+                                customColorPicker.style.display = 'flex';
+                                customColorPicker.querySelector('#customColorHexDisplay').textContent = selectedTextColor;
+                            };
+                            
+                            // Color swatch click handler
+                            customColorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', function(e) {
+                                const rect = this.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const y = e.clientY - rect.top;
+                                const hue = (x / rect.width) * 360;
+                                const sat = 1 - (y / rect.height) * 0.8;
+                                const val = 1 - (y / rect.height) * 0.8;
+                                
+                                function hsvToRgb(h, s, v) {
+                                    let f = (n, k = (n + h / 60) % 6) =>
+                                        v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+                                    return [
+                                        Math.round(f(5) * 255),
+                                        Math.round(f(3) * 255),
+                                        Math.round(f(1) * 255)
+                                    ];
+                                }
+                                const rgb = hsvToRgb(hue, sat, val);
+                                const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+                                
+                                customColorPicker.querySelector('#customColorHexDisplay').textContent = hex;
+                                
+                                if (currentPickerTarget === 'bg') {
+                                    selectedBgColor = hex;
+                                    customModal.querySelector('#bgColorLabel').textContent = hex;
+                                    customModal.querySelector('#pickBgColorBtn span:last-child').style.background = hex;
+                                } else if (currentPickerTarget === 'text') {
+                                    selectedTextColor = hex;
+                                    customModal.querySelector('#textColorLabel').textContent = hex;
+                                    customModal.querySelector('#pickTextColorBtn span:last-child').style.background = hex;
+                                }
+                                
+                                customColorPicker.style.display = 'none';
+                            });
+                            
+                            // Hide picker when clicking outside
+                            document.addEventListener('mousedown', function hideCustomPicker(e) {
+                                if (customColorPicker.style.display === 'flex' &&
+                                    !customColorPicker.contains(e.target) &&
+                                    !customModal.querySelector('#pickBgColorBtn').contains(e.target) &&
+                                    !customModal.querySelector('#pickTextColorBtn').contains(e.target)) {
+                                    customColorPicker.style.display = 'none';
+                                }
+                            });
+                            
+                            customModal.querySelector('#applyCustomThemeBtn').onclick = function () {
+                                localStorage.setItem('omniwrite-custom-bg', selectedBgColor);
+                                localStorage.setItem('omniwrite-custom-text', selectedTextColor);
+                                document.body.style.background = selectedBgColor;
+                                document.body.style.color = selectedTextColor;
+                                customColorPicker.remove();
+                                customModal.remove();
+                                showToast('Custom theme applied.', { type: 'success' });
                             };
                         }
                         customModal.style.display = 'flex';
@@ -5564,6 +6006,78 @@ if ('serviceWorker' in navigator) {
                     languageDropdown.style.display = 'none';
                 }
             });
+
+            // Sidebar Position select logic (button + dropdown)
+            const sidebarPositionOptions = [
+                { value: 'left', label: 'Left' },
+                { value: 'right', label: 'Right' }
+            ];
+            const sidebarPositionBtn = settingsModal.querySelector('#sidebarPositionBtn');
+            let currentSidebarPosition = localStorage.getItem('omniwrite-sidebar-position') || 'left';
+            sidebarPositionBtn.textContent = sidebarPositionOptions.find(o => o.value === currentSidebarPosition)?.label || 'Left';
+
+            // Create dropdown
+            let sidebarPositionDropdown = document.createElement('div');
+            sidebarPositionDropdown.className = 'dropdown-wrapper liquid-glass';
+            sidebarPositionDropdown.style.position = 'absolute';
+            sidebarPositionDropdown.style.minWidth = '120px';
+            sidebarPositionDropdown.style.display = 'none';
+            sidebarPositionDropdown.style.zIndex = '1000000';
+            sidebarPositionDropdown.innerHTML = sidebarPositionOptions.map(opt =>
+                `<div class="dropdown-item" data-value="${opt.value}">${opt.label}</div>`
+            ).join('');
+            document.body.appendChild(sidebarPositionDropdown);
+
+            sidebarPositionBtn.onclick = function (e) {
+                e.preventDefault();
+                const rect = sidebarPositionBtn.getBoundingClientRect();
+                sidebarPositionDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                sidebarPositionDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                sidebarPositionDropdown.style.display = sidebarPositionDropdown.style.display === 'block' ? 'none' : 'block';
+            };
+            sidebarPositionDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.onclick = function () {
+                    const value = this.getAttribute('data-value');
+                    localStorage.setItem('omniwrite-sidebar-position', value);
+                    sidebarPositionBtn.textContent = this.textContent;
+                    sidebarPositionDropdown.style.display = 'none';
+                    applySidebarPosition(value);
+                    showToast('Sidebar position updated.', { type: 'success' });
+                };
+            });
+            document.addEventListener('mousedown', function (e) {
+                if (
+                    sidebarPositionDropdown.style.display === 'block' &&
+                    !sidebarPositionDropdown.contains(e.target) &&
+                    !sidebarPositionBtn.contains(e.target)
+                ) {
+                    sidebarPositionDropdown.style.display = 'none';
+                }
+            });
+
+            // Reduce Transparency toggle
+            const reduceTransparencyToggle = settingsModal.querySelector('#reduceTransparencyToggle');
+            const isReduceTransparencyEnabled = localStorage.getItem('omniwrite-reduce-transparency') === 'true';
+            reduceTransparencyToggle.checked = isReduceTransparencyEnabled;
+            
+            reduceTransparencyToggle.onchange = function() {
+                const enabled = this.checked;
+                localStorage.setItem('omniwrite-reduce-transparency', enabled);
+                applyReduceTransparency(enabled);
+                showToast('Transparency setting updated.', { type: 'success' });
+            };
+
+            // Compact Mode toggle
+            const compactModeToggle = settingsModal.querySelector('#compactModeToggle');
+            const isCompactModeEnabled = localStorage.getItem('omniwrite-compact-mode') === 'true';
+            compactModeToggle.checked = isCompactModeEnabled;
+            
+            compactModeToggle.onchange = function() {
+                const enabled = this.checked;
+                localStorage.setItem('omniwrite-compact-mode', enabled);
+                applyCompactMode(enabled);
+                showToast('Compact mode updated.', { type: 'success' });
+            };
 
             // On load, apply translations
             applyTranslations(currentLang);
@@ -5812,69 +6326,67 @@ if ('serviceWorker' in navigator) {
             window.location.href = '/out-of-memory.html';
         }
     });
-    
-    // --- Floating Mic Button (Voice to Text) ---
-    const floatingMicBtn = document.createElement('button');
-    floatingMicBtn.className = 'floating-mic-btn';
-    floatingMicBtn.innerHTML = '<icon>mic</icon>';
-    floatingMicBtn.title = 'Voice to Text (Click to start/stop)';
-    document.body.appendChild(floatingMicBtn);
-    // Play sound
-    function playSound(type) {
-        if (typeof Tone === "undefined") {
-            const script = document.createElement("script");
-            script.src = "https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js";
-            script.onload = () => playSound(type);
-            document.head.appendChild(script);
-            return;
-        }
-        let synth = window._voiceSynth;
-        if (!synth) {
-            synth = new Tone.PolySynth({
-                voice: Tone.Synth,
-                oscillator: { type: "triangle" },
-                envelope: {
-                    attack: 0.01,
-                    decay: 0.1,
-                    sustain: 0.1,
-                    release: 0.2,
-                },
-                maxPolyphony: 9000
-            }).toDestination();
-            synth.volume.value = -14; // Lower volume (default is 0, -18 is much quieter)
-            window._voiceSynth = synth;
-        }
-        let note = null;
-        if (type === "listening") {
-            note = "C5";
-            synth.triggerAttackRelease(note, "8n");
-        } else if (type === "done") {
-            note = "C3";
-            synth.triggerAttackRelease(note, "8n");
-        } else if (type === "denied") {
-            note = "C4";
-            synth.triggerAttackRelease(note, "8n");
-        }
-        if (note) {
-            setTimeout(() => synth.triggerRelease(note), 300);
-        }
-    }
-
-    let recognition = null;
+    // --- Voice to Text Functionality ---
     let isRecording = false;
+    let recognition = null;
+    let speechButton = null;
 
-    // Check if browser supports Speech Recognition
+    // Check if browser supports speech recognition
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'en-US';
+        recognition.lang = localStorage.getItem('omniwrite-lang') || 'en';
 
-        let finalTranscript = '';
+        // Create floating mic button
+        speechButton = document.createElement('button');
+        speechButton.className = 'floating-mic-btn';
+        speechButton.innerHTML = '<icon>mic</icon>';
+        speechButton.title = 'Voice to Text';
+        document.body.appendChild(speechButton);
+
+        // Load Tone.js for beep sounds
+        const toneScript = document.createElement('script');
+        toneScript.src = 'https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js';
+        toneScript.nonce = 'erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
+        document.head.appendChild(toneScript);
+
+        // Beep sound functions
+        function playStartBeep() {
+            if (typeof Tone !== 'undefined') {
+                const synth = new Tone.Synth().toDestination();
+                      synth.triggerAttackRelease("C5", "8n");
+            }
+        }
+
+        function playStopBeep() {
+            if (typeof Tone !== 'undefined') {
+                const synth = new Tone.Synth().toDestination();
+                            synth.triggerAttackRelease("C3", "8n");
+
+            }
+        }
+
+        function playErrorBeep() {
+            if (typeof Tone !== 'undefined') {
+                const synth = new Tone.Synth().toDestination();
+           synth.triggerAttackRelease("C4", "8n");
+            }
+        }
+
+        // Speech recognition event handlers
+        recognition.onstart = function() {
+            isRecording = true;
+            speechButton.classList.add('recording');
+            playStartBeep();
+            showToast('Listening...', { type: 'info', duration: 1500 });
+        };
 
         recognition.onresult = function(event) {
             let interimTranscript = '';
+            let finalTranscript = '';
+
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
@@ -5883,7 +6395,8 @@ if ('serviceWorker' in navigator) {
                     interimTranscript += transcript;
                 }
             }
-            // Insert text at cursor position in editor
+
+            // Insert text into active editor
             const editorArea = document.getElementById('editorArea');
             if (editorArea && finalTranscript) {
                 const selection = window.getSelection();
@@ -5891,284 +6404,119 @@ if ('serviceWorker' in navigator) {
                     const range = selection.getRangeAt(0);
                     const textNode = document.createTextNode(finalTranscript);
                     range.insertNode(textNode);
-                    range.collapse(false);
+                    range.setStartAfter(textNode);
+                    range.collapse(true);
                     selection.removeAllRanges();
                     selection.addRange(range);
-                    // Trigger input event to save
-                    editorArea.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    editorArea.innerHTML += finalTranscript;
                 }
-                finalTranscript = '';
+
+                // Save document
+                const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                const doc = documents.find(d => d.id === docId);
+                if (doc) {
+                    doc.content = editorArea.innerHTML;
+                    saveDocuments();
+                }
             }
         };
 
         recognition.onerror = function(event) {
             console.error('Speech recognition error:', event.error);
-            if (event.error === 'no-speech') {
-                return; // Just continue
-            }
-            isRecording = false;
-            floatingMicBtn.classList.remove('recording');
-            floatingMicBtn.querySelector('icon').textContent = 'mic';
-            if (event.error === 'not-allowed' || event.error === 'denied') {
-                playSound('denied');
-                showToast('Enable mic access to write document using your voice', { type: 'error' });
+            
+            if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                playErrorBeep();
+                showToast('Enable mic access to write document using your voice.', { type: 'error', duration: 4000 });
+                isRecording = false;
+                speechButton.classList.remove('recording');
+            } else if (event.error === 'no-speech') {
+                showToast('No speech detected. Try again.', { type: 'info', duration: 2000 });
+            } else {
+                playErrorBeep();
+                showToast('Speech recognition error: ' + event.error, { type: 'error' });
             }
         };
 
         recognition.onend = function() {
             if (isRecording) {
+                // Restart if still recording
                 try {
                     recognition.start();
                 } catch (e) {
                     isRecording = false;
-                    floatingMicBtn.classList.remove('recording');
-                    floatingMicBtn.querySelector('icon').textContent = 'mic';
+                    speechButton.classList.remove('recording');
                 }
-            } else {
-                playSound('done');
             }
         };
-    }
 
-    floatingMicBtn.addEventListener('click', function() {
-        if (!recognition) {
-            showToast('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-            return;
-        }
-        const editorArea = document.getElementById('editorArea');
-        if (!editorArea || window.location.hash.indexOf('#/document/') !== 0) {
-            showToast('Please open a document first.');
-            return;
-        }
-        if (isRecording) {
-            recognition.stop();
-            isRecording = false;
-            floatingMicBtn.classList.remove('recording');
-            floatingMicBtn.querySelector('icon').textContent = 'mic';
-            playSound('done');
-        } else {
+        // Toggle recording on button click
+        speechButton.addEventListener('click', async function() {
+            // Check if we're in a document editor
+            const editorArea = document.getElementById('editorArea');
+            if (!editorArea) {
+                showToast('Please open a document first.', { type: 'info' });
+                return;
+            }
+
+            // Focus the editor
             editorArea.focus();
-            try {
-                recognition.start();
-                isRecording = true;
-                floatingMicBtn.classList.add('recording');
-                floatingMicBtn.querySelector('icon').textContent = 'mic_off';
-                playSound('listening');
-            } catch (e) {
-                console.error('Error starting recognition:', e);
-            }
-        }
-    });
-    
-    // --- Split Screen Functionality ---
-    const splitScreenBtn = document.getElementById('splitScreenBtn');
-    let isSplitMode = false;
-    let splitContainer = null;
-    let leftPane = null;
-    let rightPane = null;
-    let divider = null;
-    let rightPaneDocId = null;
-    
-    if (splitScreenBtn) {
-        splitScreenBtn.style.cursor = 'pointer';
-        splitScreenBtn.addEventListener('click', function() {
-            if (!isSplitMode) {
-                enableSplitScreen();
-            } else {
-                disableSplitScreen();
-            }
-        });
-    }
-    
-    function enableSplitScreen() {
-        const mainContainer = document.querySelector('.main-container');
-        const currentContent = mainContainer.innerHTML;
-        
-        // Create split container
-        splitContainer = document.createElement('div');
-        splitContainer.className = 'split-screen-container';
-        
-        // Create left pane (current document)
-        leftPane = document.createElement('div');
-        leftPane.className = 'split-pane';
-        leftPane.innerHTML = currentContent;
-        
-        // Create divider
-        divider = document.createElement('div');
-        divider.className = 'split-divider';
-        
-        // Create right pane
-        rightPane = document.createElement('div');
-        rightPane.className = 'split-pane';
-        rightPane.innerHTML = `
-            <div class="navbar-container">
-                <div class="navbar liquid-glass">
-                    <div class="navbar__left">
-                        <div id="documentTitle2" style="font-size: 20px; font-weight: 500; padding: 16px 14px;">Select a document</div>
-                    </div>
-                    <div class="navbar__right" style="padding: 11px 14px;">
-                        <button class="split-close-btn" id="closeSplitBtn">
-                            <icon>close</icon> Close Split
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="content-area">
-                <div class="select-area" id="selectArea2" style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;">
-                    <icon style="font-size: 72px; margin-bottom: 20px;">description</icon>
-                    <p style="font-size: 18px;">Click a document in the sidebar</p>
-                    <p style="font-size: 14px; opacity: 0.7; margin-top: 10px;">Ctrl+Click (Cmd+Click on Mac) to open here</p>
-                </div>
-            </div>
-        `;
-        
-        // Assemble split view
-        splitContainer.appendChild(leftPane);
-        splitContainer.appendChild(divider);
-        splitContainer.appendChild(rightPane);
-        
-        // Replace main container content
-        mainContainer.innerHTML = '';
-        mainContainer.appendChild(splitContainer);
-        
-        // Re-attach event listeners for left pane buttons
-        reattachEditorEventListeners(leftPane);
-        
-        // Setup close button
-        document.getElementById('closeSplitBtn').addEventListener('click', disableSplitScreen);
-        
-        // Setup resizable divider
-        setupResizableDivider();
-        
-        // Setup document click handlers for right pane
-        setupRightPaneDocumentSelection();
-        
-        isSplitMode = true;
-        splitScreenBtn.style.background = 'rgba(102, 126, 234, 0.3)';
-    }
-    
-    function disableSplitScreen() {
-        if (!leftPane) return;
-        
-        const mainContainer = document.querySelector('.main-container');
-        mainContainer.innerHTML = leftPane.innerHTML;
-        
-        // Re-attach event listeners
-        reattachEditorEventListeners(mainContainer);
-        
-        splitContainer = null;
-        leftPane = null;
-        rightPane = null;
-        divider = null;
-        rightPaneDocId = null;
-        isSplitMode = false;
-        splitScreenBtn.style.background = '';
-    }
-    
-    function reattachEditorEventListeners(container) {
-        // Re-attach the split screen button listener
-        const splitBtn = container.querySelector('#splitScreenBtn');
-        if (splitBtn) {
-            splitBtn.style.cursor = 'pointer';
-            splitBtn.addEventListener('click', function() {
-                if (!isSplitMode) {
-                    enableSplitScreen();
-                } else {
-                    disableSplitScreen();
+
+            if (!isRecording) {
+                try {
+                    // Request microphone permission
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // Update language based on current setting
+                    recognition.lang = localStorage.getItem('omniwrite-lang') || 'en';
+                    
+                    // Start recognition
+                    recognition.start();
+                } catch (err) {
+                    console.error('Microphone access denied:', err);
+                    playErrorBeep();
+                    showToast('Enable mic access to write document using your voice.', { type: 'error', duration: 4000 });
                 }
-            });
+            } else {
+                // Stop recording
+                isRecording = false;
+                speechButton.classList.remove('recording');
+                recognition.stop();
+                playStopBeep();
+                showToast('Stopped listening.', { type: 'info', duration: 1500 });
+            }
+        });
+
+        // Hide button when not in editor
+        function updateSpeechButtonVisibility() {
+            const hash = window.location.hash;
+            if (hash.match(/^#\/document\/.+$/)) {
+                speechButton.style.display = 'flex';
+            } else {
+                speechButton.style.display = 'none';
+                if (isRecording) {
+                    isRecording = false;
+                    speechButton.classList.remove('recording');
+                    recognition.stop();
+                }
+            }
         }
-    }
-    
-    function setupResizableDivider() {
-        let isDragging = false;
-        let startX = 0;
-        let startLeftWidth = 0;
-        
-        divider.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            startX = e.clientX;
-            startLeftWidth = leftPane.offsetWidth;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-            
-            const deltaX = e.clientX - startX;
-            const newLeftWidth = startLeftWidth + deltaX;
-            const containerWidth = splitContainer.offsetWidth;
-            const minWidth = 250;
-            
-            if (newLeftWidth > minWidth && (containerWidth - newLeftWidth - 8) > minWidth) {
-                const leftPercent = (newLeftWidth / containerWidth) * 100;
-                const rightPercent = 100 - leftPercent - 1;
-                
-                leftPane.style.flex = `0 0 ${leftPercent}%`;
-                rightPane.style.flex = `0 0 ${rightPercent}%`;
+
+        // Update visibility on hash change
+        window.addEventListener('hashchange', updateSpeechButtonVisibility);
+        updateSpeechButtonVisibility();
+
+        // Update language when settings change
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'omniwrite-lang') {
+                recognition.lang = e.newValue || 'en';
             }
         });
-        
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-            }
-        });
+    } else {
+        console.warn('Speech recognition not supported in this browser.');
     }
     
-    function setupRightPaneDocumentSelection() {
-        document.getElementById('documentsList').addEventListener('click', function(e) {
-            if (!isSplitMode) return;
-            
-            const docItem = e.target.closest('.document-item');
-            if (!docItem) return;
-            
-            // Check if Ctrl/Cmd key is pressed to open in right pane
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                const docId = docItem.dataset.docId;
-                openDocumentInRightPane(docId);
-            }
-        });
-    }
-    
-    function openDocumentInRightPane(docId) {
-        const doc = documents.find(d => d.id === docId);
-        if (!doc || !rightPane) return;
-        
-        rightPaneDocId = docId;
-        const contentArea = rightPane.querySelector('.content-area');
-        const titleDiv = rightPane.querySelector('#documentTitle2');
-        
-        titleDiv.innerHTML = `<span contenteditable="true" id="editableTitle2">${doc.title}</span>`;
-        
-        // Handle title editing
-        const editable = titleDiv.querySelector('#editableTitle2');
-        editable.addEventListener('blur', async function() {
-            doc.title = this.textContent.trim() || 'Untitled';
-            const docItem = document.querySelector(`.document-item[data-doc-id="${docId}"] .menu-text`);
-            if (docItem) docItem.textContent = doc.title;
-            await saveDocuments();
-        });
-        
-        contentArea.innerHTML = `
-            <div class="page active" id="editorContent2">
-                <div class="editor-content-editor" id="editorArea2" contenteditable="true" style="padding: 20px; min-height: 100%;">${doc.content || ''}</div>
-            </div>
-        `;
-        
-        const editorArea2 = document.getElementById('editorArea2');
-        editorArea2.oninput = async function() {
-            doc.content = editorArea2.innerHTML;
-            await saveDocuments();
-        };
-    }
-    
+   
     </script>
 </body>
 </html>
