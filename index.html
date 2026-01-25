@@ -40,10 +40,11 @@
             "name": "Munetios"
         }
     }
-    </script>
+    </script>        <link href="https://fonts.googleapis.com/css?family=Comic+Neue:400,700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Comic+Relief:400,700&display=swap" rel="stylesheet">
        <!-- Google Fonts links -->
         <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">     <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@400;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Lato:400,700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Oswald:400,700&display=swap" rel="stylesheet">
@@ -140,9 +141,11 @@ if ('serviceWorker' in navigator) {
         }
         h1, h2, h3, h4, h5, h6 {
             font-variation-settings: 'ROND' 90;
+            font-feature-settings: "liga" 0, "ss01" 1;
         }
         p {
                      font-variation-settings: 'ROND' 60 !important;
+                           font-feature-settings: "liga" 0;
         }
         .app {
             display: flex;
@@ -485,6 +488,9 @@ if ('serviceWorker' in navigator) {
         icon {
             cursor: pointer;
         }
+        .create-text {
+            white-space: nowrap;
+        }
         vl {
             margin: 0 10px;
             border-left: 1px solid rgba(255, 255, 255, 0.2);
@@ -498,7 +504,34 @@ if ('serviceWorker' in navigator) {
             }
             #renameMoreOptionsBtn {
                 display: flex !important;
-            }            
+            }   
+            #documentTitle {
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                min-width: 0;
+                width: 100%;
+            }      
+            #editableTitle {
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                min-width: 0;
+                width: 90%;
+            }      
+            .navbar__left {
+                flex: 1 1 0;
+                min-width: 0;
+                margin-right: 10px;
+                display: flex;
+                align-items: center;
+            }
+            .navbar {
+                align-items: stretch;
+                min-width: 0;
+            }
         }
         
         /* Floating Mic Button */
@@ -754,9 +787,8 @@ if ('serviceWorker' in navigator) {
                     <div class="toolbar-item" id="fontSizeBtn" title="Font Size" style="min-width: 70px; vertical-align: center; display: flex; align-items: center; justify-content: center; position: relative;">
                         <div class="menu-text" id="fontSizeDisplay" style="cursor: pointer;">18px</div>
                     </div>
-
-                   
-       
+               
+                  
                     <div class="toolbar-item" id="bulletListBtn" title="Bullet List">
                         <icon>format_list_bulleted</icon>
                         </div>
@@ -860,11 +892,11 @@ if ('serviceWorker' in navigator) {
     <div class="dropdown-item" data-font="'Google Sans Flex', sans-serif">
             <div class="menu-text" style="font-family: 'Google Sans Flex', sans-serif;">Google Sans Flex</div>
         </div>
+        <div class="dropdown-item" data-font="'system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif">
+            <div class="menu-text" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">System</div>
+        </div>
         <div class="dropdown-item" data-font="Arial, sans-serif">
             <div class="menu-text" style="font-family: Arial, sans-serif;">Arial</div>
-        </div>
-        <div class="dropdown-item" data-font="'Helvetica Neue', sans-serif">
-            <div class="menu-text" style="font-family: 'Helvetica Neue', sans-serif;">Helvetica Neue</div>
         </div>
         <div class="dropdown-item" data-font="'Times New Roman', serif">
             <div class="menu-text" style="font-family: 'Times New Roman', serif;">Times New Roman</div>
@@ -875,8 +907,8 @@ if ('serviceWorker' in navigator) {
         <div class="dropdown-item" data-font="'Georgia', serif">
             <div class="menu-text" style="font-family: 'Georgia', serif;">Georgia</div>
         </div>
-        <div class="dropdown-item" data-font="'Segoe UI', sans-serif">
-            <div class="menu-text" style="font-family: 'Segoe UI', sans-serif;">Segoe UI</div>
+        <div class="dropdown-item" data-font="'Comic Sans MS', cursive, sans-serif">
+            <div class="menu-text" style="font-family: 'Comic Sans MS', cursive, sans-serif;">Comic Sans MS</div>
         </div>
         <div class="dropdown-item" data-font="'Verdana', sans-serif">
             <div class="menu-text" style="font-family: 'Verdana', sans-serif;">Verdana</div>
@@ -888,6 +920,10 @@ if ('serviceWorker' in navigator) {
         <div class="dropdown-item" data-font="'Open Sans', sans-serif">
             <div class="menu-text" style="font-family: 'Open Sans', sans-serif;">Open Sans</div>
         </div>
+        <div class="dropdown-item" data-font="'Mona Sans', sans-serif">
+            <div class="menu-text" style="font-family: 'Mona Sans', sans-serif;">Mona Sans</div>
+        </div>
+   
         <div class="dropdown-item" data-font="'Lato', sans-serif">
             <div class="menu-text" style="font-family: 'Lato', sans-serif;">Lato</div>
         </div>
@@ -921,6 +957,13 @@ if ('serviceWorker' in navigator) {
         <div class="dropdown-item" data-font="'Playfair Display', serif">
             <div class="menu-text" style="font-family: 'Playfair Display', serif;">Playfair Display</div>
         </div>
+        <div class="dropdown-item" data-font="'Comic Neue', cursive, sans-serif">
+            <div class="menu-text" style="font-family: 'Comic Neue', cursive, sans-serif;">Comic Neue</div>
+        </div>
+        <div class="dropdown-item" data-font="'Comic Relief', cursive, sans-serif">
+            <div class="menu-text" style="font-family: 'Comic Relief', cursive, sans-serif;">Comic Relief</div>
+        </div>
+
         <div class="dropdown-item" data-font="'Quicksand', sans-serif">
             <div class="menu-text" style="font-family: 'Quicksand', sans-serif;">Quicksand</div>
         </div>
@@ -1211,6 +1254,11 @@ if ('serviceWorker' in navigator) {
     const KEY_STORE = 'cryptoKey';
     let db = null;
     let cryptoKey = null;
+    
+    // Save queue to prevent race conditions
+    let savePending = false;
+    let saveQueued = false;
+    let saveTimeout = null;
 
     // Open IndexedDB and initialize stores
     function openDB() {
@@ -1289,25 +1337,57 @@ if ('serviceWorker' in navigator) {
         return dec.decode(plaintext);
     }
 
-    // Save all documents to IndexedDB (encrypted)
+    // Save queue to prevent race conditions
+   
+    // Save all documents to IndexedDB (encrypted) with mutex to prevent race conditions
     async function saveDocuments() {
-        // Pre-encrypt all documents before opening transaction (Firefox/Safari compatibility)
-        const encryptedDocs = [];
-        for (const doc of documents) {
-            const encDoc = await encryptData(JSON.stringify(doc));
-            encryptedDocs.push({ id: doc.id, enc: encDoc });
+        // If a save is already in progress, queue another save
+        if (savePending) {
+            saveQueued = true;
+            return Promise.resolve();
         }
         
-        // Now write all at once in a single transaction
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(DOC_STORE, 'readwrite');
-            const store = tx.objectStore(DOC_STORE);
-            for (const encDoc of encryptedDocs) {
-                store.put(encDoc);
+        savePending = true;
+        saveQueued = false;
+        
+        try {
+            // Pre-encrypt all documents before opening transaction (Firefox/Safari compatibility)
+            const encryptedDocs = [];
+            for (const doc of documents) {
+                const encDoc = await encryptData(JSON.stringify(doc));
+                encryptedDocs.push({ id: doc.id, enc: encDoc });
             }
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
-        });
+            
+            // Now write all at once in a single transaction
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(DOC_STORE, 'readwrite');
+                const store = tx.objectStore(DOC_STORE);
+                for (const encDoc of encryptedDocs) {
+                    store.put(encDoc);
+                }
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        } catch (error) {
+            console.error('Error saving documents:', error);
+        } finally {
+            savePending = false;
+            
+            // If another save was queued while we were saving, execute it now
+            if (saveQueued) {
+                setTimeout(() => saveDocuments(), 0);
+            }
+        }
+    }
+    
+    // Debounced save function to reduce save frequency during rapid edits
+    function debouncedSaveDocuments(delay = 500) {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+        }
+        saveTimeout = setTimeout(() => {
+            saveDocuments();
+        }, delay);
     }
 
     // Load all documents from IndexedDB (decrypt)
@@ -1444,13 +1524,14 @@ if ('serviceWorker' in navigator) {
         titleDiv.innerHTML = `<span contenteditable="true" id="editableTitle">${doc.title}</span>`;
         // Save title on blur or enter
         const editable = document.getElementById('editableTitle');
-        editable.addEventListener('blur', async function() {
+        editable.addEventListener('blur', function() {
             doc.title = this.textContent.trim() || 'Untitled Document';
             this.textContent = doc.title;
+            doc.timestamp = Date.now();
             // Update sidebar
             const item = document.querySelector(`.document-item[data-doc-id="${doc.id}"] .menu-text`);
             if (item) item.textContent = doc.title;
-            await saveDocuments();
+            debouncedSaveDocuments(100);
         });
         editable.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -1593,10 +1674,11 @@ if ('serviceWorker' in navigator) {
             }
         })();
         
-        // Save content on input
-        editorArea.oninput = async function() {
+        // Save content on input (debounced to prevent race conditions)
+        editorArea.oninput = function() {
             doc.content = editorArea.innerHTML;
-            await saveDocuments();
+            doc.timestamp = Date.now();
+            debouncedSaveDocuments(300); // Save after 300ms of no typing
         };
         
         // --- Rich Text Formatting Toolbar Functionality ---
@@ -3115,10 +3197,11 @@ if ('serviceWorker' in navigator) {
         }
         // Patch editorArea.oninput to also save version
         const origEditorAreaOnInput = document.getElementById('editorArea').oninput;
-        document.getElementById('editorArea').oninput = async function () {
+        document.getElementById('editorArea').oninput = function () {
             doc.content = this.innerHTML;
-            await saveDocuments();
-            await saveDocumentVersion(doc);
+            doc.timestamp = Date.now();
+            debouncedSaveDocuments(300);
+            saveDocumentVersion(doc);
             if (typeof origEditorAreaOnInput === 'function') origEditorAreaOnInput.call(this);
         };
 
@@ -3373,20 +3456,40 @@ if ('serviceWorker' in navigator) {
             document.querySelectorAll('.modal').forEach(m => m.remove());
             shareModal = null;
 
+            const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+            const doc = documents.find(d => d.id === docId);
+            if (!doc) return;
+
             // Create modal
             shareModal = document.createElement('div');
             shareModal.className = 'modal';
             shareModal.innerHTML = `
-            <div class="modal-content" style="position:relative;max-width:500px;">
+            <div class="modal-content liquid-glass" style="position:relative;max-width:500px;">
             <span class="modal-content-close" id="closeShareModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
-            <h2>Share</h2>
-            <p>Share this document with others by downloading it as a PDF file.</p>
-            <div style="margin: 24px 0 18px 0;">
-                <button id="downloadPdfBtn" style="font-size:17px;display:flex;align-items:center;gap:8px;">
-                <icon>download</icon> Download as PDF
+            <h2>Share Document</h2>
+            <p style="margin-bottom: 20px;">Share "${doc.title}" via:</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="shareFacebook" style="justify-content: center; background: #1877f2;">
+                    <icon>share</icon>
+                    <span>Share on Facebook</span>
+                </button>
+                <button id="shareGmail" style="justify-content: center; background: #ea4335;">
+                    <icon>email</icon>
+                    <span>Share via Gmail</span>
+                </button>
+                <button id="shareWhatsApp" style="justify-content: center; background: #25d366;">
+                    <icon>chat</icon>
+                    <span>Share on WhatsApp</span>
+                </button>
+                <button id="shareReddit" style="justify-content: center; background: #ff4500;">
+                    <icon>forum</icon>
+                    <span>Share on Reddit</span>
+                </button>
+                <button id="downloadPdfBtn" style="justify-content: center; background: #6c757d; margin-top: 10px;">
+                    <icon>download</icon>
+                    <span>Download as PDF</span>
                 </button>
             </div>
-            <div style="font-size:14px;opacity:0.7;">Download a PDF version of this document.</div>
             </div>
             `;
             document.body.appendChild(shareModal);
@@ -3397,13 +3500,48 @@ if ('serviceWorker' in navigator) {
             shareModal = null;
             };
 
+            // Get document content as plain text
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = doc.content;
+            const bodyText = tempDiv.innerText || tempDiv.textContent || '';
+            
+            // Facebook share
+            shareModal.querySelector('#shareFacebook').onclick = function() {
+                const url = encodeURIComponent(window.location.href);
+                const text = encodeURIComponent(doc.title + '\n\n' + bodyText);
+                window.location.href = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+            };
+            
+            // Gmail share
+            shareModal.querySelector('#shareGmail').onclick = function() {
+                const subject = encodeURIComponent(doc.title);
+                const body = encodeURIComponent(bodyText + '\n\n' + window.location.href);
+                window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+            };
+            
+            // WhatsApp share
+            shareModal.querySelector('#shareWhatsApp').onclick = function() {
+                const text = encodeURIComponent(doc.title + '\n\n' + bodyText + '\n\n' + window.location.href);
+                window.location.href = `https://web.whatsapp.com/send?text=${text}`;
+            };
+            
+            // Reddit share
+            shareModal.querySelector('#shareReddit').onclick = function() {
+                const url = encodeURIComponent(window.location.href);
+                const title = encodeURIComponent(doc.title);
+                const text = encodeURIComponent(bodyText);
+                window.location.href = `https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`;
+            };
+
             // Download as PDF button
             shareModal.querySelector('#downloadPdfBtn').onclick = function () {
-            // Get document content
-            const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
-            const doc = documents.find(d => d.id === docId);
-            if (!doc) return;
-
+            // Get current editor styles
+            const editorArea = document.getElementById('editorArea');
+            const computedStyle = window.getComputedStyle(editorArea);
+            const fontFamily = computedStyle.fontFamily || 'Google Sans Flex, Arial, sans-serif';
+            const fontSize = computedStyle.fontSize || '16px';
+            const color = computedStyle.color || '#222';
+            
             // Create a new window for printing
             const printWindow = window.open('', '', 'width=900,height=900');
             printWindow.document.write(`
@@ -3411,8 +3549,8 @@ if ('serviceWorker' in navigator) {
                 <head>
                 <title>${doc.title}</title>
                 <style>
-                    body { font-family: 'Google Sans Flex', Arial, sans-serif; color: #222; background: #fff; margin: 40px; }
-                    h1,h2,h3,h4,h5,h6 { font-variation-settings: 'ROND' 90; }
+                    body { font-family: ${fontFamily}; font-size: ${fontSize}; color: ${color}; background: #fff; margin: 40px; }
+                    h1,h2,h3,h4,h5,h6 { font-family: ${fontFamily}; font-variation-settings: 'ROND' 90; }
                     img, video, audio { max-width: 100%; border-radius: 8px; margin: 8px 0; }
                     table { border-collapse: collapse; width: 100%; margin: 12px 0; }
                     th, td { border: 1px solid #888; padding: 8px; }
@@ -3469,13 +3607,14 @@ if ('serviceWorker' in navigator) {
         titleDiv.innerHTML = `<span contenteditable="true" id="editableTitle">${doc.title}</span>`;
         // Save title on blur or enter
         const editable = document.getElementById('editableTitle');
-        editable.addEventListener('blur', async function() {
+        editable.addEventListener('blur', function() {
             doc.title = this.textContent.trim() || 'Untitled Document';
             this.textContent = doc.title;
+            doc.timestamp = Date.now();
             // Update sidebar
             const item = document.querySelector(`.document-item[data-doc-id="${doc.id}"] .menu-text`);
             if (item) item.textContent = doc.title;
-            await saveDocuments();
+            debouncedSaveDocuments(100);
         });
         editable.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -3543,27 +3682,233 @@ if ('serviceWorker' in navigator) {
         versionHistoryBtn.click();
     });
 
-    // --- Download Document (HTML) ---
+    // --- Download Document (Multiple Formats) ---
     document.getElementById('downloadMoreOptionsBtn').addEventListener('mousedown', function (e) {
         e.preventDefault();
         editorMoreOptions.style.display = 'none';
-        // Download as HTML file
+        
+        // Show download format modal
         const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
-        const blob = new Blob([
-            `<html><head><meta charset="UTF-8"><title>${doc.title}</title></head><body><h1>${doc.title}</h1>${doc.content}</body></html>`
-        ], { type: 'text/html' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = (doc.title || 'document') + '.html';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            URL.revokeObjectURL(a.href);
-            a.remove();
-        }, 100);
-        showToast('Document downloaded as HTML.', { type: 'success' });
+        
+        let downloadModal = document.createElement('div');
+        downloadModal.className = 'modal';
+        downloadModal.innerHTML = `
+            <div class="modal-content liquid-glass" style="max-width: 400px;">
+                <div class="modal-content-close" id="closeDownloadModal">
+                    <icon>close</icon>
+                </div>
+                <h2>Download Document</h2>
+                <p style="margin-bottom: 20px;">Choose format for "${doc.title}":</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="downloadTxt" style="justify-content: center;">
+                        <icon>text_snippet</icon>
+                        <span>Download as TXT</span>
+                    </button>
+                    <button id="downloadHtml" style="justify-content: center;">
+                        <icon>code</icon>
+                        <span>Download as HTML</span>
+                    </button>
+                    <button id="downloadDocx" style="justify-content: center;">
+                        <icon>description</icon>
+                        <span>Download as DOCX</span>
+                    </button>
+                    <button id="downloadMd" style="justify-content: center;">
+                        <icon>notes</icon>
+                        <span>Download as MD</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(downloadModal);
+        
+        downloadModal.querySelector('#closeDownloadModal').onclick = () => downloadModal.remove();
+        
+        // Helper function to get current styles from editor
+        function getEditorStyles() {
+            const editorArea = document.getElementById('editorArea');
+            const computedStyle = window.getComputedStyle(editorArea);
+            return {
+                fontFamily: computedStyle.fontFamily || 'Arial, sans-serif',
+                fontSize: computedStyle.fontSize || '16px',
+                color: computedStyle.color || '#000000',
+                backgroundColor: computedStyle.backgroundColor || '#ffffff'
+            };
+        }
+        
+        // Download as TXT
+        downloadModal.querySelector('#downloadTxt').onclick = function() {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = doc.content;
+            const text = tempDiv.innerText || tempDiv.textContent || '';
+            const blob = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (doc.title || 'document') + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove();
+            }, 100);
+            downloadModal.remove();
+            showToast('Document downloaded as TXT.', { type: 'success' });
+        };
+        
+        // Download as HTML
+        downloadModal.querySelector('#downloadHtml').onclick = function() {
+            const styles = getEditorStyles();
+            const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${doc.title}</title>
+    <style>
+        body {
+            font-family: ${styles.fontFamily};
+            font-size: ${styles.fontSize};
+            color: ${styles.color};
+            background-color: ${styles.backgroundColor};
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: ${styles.fontFamily};
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        blockquote {
+            border-left: 4px solid #ccc;
+            margin: 20px 0;
+            padding-left: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>${doc.title}</h1>
+    ${doc.content}
+</body>
+</html>`;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (doc.title || 'document') + '.html';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove();
+            }, 100);
+            downloadModal.remove();
+            showToast('Document downloaded as HTML.', { type: 'success' });
+        };
+        
+        // Download as DOCX (HTML wrapped as DOCX format)
+        downloadModal.querySelector('#downloadDocx').onclick = function() {
+            const styles = getEditorStyles();
+            const docxContent = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='utf-8'>
+    <title>${doc.title}</title>
+    <style>
+        body {
+            font-family: ${styles.fontFamily};
+            font-size: ${styles.fontSize};
+            color: ${styles.color};
+        }
+    </style>
+</head>
+<body>
+    <h1>${doc.title}</h1>
+    ${doc.content}
+</body>
+</html>`;
+            const blob = new Blob([docxContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (doc.title || 'document') + '.docx';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove();
+            }, 100);
+            downloadModal.remove();
+            showToast('Document downloaded as DOCX.', { type: 'success' });
+        };
+        
+        // Download as Markdown
+        downloadModal.querySelector('#downloadMd').onclick = function() {
+            // Simple HTML to Markdown conversion
+            let markdown = doc.content
+                .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+                .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+                .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+                .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+                .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
+                .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
+                .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+                .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+                .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+                .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+                .replace(/<u[^>]*>(.*?)<\/u>/gi, '__$1__')
+                .replace(/<ul[^>]*>(.*?)<\/ul>/gis, function(match, content) {
+                    return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+                })
+                .replace(/<ol[^>]*>(.*?)<\/ol>/gis, function(match, content) {
+                    let counter = 1;
+                    return content.replace(/<li[^>]*>(.*?)<\/li>/gi, function(m, text) {
+                        return (counter++) + '. ' + text + '\n';
+                    });
+                })
+                .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, function(match, content) {
+                    return content.split('\n').map(line => '> ' + line).join('\n') + '\n\n';
+                })
+                .replace(/<code[^>]*>(.*?)<\/code>/gis, '`$1`')
+                .replace(/<pre[^>]*>(.*?)<\/pre>/gis, '```\n$1\n```\n\n')
+                .replace(/<a[^>]*href=["'](.*?)["'][^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+                .replace(/<img[^>]*src=["'](.*?)["'][^>]*alt=["'](.*?)["'][^>]*>/gi, '![$2]($1)')
+                .replace(/<img[^>]*src=["'](.*?)["'][^>]*>/gi, '![]($1)')
+                .replace(/<br[^>]*>/gi, '  \n')
+                .replace(/<p[^>]*>(.*?)<\/p>/gis, '$1\n\n')
+                .replace(/<div[^>]*>(.*?)<\/div>/gis, '$1\n')
+                .replace(/<[^>]+>/g, '');
+            
+            markdown = '# ' + doc.title + '\n\n' + markdown;
+            
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (doc.title || 'document') + '.md';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove();
+            }, 100);
+            downloadModal.remove();
+            showToast('Document downloaded as Markdown.', { type: 'success' });
+        };
     });
 
     // --- Compare Documents ---
@@ -3618,7 +3963,7 @@ if ('serviceWorker' in navigator) {
         };
     });
 
-    // --- Share Document (PDF) ---
+    // --- Share Document ---
     document.getElementById('shareMoreOptionsBtn').addEventListener('mousedown', function (e) {
         e.preventDefault();
         editorMoreOptions.style.display = 'none';
@@ -3713,6 +4058,7 @@ if ('serviceWorker' in navigator) {
             <div class="modal-content" style="position:relative;max-width:500px;">
                 <span class="modal-content-close" id="closeSplitSelectModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
                 <h2>Select Document for Split View</h2>
+                <P>Note: If you split screen and edit the document you might be unable to get out of split view. Like e.g Close button just brings the caret and come editable</P>
                 <div style="margin:18px 0;max-height:300px;overflow-y:auto;">
                     ${documents.filter(d => d.id !== currentDocId).map(d => 
                         `<div class="sidebarnav__item" data-doc-id="${d.id}" style="cursor:pointer;margin-bottom:8px;">
@@ -3772,14 +4118,15 @@ if ('serviceWorker' in navigator) {
             </div>
         `;
 
-        // Add input handlers for both editors
+        // Add input handlers for both editors (debounced to prevent race conditions)
         document.querySelectorAll('.split-editor').forEach(editor => {
             editor.oninput = function() {
                 const docId = this.getAttribute('data-doc-id');
                 const doc = documents.find(d => d.id === docId);
                 if (doc) {
                     doc.content = this.innerHTML;
-                    saveDocuments();
+                    doc.timestamp = Date.now();
+                    debouncedSaveDocuments(300);
                 }
             };
         });
@@ -3855,9 +4202,10 @@ if ('serviceWorker' in navigator) {
         if (doc) {
             editorArea.contentEditable = 'true';
             editorArea.innerHTML = doc.content || '';
-            editorArea.oninput = async function() {
+            editorArea.oninput = function() {
                 doc.content = editorArea.innerHTML;
-                await saveDocuments();
+                doc.timestamp = Date.now();
+                debouncedSaveDocuments(300);
             };
         }
 
@@ -4887,6 +5235,7 @@ if ('serviceWorker' in navigator) {
                         <li>v1.0.3 - Added voice-to-text writing and split screen for enhanced productivity.</li>
                         <li>v1.0.4 - Fix the font family bug</li>
                         <li>v1.0.5 - Add Split Screen functionality, Add sidebar position settings, Add reduce transparency and compact mode settings</li>
+                        <li>v1.0.6 - Added download formats, Share includes Share with Gmail, facebook, whatsapp, reddit. Fix a bug when switching documents and editing or creating too quickly overwrites content. and added more fonts in font family picker</li>
                     </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
