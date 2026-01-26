@@ -3509,20 +3509,20 @@ if ('serviceWorker' in navigator) {
             shareModal.querySelector('#shareFacebook').onclick = function() {
                 const url = encodeURIComponent(window.location.href);
                 const text = encodeURIComponent(doc.title + '\n\n' + bodyText);
-                window.location.href = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank');
             };
             
             // Gmail share
             shareModal.querySelector('#shareGmail').onclick = function() {
                 const subject = encodeURIComponent(doc.title);
                 const body = encodeURIComponent(bodyText + '\n\n' + window.location.href);
-                window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
             };
             
             // WhatsApp share
             shareModal.querySelector('#shareWhatsApp').onclick = function() {
                 const text = encodeURIComponent(doc.title + '\n\n' + bodyText + '\n\n' + window.location.href);
-                window.location.href = `https://web.whatsapp.com/send?text=${text}`;
+                window.open(`https://web.whatsapp.com/send?text=${text}`, '_blank');
             };
             
             // Reddit share
@@ -3530,7 +3530,7 @@ if ('serviceWorker' in navigator) {
                 const url = encodeURIComponent(window.location.href);
                 const title = encodeURIComponent(doc.title);
                 const text = encodeURIComponent(bodyText);
-                window.location.href = `https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`;
+                window.open(`https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`, '_blank');
             };
 
             // Download as PDF button
