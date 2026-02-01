@@ -40,7 +40,8 @@
             "name": "Munetios"
         }
     }
-    </script>        <link href="https://fonts.googleapis.com/css?family=Comic+Neue:400,700&display=swap" rel="stylesheet">
+    </script>        <link href="https://fonts.googleapis.com/css?family=Comic+Neue:400,700&display=swap" rel="stylesheet">    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Comic+Relief:400,700&display=swap" rel="stylesheet">
        <!-- Google Fonts links -->
         <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
@@ -627,6 +628,20 @@ if ('serviceWorker' in navigator) {
         .split-close-btn:hover {
             background: rgba(231, 76, 60, 0.4);
         }
+        @media (max-width: 754px) {
+            .saving-time {
+                display: none;
+            }
+        }
+        .documents--section h4 {
+            margin: 16px 0 8px 8px;
+        }
+        .documents--section {
+            margin-bottom: 16px;
+        }
+        .documents--section p {
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -659,10 +674,19 @@ if ('serviceWorker' in navigator) {
                         <input type="text" placeholder="Search documents" />
                     </div>
                 <div class="sidebar__content">
-                   
+                    <div class="documents--section">
+                        <h4>Pinned</h4>
+                        <div class="documents--list" id="pinnedDocumentsList">
+                            <!-- Pinned document items will be dynamically added here -->
+                             <p>No pinned documents</p>
+                             </div>
+                    </div>
+                   <div class="documents--section">
+                    <h4>Documents</h4>
                     <div class="documents--list" id="documentsList">
                         <!-- Document items will be dynamically added here -->
                     </div>
+                </div>
                 </div>
                 <div class="sidebar__bottom">
                     <div class="settings-item sidebarnav__item">
@@ -754,6 +778,10 @@ if ('serviceWorker' in navigator) {
                                 <icon>menu</icon>
                             </div>
                             <div class="liquid-glass" id="documentTitle" style="padding: 16px 14px;"></div>
+                            <div class="saving-time">
+                                <icon style="font-size: 20px; vertical-align: middle; margin-right: 6px;">lock</icon>
+                                <span id="savingStatus">End to end encrypted</span>
+                            </div>
                 </div>
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
                     <icon id="versionHistoryBtn">history</icon>
@@ -1003,8 +1031,7 @@ if ('serviceWorker' in navigator) {
         <div class="dropdown-item" data-font="'Google Sans Code', monospace">
             <div class="menu-text" style="font-family: 'Google Sans Code', monospace;">Google Sans Code</div>
         </div>
-        <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;700&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+    
         <div class="dropdown-item" data-font="'Manrope', sans-serif">
             <div class="menu-text" style="font-family: 'Manrope', sans-serif;">Manrope</div>
         </div>
@@ -1154,6 +1181,10 @@ if ('serviceWorker' in navigator) {
         <icon>drive_file_rename_outline</icon>
         <div class="menu-text">Rename Document</div>
     </div>
+    <div class="dropdown-item" id="pinDocumentMoreOptionsBtn">
+        <icon>push_pin</icon>
+        <div class="menu-text">Pin Document</div>
+    </div>
     <div class="dropdown-item" id="versionHistoryMoreOptionsBtn">
         <icon>history</icon>
         <div class="menu-text">Version History</div>
@@ -1259,6 +1290,8 @@ if ('serviceWorker' in navigator) {
     let savePending = false;
     let saveQueued = false;
     let saveTimeout = null;
+    let saveStartTime = null;
+    let isSaved = true; // Track if document is saved
 
     // Open IndexedDB and initialize stores
     function openDB() {
@@ -1337,8 +1370,23 @@ if ('serviceWorker' in navigator) {
         return dec.decode(plaintext);
     }
 
-    // Save queue to prevent race conditions
-   
+    // Update saving status UI
+    function updateSavingStatus(status) {
+        const savingStatusElement = document.getElementById('savingStatus');
+        if (savingStatusElement) {
+            savingStatusElement.textContent = status;
+        }
+    }
+
+    // Calculate estimated save time based on content size
+    function estimateSaveTime(contentSize) {
+        // Base time: 500ms + 100ms per 10KB of content
+        const baseTime = 500;
+        const sizeInKB = contentSize / 1024;
+        const additionalTime = Math.floor(sizeInKB / 10) * 100;
+        return Math.min(baseTime + additionalTime, 5000); // Cap at 5 seconds
+    }
+    
     // Save all documents to IndexedDB (encrypted) with mutex to prevent race conditions
     async function saveDocuments() {
         // If a save is already in progress, queue another save
@@ -1349,8 +1397,22 @@ if ('serviceWorker' in navigator) {
         
         savePending = true;
         saveQueued = false;
+        saveStartTime = Date.now();
+        isSaved = false; // Mark as unsaved during save
+        
+        // Update status to "Saving..."
+        updateSavingStatus('Saving...');
         
         try {
+            // Calculate total content size
+            let totalSize = 0;
+            for (const doc of documents) {
+                totalSize += JSON.stringify(doc).length;
+            }
+            
+            // Estimate save time
+            const estimatedTime = estimateSaveTime(totalSize);
+            
             // Pre-encrypt all documents before opening transaction (Firefox/Safari compatibility)
             const encryptedDocs = [];
             for (const doc of documents) {
@@ -1368,8 +1430,38 @@ if ('serviceWorker' in navigator) {
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => reject(tx.error);
             });
+            
+            // Calculate actual save time
+            const actualSaveTime = Date.now() - saveStartTime;
+            
+            // If save was faster than estimated, add a small delay for better UX
+            const minDisplayTime = 1000; // Show "Saving..." for at least 1 second
+            if (actualSaveTime < minDisplayTime) {
+                await new Promise(resolve => setTimeout(resolve, minDisplayTime - actualSaveTime));
+            }
+            
+            // Mark as saved successfully
+            isSaved = true;
+            
+            // Update status to "Saved" with timestamp
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            updateSavingStatus(`Saved at ${timeStr}`);
+            
+            // Revert to "End to end encrypted" after 3 seconds
+            setTimeout(() => {
+                updateSavingStatus('End to end encrypted');
+            }, 3000);
+            
         } catch (error) {
             console.error('Error saving documents:', error);
+            isSaved = false; // Keep as unsaved if error
+            updateSavingStatus('Save failed');
+            
+            // Revert to "End to end encrypted" after 3 seconds
+            setTimeout(() => {
+                updateSavingStatus('End to end encrypted');
+            }, 3000);
         } finally {
             savePending = false;
             
@@ -1382,6 +1474,7 @@ if ('serviceWorker' in navigator) {
     
     // Debounced save function to reduce save frequency during rapid edits
     function debouncedSaveDocuments(delay = 500) {
+        isSaved = false; // Mark as unsaved when edits occur
         if (saveTimeout) {
             clearTimeout(saveTimeout);
         }
@@ -1435,6 +1528,15 @@ if ('serviceWorker' in navigator) {
         });
     }
 
+    // Prevent reload/close if document is being saved or has unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+        if (!isSaved || savePending) {
+            e.preventDefault();
+            e.returnValue = 'Your document is still saving. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
+
     // --- Initialization ---
     async function initializeApp() {
         // Patch DB for images/trash/videos/audios before opening
@@ -1475,6 +1577,8 @@ if ('serviceWorker' in navigator) {
         db = await openDB();
         cryptoKey = await getOrCreateKey();
         await loadDocuments();
+        // Render documents list in sorted order
+        renderDocumentsList();
         // Now handle hash after documents are loaded
         handleHashChangeWithDocument();
         window.addEventListener('hashchange', handleHashChangeWithDocument);
@@ -1558,6 +1662,42 @@ if ('serviceWorker' in navigator) {
         const list = document.getElementById('documentsList');
         const el = createDocumentElement(doc);
         list.appendChild(el);
+    }
+    
+    // Re-render all documents in sorted order (pinned in separate section)
+    function renderDocumentsList() {
+        const pinnedList = document.getElementById('pinnedDocumentsList');
+        const documentsList = document.getElementById('documentsList');
+        const pinnedSection = pinnedList ? pinnedList.closest('.documents--section') : null;
+        
+        if (pinnedList) pinnedList.innerHTML = '';
+        if (documentsList) documentsList.innerHTML = '';
+        
+        // Separate pinned and unpinned documents
+        const pinnedDocs = documents.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const unpinnedDocs = documents.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
+        // Render pinned documents
+        if (pinnedList) {
+            if (pinnedDocs.length > 0) {
+                pinnedDocs.forEach(doc => {
+                    const el = createDocumentElement(doc);
+                    pinnedList.appendChild(el);
+                });
+                // Show pinned section
+                if (pinnedSection) pinnedSection.style.display = 'block';
+            } else {
+                pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">No pinned documents</p>';
+            }
+        }
+        
+        // Render unpinned documents
+        if (documentsList) {
+            unpinnedDocs.forEach(doc => {
+                const el = createDocumentElement(doc);
+                documentsList.appendChild(el);
+            });
+        }
     }
 
     // Flag to track if toolbar listeners have been initialized
@@ -3643,6 +3783,15 @@ if ('serviceWorker' in navigator) {
             editorMoreOptions.style.left = (rect.left + window.scrollX - 250) + 'px';
             editorMoreOptions.style.display = 'block';
             moreDropdownVisible = true;
+            
+            // Update pin button text based on current document state
+            const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+            const doc = documents.find(d => d.id === docId);
+            if (doc) {
+                const pinBtn = document.getElementById('pinDocumentMoreOptionsBtn');
+                const text = pinBtn.querySelector('.menu-text');
+                text.textContent = doc.pinned ? 'Unpin Document' : 'Pin Document';
+            }
         }
     });
 
@@ -3673,6 +3822,36 @@ if ('serviceWorker' in navigator) {
             sel.removeAllRanges();
             sel.addRange(range);
         }
+    });
+    
+    // --- Pin/Unpin Document ---
+    document.getElementById('pinDocumentMoreOptionsBtn').addEventListener('mousedown', async function (e) {
+        e.preventDefault();
+        editorMoreOptions.style.display = 'none';
+        
+        const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        const doc = documents.find(d => d.id === docId);
+        if (!doc) return;
+        
+        // Toggle pinned state
+        doc.pinned = !doc.pinned;
+        
+        // Update button text and icon
+        const pinBtn = document.getElementById('pinDocumentMoreOptionsBtn');
+        const text = pinBtn.querySelector('.menu-text');
+        if (doc.pinned) {
+            text.textContent = 'Unpin Document';
+            showToast('Document pinned.', { type: 'success' });
+        } else {
+            text.textContent = 'Pin Document';
+            showToast('Document unpinned.', { type: 'success' });
+        }
+        
+        // Re-render documents list to show updated order
+        renderDocumentsList();
+        
+        // Save to database
+        await saveDocuments();
     });
 
     // --- Version History ---
@@ -4535,10 +4714,13 @@ if ('serviceWorker' in navigator) {
                 const newDoc = {
                     id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
                     title: tpl.name + ' ' + new Date().toLocaleTimeString(),
-                    content: tpl.content
+                    content: tpl.content,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    pinned: false
                 };
                 documents.push(newDoc);
-                addDocumentToList(newDoc);
+                renderDocumentsList();
                 openDocument(newDoc.id);
                 await saveDocuments();
             });
@@ -4549,15 +4731,44 @@ if ('serviceWorker' in navigator) {
     const searchBarInput = document.querySelector('.search-bar input');
     searchBarInput.addEventListener('input', function () {
         const query = this.value.trim().toLowerCase();
-        const list = document.getElementById('documentsList');
-        list.innerHTML = '';
+        const pinnedList = document.getElementById('pinnedDocumentsList');
+        const documentsList = document.getElementById('documentsList');
+        const pinnedSection = pinnedList ? pinnedList.closest('.documents--section') : null;
+        
         if (!query) {
-            // Show all documents
-            documents.forEach(doc => addDocumentToList(doc));
+            // Show all documents with proper sorting
+            renderDocumentsList();
         } else {
-            documents
-                .filter(doc => doc.title && doc.title.toLowerCase().includes(query))
-                .forEach(doc => addDocumentToList(doc));
+            // Filter documents
+            const filteredDocs = documents.filter(doc => doc.title && doc.title.toLowerCase().includes(query));
+            
+            // Separate into pinned and unpinned
+            const pinnedDocs = filteredDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            const unpinnedDocs = filteredDocs.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            
+            if (pinnedList) pinnedList.innerHTML = '';
+            if (documentsList) documentsList.innerHTML = '';
+            
+            // Show pinned section if there are pinned results
+            if (pinnedList) {
+                if (pinnedDocs.length > 0) {
+                    pinnedDocs.forEach(doc => {
+                        const el = createDocumentElement(doc);
+                        pinnedList.appendChild(el);
+                    });
+                    if (pinnedSection) pinnedSection.style.display = 'block';
+                } else {
+                    pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">No pinned documents</p>';
+                }
+            }
+            
+            // Show unpinned results
+            if (documentsList) {
+                unpinnedDocs.forEach(doc => {
+                    const el = createDocumentElement(doc);
+                    documentsList.appendChild(el);
+                });
+            }
         }
     });
     // Patch switchPage to render templates when needed
@@ -5236,10 +5447,11 @@ if ('serviceWorker' in navigator) {
                         <li>v1.0.4 - Fix the font family bug</li>
                         <li>v1.0.5 - Add Split Screen functionality, Add sidebar position settings, Add reduce transparency and compact mode settings</li>
                         <li>v1.0.6 - Added download formats, Share includes Share with Gmail, facebook, whatsapp, reddit. Fix a bug when switching documents and editing or creating too quickly overwrites content. and added more fonts in font family picker</li>
-                    </ul>
+                        <li>v1.0.7 - Added Pin Documents feature, Removed the Voice To Text because it can send voice data to Google or Microsoft or Apple.</li>
+                        </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
-                        &copy; 2025-2026 Munetios.<br>
+                        &copy; 2025-2026 Munetios. <br>
                         Munetios OmniWrite is a unregistered trademark of Munetios.<br>
                         Website <a href="https://munetios.com" target="_self" style="color:#ffe066;">munetios.com</a>
                     <br>OmniWrite is open source. See <a href="https://github.com/munetios/omniwrite" target="_self" style="color:#ffe066;">github.com/munetios/omniwrite</a><br> <br>
@@ -6483,35 +6695,84 @@ if ('serviceWorker' in navigator) {
 
             // Danger Zone: Reset Encryption Key
             settingsModal.querySelector('#resetKeyBtn').onclick = async function () {
-                // Use a custom modal for confirmation since window.confirm is patched
-                let confirmModal = document.createElement('div');
-                confirmModal.className = 'modal';
-                confirmModal.innerHTML = `
-                    <div class="modal-content" style="position:relative;max-width:340px;">
-                        <span class="modal-content-close" id="closeResetKeyModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
-                        <h2>Reset Encryption Key</h2>
-                        <p>Resetting the encryption key will make all existing documents unreadable. Continue?</p>
-                        <div style="margin-top:18px;display:flex;gap:12px;">
-                            <button id="confirmResetKeyBtn" style="background:#ffe066;color:#110736;">Reset Key</button>
-                            <button id="cancelResetKeyBtn">Cancel</button>
+                let warningCount = 0;
+
+                function showWarningModal() {
+                    let confirmModal = document.createElement('div');
+                    confirmModal.className = 'modal';
+                    let warningText = '';
+                    let isFinalWarning = false;
+
+                    switch (warningCount) {
+                        case 0:
+                            warningText = 'Are you absolutely sure you want to reset the encryption key?';
+                            break;
+                        case 1:
+                            warningText = 'This action will make all existing documents unreadable and cannot be undone.';
+                            break;
+                        case 2:
+                            warningText = `<span style="color:#e74c3c;font-weight:bold;">WARNING: This is your final chance to cancel. Resetting the encryption key will permanently make all documents unreadable.</span>`;
+                            break;
+                        case 3:
+                            warningText = `
+                                <span style="color:#e74c3c;font-weight:bold;font-size:16px;line-height:1.6;">
+                                    FINAL STEP: To confirm, type <code style="background:#222;color:#ffe066;padding:2px 4px;border-radius:4px;">RESET KEY</code> in the box below and click "Confirm to Reset".
+                                    <br><br>
+                                    <u>Note:</u> This action is irreversible. All your documents will become permanently unreadable.
+                                </span>
+                            `;
+                            isFinalWarning = true;
+                            break;
+                    }
+
+                    confirmModal.innerHTML = `
+                        <div class="modal-content" style="position:relative;max-width:400px;">
+                            <span class="modal-content-close" id="closeResetKeyModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                            <h2>Reset Encryption Key</h2>
+                            <p>${warningText}</p>
+                            <div style="margin-top:18px;display:flex;flex-direction:column;gap:12px;">
+                                ${isFinalWarning ? `
+                                    <input type="text" id="resetKeyConfirmationInput" placeholder="Type RESET KEY" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+                                    <button id="confirmResetKeyBtn" style="background:#e74c3c;color:#fff;">Confirm to Reset</button>
+                                ` : `
+                                    <button id="confirmResetKeyBtn" style="background:#e74c3c;color:#fff;">Proceed</button>
+                                `}
+                                <button id="cancelResetKeyBtn">Cancel</button>
+                            </div>
                         </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmModal);
-                confirmModal.style.display = 'flex';
+                    `;
 
-                confirmModal.querySelector('#closeResetKeyModal').onclick = () => confirmModal.remove();
-                confirmModal.querySelector('#cancelResetKeyBtn').onclick = () => confirmModal.remove();
+                    document.body.appendChild(confirmModal);
 
-                confirmModal.querySelector('#confirmResetKeyBtn').onclick = async function () {
-                    // Delete key from IndexedDB (documents will remain but become unreadable)
-                    const tx = db.transaction(KEY_STORE, 'readwrite');
-                    tx.objectStore(KEY_STORE).delete('main');
-                    showToast('Encryption key reset. Existing documents are now unreadable.', { type: 'success' });
-                    confirmModal.remove();
-                    settingsModal.remove();
-                    setTimeout(() => window.location.reload(), 1200);
-                };
+                    confirmModal.querySelector('#closeResetKeyModal').onclick = () => confirmModal.remove();
+                    confirmModal.querySelector('#cancelResetKeyBtn').onclick = () => confirmModal.remove();
+
+                    confirmModal.querySelector('#confirmResetKeyBtn').onclick = async function () {
+                        if (isFinalWarning) {
+                            const input = document.getElementById('resetKeyConfirmationInput').value.trim();
+                            if (input !== 'RESET KEY') {
+                                showToast('Incorrect confirmation code. Please type RESET KEY.', { type: 'error' });
+                                return;
+                            }
+                        }
+
+                        confirmModal.remove();
+                        warningCount++;
+
+                        if (warningCount > 3) {
+                            // Perform the reset
+                            const tx = db.transaction(KEY_STORE, 'readwrite');
+                            tx.objectStore(KEY_STORE).delete('main');
+                            showToast('Encryption key reset. Existing documents are now unreadable.', { type: 'success' });
+                            settingsModal.remove();
+                            setTimeout(() => window.location.reload(), 1200);
+                        } else {
+                            showWarningModal();
+                        }
+                    };
+                }
+
+                showWarningModal();
             };
 
             
@@ -6610,54 +6871,109 @@ if ('serviceWorker' in navigator) {
             
             // Danger Zone: Delete Everything
             settingsModal.querySelector('#deleteEverythingBtn').onclick = async function () {
-                // Use a custom modal for confirmation since window.confirm is patched
-                let confirmModal = document.createElement('div');
-                confirmModal.className = 'modal';
-                confirmModal.innerHTML = `
-                    <div class="modal-content" style="position:relative;max-width:340px;">
-                        <span class="modal-content-close" id="closeDeleteAllModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
-                        <h2>Delete Everything</h2>
-                        <p>Delete all documents and images? This cannot be undone.</p>
-                        <div style="margin-top:18px;display:flex;gap:12px;">
-                            <button id="confirmDeleteAllBtn" style="background:#e74c3c;color:#fff;">Delete All</button>
-                            <button id="cancelDeleteAllBtn">Cancel</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmModal);
-                confirmModal.querySelector('#closeDeleteAllModal').onclick = () => confirmModal.remove();
-                confirmModal.querySelector('#cancelDeleteAllBtn').onclick = () => confirmModal.remove();
-                confirmModal.querySelector('#confirmDeleteAllBtn').onclick = async function () {
-                    documents = [];
-                    // Clear all stores using transactions
-                    const storesToClear = ['documents', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
-                    const clearPromises = [];
-                    
-                    for (const storeName of storesToClear) {
-                        // Check if store exists before trying to clear it
-                        if (db.objectStoreNames.contains(storeName)) {
-                            clearPromises.push(
-                                new Promise((res, rej) => {
-                                    try {
-                                        const tx = db.transaction(storeName, 'readwrite');
-                                        tx.objectStore(storeName).clear();
-                                        tx.oncomplete = () => res();
-                                        tx.onerror = () => rej(tx.error);
-                                    } catch (e) {
-                                        console.warn('Could not clear store:', storeName, e);
-                                        res(); // Continue even if one fails
-                                    }
-                                })
-                            );
-                        }
+                let warningCount = 0;
+
+                function showWarningModal() {
+                    let confirmModal = document.createElement('div');
+                    confirmModal.className = 'modal';
+                    let warningText = '';
+                    let isFinalWarning = false;
+
+                    switch (warningCount) {
+                        case 0:
+                            warningText = 'Are you absolutely sure you want to delete everything?';
+                            break;
+                        case 1:
+                            warningText = 'This action will permanently delete all your documents, images, and data.';
+                            break;
+                        case 2:
+                            warningText = 'This cannot be undone. Please proceed with caution.';
+                            break;
+                        case 3:
+                            warningText = `<span style="color:#e74c3c;font-weight:bold;">WARNING: This is your final chance to cancel. Deleting everything will erase all data permanently.</span>`;
+                            break;
+                        case 4:
+                            warningText = `
+                                <span style="color:#e74c3c;font-weight:bold;">
+                                    FINAL STEP: To confirm, type <code style="background:#222;color:#ffe066;padding:2px 4px;border-radius:4px;">DELETE ALL</code> in the box below and click "Confirm to Delete".
+                                </span>
+                            `;
+                            isFinalWarning = true;
+                            break;
                     }
-                    
-                    await Promise.all(clearPromises);
-                    document.getElementById('documentsList').innerHTML = '';
-                    showToast('All data deleted.', { type: 'success' });
-                    confirmModal.remove();
-                    setTimeout(() => window.location.reload(), 1200);
-                };
+
+                    confirmModal.innerHTML = `
+                        <div class="modal-content" style="position:relative;max-width:400px;">
+                            <span class="modal-content-close" id="closeDeleteAllModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                            <h2>Delete Everything</h2>
+                            <p>${warningText}</p>
+                            <div style="margin-top:18px;display:flex;flex-direction:column;gap:12px;">
+                                ${isFinalWarning ? `
+                                    <input type="text" id="deleteConfirmationInput" placeholder="Type DELETE ALL" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+                                    <button id="confirmDeleteAllBtn" style="background:#e74c3c;color:#fff;">Confirm to Delete</button>
+                                ` : `
+                                    <button id="confirmDeleteAllBtn" style="background:#e74c3c;color:#fff;">Proceed</button>
+                                `}
+                                <button id="cancelDeleteAllBtn">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(confirmModal);
+
+                    confirmModal.querySelector('#closeDeleteAllModal').onclick = () => confirmModal.remove();
+                    confirmModal.querySelector('#cancelDeleteAllBtn').onclick = () => confirmModal.remove();
+
+                    confirmModal.querySelector('#confirmDeleteAllBtn').onclick = async function () {
+                        if (isFinalWarning) {
+                            const input = document.getElementById('deleteConfirmationInput').value.trim();
+                            if (input !== 'DELETE ALL') {
+                                showToast('Incorrect confirmation code. Please type DELETE ALL.', { type: 'error' });
+                                return;
+                            }
+                        }
+
+                        confirmModal.remove();
+                        warningCount++;
+
+                        if (warningCount > 4) {
+                            // Perform the deletion
+                            documents = [];
+                            localStorage.clear(); // Clear all localStorage data
+
+                            // Clear all stores using transactions
+                            const storesToClear = ['documents', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
+                            const clearPromises = [];
+
+                            for (const storeName of storesToClear) {
+                                if (db.objectStoreNames.contains(storeName)) {
+                                    clearPromises.push(
+                                        new Promise((res, rej) => {
+                                            try {
+                                                const tx = db.transaction(storeName, 'readwrite');
+                                                tx.objectStore(storeName).clear();
+                                                tx.oncomplete = () => res();
+                                                tx.onerror = () => rej(tx.error);
+                                            } catch (e) {
+                                                console.warn('Could not clear store:', storeName, e);
+                                                res(); // Continue even if one fails
+                                            }
+                                        })
+                                    );
+                                }
+                            }
+
+                            await Promise.all(clearPromises);
+                            document.getElementById('documentsList').innerHTML = '';
+                            showToast('All data deleted.', { type: 'success' });
+                            setTimeout(() => window.location.reload(), 1200);
+                        } else {
+                            showWarningModal();
+                        }
+                    };
+                }
+
+                showWarningModal();
             };
         });
         // --- Block all confirm(), alert(), and prompt() globally ---
@@ -6675,196 +6991,32 @@ if ('serviceWorker' in navigator) {
             window.location.href = '/out-of-memory.html';
         }
     });
-    // --- Voice to Text Functionality ---
-    let isRecording = false;
-    let recognition = null;
-    let speechButton = null;
+   
+    // Check for IndexedDB and Web Crypto API support
+    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+        // Create unsupported browser modal
+        const unsupportedModal = document.createElement('div');
+        unsupportedModal.className = 'modal';
+        unsupportedModal.innerHTML = `
+            <div class="modal-content" style="position:relative;max-width:500px;">
+                <h2>Unsupported Browser</h2>
+                <p>Your browser does not support the required features for this application, such as IndexedDB or Web Crypto API.</p>
+                <p>Additionally, Safari is known to have issues with IndexedDB, which may cause instability in OmniWrite.</p>
+                <p>Please update your browser or switch to a modern browser like Chrome, Firefox, or Edge.</p>
+                <p>Or, if you're feeling adventurous, you can try OmniWrite anyway by clicking the "Try Anyway" button.</p>
+                <button id="closeUnsupportedModal" style="margin-top:20px;">Try Anyway</button>
+            </div>
+        `;
+        document.body.appendChild(unsupportedModal);
 
-    // Check if browser supports speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = localStorage.getItem('omniwrite-lang') || 'en';
-
-        // Create floating mic button
-        speechButton = document.createElement('button');
-        speechButton.className = 'floating-mic-btn';
-        speechButton.innerHTML = '<icon>mic</icon>';
-        speechButton.title = 'Voice to Text';
-        document.body.appendChild(speechButton);
-
-        // Load Tone.js for beep sounds
-        const toneScript = document.createElement('script');
-        toneScript.src = 'https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js';
-        toneScript.nonce = 'erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
-        document.head.appendChild(toneScript);
-
-        // Beep sound functions
-        function playStartBeep() {
-            if (typeof Tone !== 'undefined') {
-                const synth = new Tone.Synth().toDestination();
-                      synth.triggerAttackRelease("C5", "8n");
-            }
-        }
-
-        function playStopBeep() {
-            if (typeof Tone !== 'undefined') {
-                const synth = new Tone.Synth().toDestination();
-                            synth.triggerAttackRelease("C3", "8n");
-
-            }
-        }
-
-        function playErrorBeep() {
-            if (typeof Tone !== 'undefined') {
-                const synth = new Tone.Synth().toDestination();
-           synth.triggerAttackRelease("C4", "8n");
-            }
-        }
-
-        // Speech recognition event handlers
-        recognition.onstart = function() {
-            isRecording = true;
-            speechButton.classList.add('recording');
-            playStartBeep();
-            showToast('Listening...', { type: 'info', duration: 1500 });
+        // Close modal button
+        unsupportedModal.querySelector('#closeUnsupportedModal').onclick = () => {
+            unsupportedModal.remove();
         };
 
-        recognition.onresult = function(event) {
-            let interimTranscript = '';
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript + ' ';
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
-
-            // Insert text into active editor
-            const editorArea = document.getElementById('editorArea');
-            if (editorArea && finalTranscript) {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const textNode = document.createTextNode(finalTranscript);
-                    range.insertNode(textNode);
-                    range.setStartAfter(textNode);
-                    range.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                } else {
-                    editorArea.innerHTML += finalTranscript;
-                }
-
-                // Save document
-                const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
-                const doc = documents.find(d => d.id === docId);
-                if (doc) {
-                    doc.content = editorArea.innerHTML;
-                    saveDocuments();
-                }
-            }
-        };
-
-        recognition.onerror = function(event) {
-            console.error('Speech recognition error:', event.error);
-            
-            if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-                playErrorBeep();
-                showToast('Enable mic access to write document using your voice.', { type: 'error', duration: 4000 });
-                isRecording = false;
-                speechButton.classList.remove('recording');
-            } else if (event.error === 'no-speech') {
-                showToast('No speech detected. Try again.', { type: 'info', duration: 2000 });
-            } else {
-                playErrorBeep();
-                showToast('Speech recognition error: ' + event.error, { type: 'error' });
-            }
-        };
-
-        recognition.onend = function() {
-            if (isRecording) {
-                // Restart if still recording
-                try {
-                    recognition.start();
-                } catch (e) {
-                    isRecording = false;
-                    speechButton.classList.remove('recording');
-                }
-            }
-        };
-
-        // Toggle recording on button click
-        speechButton.addEventListener('click', async function() {
-            // Check if we're in a document editor
-            const editorArea = document.getElementById('editorArea');
-            if (!editorArea) {
-                showToast('Please open a document first.', { type: 'info' });
-                return;
-            }
-
-            // Focus the editor
-            editorArea.focus();
-
-            if (!isRecording) {
-                try {
-                    // Request microphone permission
-                    await navigator.mediaDevices.getUserMedia({ audio: true });
-                    
-                    // Update language based on current setting
-                    recognition.lang = localStorage.getItem('omniwrite-lang') || 'en';
-                    
-                    // Start recognition
-                    recognition.start();
-                } catch (err) {
-                    console.error('Microphone access denied:', err);
-                    playErrorBeep();
-                    showToast('Enable mic access to write document using your voice.', { type: 'error', duration: 4000 });
-                }
-            } else {
-                // Stop recording
-                isRecording = false;
-                speechButton.classList.remove('recording');
-                recognition.stop();
-                playStopBeep();
-                showToast('Stopped listening.', { type: 'info', duration: 1500 });
-            }
-        });
-
-        // Hide button when not in editor
-        function updateSpeechButtonVisibility() {
-            const hash = window.location.hash;
-            if (hash.match(/^#\/document\/.+$/)) {
-                speechButton.style.display = 'flex';
-            } else {
-                speechButton.style.display = 'none';
-                if (isRecording) {
-                    isRecording = false;
-                    speechButton.classList.remove('recording');
-                    recognition.stop();
-                }
-            }
-        }
-
-        // Update visibility on hash change
-        window.addEventListener('hashchange', updateSpeechButtonVisibility);
-        updateSpeechButtonVisibility();
-
-        // Update language when settings change
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'omniwrite-lang') {
-                recognition.lang = e.newValue || 'en';
-            }
-        });
-    } else {
-        console.warn('Speech recognition not supported in this browser.');
+        // Prevent further script execution
+        throw new Error('Unsupported browser');
     }
-    
    
     </script>
 </body>
