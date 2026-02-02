@@ -127,7 +127,7 @@ if ('serviceWorker' in navigator) {
         frame-src 'self' https://www.munetios.com https://calendar.munetios.com https://www.youtube-nocookie.com;
         ">
     <style>
-        /* Using Google Sans Flex for now, Munetios Sans is coming soon  */
+      /* Using Google Sans Flex for now, Munetios Sans is coming soon  */
         @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap');
         html, button, input, select, textarea {
             font-family: 'Google Sans Flex', sans-serif;
@@ -137,9 +137,24 @@ if ('serviceWorker' in navigator) {
             font-family: 'Google Sans Flex', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #110736;
+            background: linear-gradient(135deg, #0a031e 0%, #1a0324 100%);
+            background-size: 400% 400%; /* ensures noticeable movement */
+            animation: gradientAnimation 10s ease infinite; /* ensures animation */
             box-sizing: border-box;
-            color: #FFFFFF;
+            color: #E0E0E0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+            background-position: 0% 50%;
+            }
+            50% {
+            background-position: 100% 50%;
+            }
+            100% {
+            background-position: 0% 50%;
+            }
         }
         h1, h2, h3, h4, h5, h6 {
             font-variation-settings: 'ROND' 90;
@@ -165,9 +180,20 @@ if ('serviceWorker' in navigator) {
         .sidebar {
             height: 100%;
             box-sizing: border-box;
-            border-radius: 16px !important;
-            scrollbar-width: none;
+            border-radius: 20px !important;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
             overflow-y: auto;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
         }
         .sidebar__header {
             display: flex;
@@ -193,71 +219,95 @@ if ('serviceWorker' in navigator) {
             padding: 12px 16px;
             cursor: pointer;
             box-sizing: border-box;
+            border-radius: 12px;
+            margin: 4px 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .sidebarnav__item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 0;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 0 4px 4px 0;
+            transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebarnav__item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .sidebarnav__item:hover::before {
+            height: 60%;
         }
         #createBtn {
             cursor: pointer;
             border-radius: 69px;
-            padding: 8px;
+            padding: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #createBtn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            transform: rotate(90deg) scale(1.15);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
         }
         icon {
             font-family: 'Material Symbols Rounded';
-            font-size: 28px
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        icon:hover {
+            text-shadow: 0 0 12px rgba(102, 126, 234, 0.6),
+                         0 0 24px rgba(102, 126, 234, 0.4);
         }
         .sidebar__content {
             padding: 0 8px;
             overflow-y: auto;
-            min-height: 200px;
+            min-height: 60px;
             box-sizing: border-box;
             scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
             -ms-overflow-style: none;  /* IE and Edge Legacy */
-            height: calc(100% - 470px);
+            height: calc(100% - 570px);
         }
         .sidebar__content::-webkit-scrollbar {
             display: none; /* Safari */
         }
-        .liquid-glass {
-       background:
-    linear-gradient(
-      to bottom,
-      rgba(255,255,255,0.16) 0%,
-      rgba(255,255,255,0.06) 22%,
-      rgba(255,255,255,0.04) 50%,
-      rgba(255,255,255,0.06) 78%,
-      rgba(255,255,255,0.14) 100%
-    );
-    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-    backdrop-filter: blur( 2px )  saturate(190%) brightness(105%) contrast(100%) !important;
-    -webkit-backdrop-filter: blur( 1.75px )  saturate(200%) brightness(125%) contrast(100%) !important;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-}
         .search-bar {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
-            margin: 16px 0;
+            padding: 10px 16px;
+            margin: 16px 8px;
             box-sizing: border-box;
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-radius: 86px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .search-bar:focus-within {
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
         }
         .search-bar input {
             width: 100%;
             padding: 8px;
             border: none;
             outline: none;
-            border-radius: 8px;
+            border-radius: 12px;
             color: #FFFFFF;
             background-color: transparent;
             font-size: 16px;
             box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
         }
         .sidebar__bottom {
             box-sizing: border-box;
@@ -272,11 +322,24 @@ if ('serviceWorker' in navigator) {
             white-space: nowrap;
             max-height: 500px;
             overflow-y: auto;
-            scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
             margin: 60px 0 0 20px;
-            border-radius: 16px;
+            border-radius: 20px;
             box-sizing: border-box;
             display: none;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3),
+                        0 0 30px rgba(102, 126, 234, 0.2);
+        }
+        .dropdown-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+        .dropdown-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .dropdown-wrapper::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
         }
         .dropdown-item {
             display: flex;
@@ -285,9 +348,29 @@ if ('serviceWorker' in navigator) {
             padding: 12px 16px;
             cursor: pointer;
             box-sizing: border-box;
+            border-radius: 12px;
+            margin: 4px 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .dropdown-item::after {
+            content: '';
+            position: absolute;
+            left: -100%;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .dropdown-item:hover::after {
+            left: 100%;
         }
         .dropdown-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
         }
         .main-container {
             width: calc(100% - 300px);
@@ -321,12 +404,29 @@ if ('serviceWorker' in navigator) {
             padding: 10px 13px;
             display: flex;
             justify-content: center;
-
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 69px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .menu-btn:hover::before {
+            opacity: 1;
         }
         .menu-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            transition: transform 0.2s;
-            transform: scale(1.3);
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
+        }
+        .menu-btn:active {
+            transform: scale(0.95);
         }
         .content-area {
             margin-top: 60px;
@@ -361,22 +461,43 @@ if ('serviceWorker' in navigator) {
             width: 100%;
             height: 100%;
             backdrop-filter: blur(5px);
+            background-color: rgba(0, 0, 0, 0.01);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 10000;
+            animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .modal-content {
-            background-color: #ffffff10;
-            border: 1px solid #ffffff20;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            border-radius: 16px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.15) 0%,
+                rgba(255, 255, 255, 0.08) 100%
+            );
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+                        0 0 40px rgba(102, 126, 234, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            border-radius: 24px;
             box-sizing: border-box;
             width: 90%;
             max-width: 700px;
             max-height: 80%;
             overflow-y: auto;
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
         }
         .modal-content-close {
             position: absolute;
@@ -384,30 +505,82 @@ if ('serviceWorker' in navigator) {
             right: 20px;
             cursor: pointer;
             font-size: 24px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-content-close:hover {
+            background-color: rgba(231, 76, 60, 0.2);
+            transform: rotate(90deg) scale(1.2);
+            color: #e74c3c;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         button {
             cursor: pointer;
             outline: none;
-            padding: 10px 16px;
-               background:
-    linear-gradient(
-      to bottom,
-      rgba(255,255,255,0.16) 0%,
-      rgba(255,255,255,0.06) 22%,
-      rgba(255,255,255,0.04) 50%,
-      rgba(255,255,255,0.06) 78%,
-      rgba(255,255,255,0.14) 100%
-    );
-    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-    backdrop-filter: blur( 1.75px )  saturate(180%) brightness(105%) contrast(100%);
-    -webkit-backdrop-filter: blur( 1.75px )  saturate(200%) brightness(125%) contrast(100%);
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 12px 20px;
+            background:
+                linear-gradient(
+                  to bottom,
+                  rgba(255,255,255,0.16) 0%,
+                  rgba(255,255,255,0.06) 22%,
+                  rgba(255,255,255,0.04) 50%,
+                  rgba(255,255,255,0.06) 78%,
+                  rgba(255,255,255,0.14) 100%
+                );
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                        0 2px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(1.75px) saturate(180%) brightness(105%) contrast(100%);
+            -webkit-backdrop-filter: blur(1.75px) saturate(200%) brightness(125%) contrast(100%);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
             color: #FFFFFF;
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4),
+                        0 4px 12px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        button:active {
+            transform: translateY(0) scale(0.98);
         }
         @media (max-width: 1050px) {
             .sidebar__container {
@@ -464,22 +637,9 @@ if ('serviceWorker' in navigator) {
             animation: dropdownFadeOut 0.2s cubic-bezier(.4,0,.2,1);
         }
 
-        /* Animate menu button on hover */
-        .menu-btn {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .menu-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-        }
+        /* Animate menu button on hover - removed as duplicated above */
 
-        /* Animate sidebar nav item hover */
-        .sidebarnav__item, .dropdown-item {
-            transition: background-color 0.2s, transform 0.2s;
-        }
-        .sidebarnav__item:hover, .dropdown-item:hover {
-            transform: translateX(6px) scale(1.03);
-        }
+        /* Enhanced sidebar nav item animations - moved to main definitions above */
 
         /* Animate document list items (if dynamically added) */
         .documents--list > * {
@@ -494,17 +654,38 @@ if ('serviceWorker' in navigator) {
             gap: 10px;
             padding: 10px;
             overflow-x: auto;
-
             scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
         }
         .toolbar::-webkit-scrollbar {
             display: none; /* Safari */
         }
+        .toolbar-item {
+            padding: 6px 8px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .toolbar-item:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        .toolbar-item:active {
+            transform: translateY(0) scale(0.98);
+        }
         .editor-content-editor {
             margin-top: 80px;
         }
-        icon {
+        .toolbar-item icon,
+        .menu-btn icon,
+        .sidebar icon {
             cursor: pointer;
+            position: relative;
+            z-index: 1;
         }
         .create-text {
             white-space: nowrap;
@@ -512,8 +693,10 @@ if ('serviceWorker' in navigator) {
         vl {
             margin: 0 10px;
             border-left: 1px solid rgba(255, 255, 255, 0.2);
-            height: 24px;
-        }#renameMoreOptionsBtn {
+            height: 44px;
+            box-shadow: -1px 0 4px rgba(102, 126, 234, 0.1);
+        }
+        #renameMoreOptionsBtn {
             display: none;
         }
         @media (max-width: 560px) {
@@ -557,27 +740,42 @@ if ('serviceWorker' in navigator) {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
             background: linear-gradient(135deg, #667eea77 0%, #764ba257 100%);
             backdrop-filter: blur(2px);
-            border: none;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4),
+                        0 0 20px rgba(102, 126, 234, 0.2);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .floating-mic-btn::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+        .floating-mic-btn:hover::before {
+            opacity: 0.5;
         }
         .floating-mic-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 16px 40px rgba(102, 126, 234, 0.5),
+                        0 0 30px rgba(102, 126, 234, 0.3);
         }
         .floating-mic-btn.recording {
             background: linear-gradient(135deg, #f093fb77 0%, #f5576c57 100%);
-            animation: pulse 1.5s infinite;
+            animation: pulse 1.5s infinite, glow 2s infinite;
         }
         .floating-mic-btn icon {
             font-size: 28px;
@@ -585,7 +783,11 @@ if ('serviceWorker' in navigator) {
         }
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 8px 30px rgba(240, 147, 251, 0.4), 0 0 40px rgba(245, 87, 108, 0.3); }
+            50% { box-shadow: 0 12px 40px rgba(240, 147, 251, 0.6), 0 0 60px rgba(245, 87, 108, 0.5); }
         }
         
         /* Split Screen Styles */
@@ -662,7 +864,34 @@ if ('serviceWorker' in navigator) {
         .documents--section p {
             margin-left: 8px;
         }
-        
+        .liquid-glass {
+                background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.16) 0%,
+      rgba(255,255,255,0.06) 22%,
+      rgba(255,255,255,0.04) 50%,
+      rgba(255,255,255,0.06) 78%,
+      rgba(255,255,255,0.14) 100%
+    );
+    box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+    backdrop-filter: blur( 2px )  saturate(190%) brightness(105%) contrast(100%) !important;
+    -webkit-backdrop-filter: blur( 1.75px )  saturate(200%) brightness(125%) contrast(100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        @media (prefers-color-scheme: light) {
+            body {
+                background: linear-gradient(135deg, #f0f0f0 0%, #dcdcdc 100%);
+                color: #202020;
+            }
+            button {
+                color: #202020;
+            }
+            .search-bar input {
+                color: #202020;
+            }
+        }
+            
     </style>
 </head>
 <body>
@@ -710,6 +939,10 @@ if ('serviceWorker' in navigator) {
                 </div>
                 </div>
                 <div class="sidebar__bottom">
+                    <div class="try-beta-item sidebarnav__item">
+                        <icon>new_releases</icon>
+                        <div class="menu-text">Try Beta</div>
+                    </div>
                     <div class="settings-item sidebarnav__item">
                         <icon>settings</icon>
                         <div class="menu-text">Settings</div>
@@ -5376,55 +5609,157 @@ if ('serviceWorker' in navigator) {
          * @param {object} [options] - Optional settings: { duration: ms, type: 'success'|'error'|'info' }
          */
         function showToast(message, options = {}) {
+            const dict = TRANSLATIONS[localStorage.getItem('omniwrite-lang') || 'en'] || TRANSLATIONS['en'];
+            const msg = dict[message] || message;
             // Remove any existing toast
             const old = document.getElementById('omniwrite-toast');
             if (old) old.remove();
-
-            // Create toast element
             const toast = document.createElement('div');
             toast.id = 'omniwrite-toast';
             toast.className = 'liquid-glass';
-            toast.textContent = message;
+            toast.innerHTML = `
+            <span style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;transition:transform 0.2s;" id="closeToast">&times;</span>
+            <div style="padding-right:20px;">${msg}</div>
+            <div id="toastProgressBar" style="position:absolute;bottom:0;left:0;height:3px;width:100%;background:linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));border-radius:0 0 20px 20px;"></div>
+            `;
             toast.style.position = 'fixed';
-            toast.style.left = '50%';
-            toast.style.bottom = '40px';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.padding = '14px 32px';
-            toast.style.fontSize = '16px';
+            toast.style.right = '20px';
+            toast.style.top = '20px';
+            toast.style.padding = '16px 40px 16px 20px';
+            toast.style.fontSize = '15px';
             toast.style.zIndex = 999999;
             toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.2s';
+            toast.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
+            toast.style.borderRadius = '10px';
+            toast.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+            toast.style.color = '#fff';
+            toast.style.minWidth = '280px';
+            toast.style.maxWidth = '400px';
+            toast.style.backdropFilter = 'blur(2px) saturate(180%)';
+            toast.style.webkitBackdropFilter = 'blur(2px) saturate(180%)';
 
-            // Set background color based on type
-            let bg = 'rgba(30,30,40,0.01)';
-            let color = '#fff';
+            let bg = 'linear-gradient(135deg, rgba(30,30,40,0.85) 0%, rgba(20,20,30,0.92) 100%)';
+            let accentColor = 'rgba(255,255,255,0.4)';
             if (options.type === 'success') {
-                bg = 'rgba(46, 204, 113, 0.88)';
-                color = '#fff';
+            bg = 'linear-gradient(135deg, rgba(46, 204, 113, 0.25) 0%, rgba(39, 174, 96, 0.35) 100%)';
+            accentColor = 'rgba(46, 204, 113, 0.6)';
             } else if (options.type === 'error') {
-                bg = 'rgba(231, 76, 60, 0.78)';
-                color = '#fff';
+            bg = 'linear-gradient(135deg, rgba(231, 76, 60, 0.25) 0%, rgba(192, 57, 43, 0.35) 100%)';
+            accentColor = 'rgba(231, 76, 60, 0.6)';
             } else if (options.type === 'info') {
-                bg = 'rgba(52, 152, 219, 0.78)';
-                color = '#fff';
+            bg = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(41, 128, 185, 0.35) 100%)';
+            accentColor = 'rgba(52, 152, 219, 0.6)';
             }
             toast.style.background = bg;
-            toast.style.color = color;
+            toast.style.borderLeft = `4px solid ${accentColor}`;
 
             document.body.appendChild(toast);
 
+            // Close toast on X icon click with hover effect
+            const closeBtn = toast.querySelector('#closeToast');
+            closeBtn.onclick = () => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
+            setTimeout(() => toast.remove(), 300);
+            };
+            closeBtn.onmouseenter = () => {
+            closeBtn.style.transform = 'scale(1.2) rotate(90deg)';
+            };
+            closeBtn.onmouseleave = () => {
+            closeBtn.style.transform = 'scale(1) rotate(0deg)';
+            };
+
             // Animate in
             setTimeout(() => {
-                toast.style.opacity = '1';
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0) scale(1)';
             }, 10);
 
-            // Remove after duration
+            // Progress bar animation
             const duration = typeof options.duration === 'number' ? options.duration : 2600;
+            const progressBar = toast.querySelector('#toastProgressBar');
+            progressBar.style.transition = `width ${duration}ms linear`;
             setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
+            progressBar.style.width = '0';
+            }, 10);
+
+            // Remove after duration with fade out animation
+            setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
+            setTimeout(() => toast.remove(), 300);
             }, duration);
         }
+
+        // Add custom confirm modal function
+        window.showConfirm = function(message, onConfirm, onCancel) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:400px;">
+                <h2>Confirm</h2>
+                <p style="margin:20px 0;">${message}</p>
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button id="confirmCancelBtn">Cancel</button>
+                <button id="confirmOkBtn" style="background:#ffe066;color:#110736;">OK</button>
+                </div>
+            </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#confirmOkBtn').onclick = () => {
+            modal.remove();
+            if (typeof onConfirm === 'function') onConfirm();
+            };
+            modal.querySelector('#confirmCancelBtn').onclick = () => {
+            modal.remove();
+            if (typeof onCancel === 'function') onCancel();
+            };
+        };
+
+        // Add "Try Beta" button functionality
+        const tryBetaItem = document.querySelector('.try-beta-item');
+        tryBetaItem.addEventListener('click', function () {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:600px;max-height:80vh;overflow-y:auto;">
+                <span class="modal-content-close" id="closeBetaWarningModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                <h2 style="color:#e74c3c;margin-bottom:16px;">⚠️ Beta/Preview Version Warning</h2>
+                <div style="line-height:1.8;font-size:15px;margin-bottom:20px;">
+                <p><strong>You are about to access the beta/preview version of OmniWrite.</strong></p>
+                <p style="margin-top:12px;">Please be aware of the following risks:</p>
+                <ul style="margin:12px 0;padding-left:20px;">
+                    <li><strong>Data Corruption:</strong> Beta features may contain bugs that could corrupt or lose your documents.</li>
+                    <li><strong>Instability:</strong> The preview version may crash unexpectedly or behave unpredictably.</li>
+                    <li><strong>Breaking Changes:</strong> Features may change or be removed without notice.</li>
+                    <li><strong>No Guarantee:</strong> We do not guarantee data integrity or functionality in the beta version.</li>
+                </ul>
+                <div style="background:rgba(255,224,102,0.15);border-left:4px solid #ffe066;padding:12px 16px;border-radius:8px;margin:16px 0;">
+                    <p style="margin:0;"><strong>⚠️ IMPORTANT:</strong> Always export your data regularly using <strong>Settings → Backup & Restore → Export Backup</strong> before using the beta version.</p>
+                    <p style="margin:8px 0 0 0;"><strong>If anything goes wrong:</strong> Delete everything via <strong>Settings → Danger Zone → Delete Everything</strong> to restore stability, then import your backup.</p>
+                </div>
+                <p style="margin-top:16px;">By proceeding, you acknowledge and accept these risks.</p>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px;">
+                <button id="betaCancelBtn" style="background:rgba(255,255,255,0.1);">Cancel</button>
+                <button id="betaAcceptBtn" style="background:#e74c3c;color:#fff;">I Accept the Risks</button>
+                </div>
+            </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#closeBetaWarningModal').onclick = () => modal.remove();
+            modal.querySelector('#betaCancelBtn').onclick = () => {
+            modal.remove();
+            showToast('Action cancelled.', { type: 'info' });
+            };
+            modal.querySelector('#betaAcceptBtn').onclick = () => {
+            modal.remove();
+            window.location.href = 'preview.html';
+            };
+        });
         /**
          * Help Modal Functionality
          */
@@ -5470,6 +5805,7 @@ if ('serviceWorker' in navigator) {
                         <li>v1.0.6 - Added download formats, Share includes Share with Gmail, facebook, whatsapp, reddit. Fix a bug when switching documents and editing or creating too quickly overwrites content. and added more fonts in font family picker</li>
                         <li>v1.0.7 - Added Pin Documents feature, Removed the Voice To Text because it can send voice data to Google or Microsoft or Apple.</li>
                         <li>v1.0.8 - UI Improvements.</li>
+                        <li>v1.0.9 - Added Try Beta button with warning modal, UI Improvements and redesigned showToast.</li>
                         </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
@@ -6240,48 +6576,91 @@ if ('serviceWorker' in navigator) {
             document.querySelectorAll('button, .modal-content-close').forEach(el => {
                 if (dict[el.textContent]) el.textContent = dict[el.textContent];
             });
-            window.showToast = function(message, options = {}) {
-                const msg = dict[message] || message;
-                const old = document.getElementById('omniwrite-toast');
-                if (old) old.remove();
-                const toast = document.createElement('div');
-                toast.id = 'omniwrite-toast';
-                toast.className = 'liquid-glass';
-                toast.textContent = msg;
-                toast.style.position = 'fixed';
-                toast.style.left = '50%';
-                toast.style.bottom = '40px';
-                toast.style.transform = 'translateX(-50%)';
-                toast.style.padding = '14px 32px';
-                toast.style.fontSize = '16px';
-                toast.style.zIndex = 999999;
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.2s';
-                let bg = 'rgba(30,30,40,0.01)';
-                let color = '#fff';
-                if (options.type === 'success') {
-                    bg = 'rgba(46, 204, 113, 0.88)';
-                    color = '#fff';
-                } else if (options.type === 'error') {
-                    bg = 'rgba(231, 76, 60, 0.88)';
-                    color = '#fff';
-                } else if (options.type === 'info') {
-                    bg = 'rgba(52, 152, 219, 0.88)';
-                    color = '#fff';
-                }
-                toast.style.background = bg;
-                toast.style.color = color;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '1';
-                }, 10);
-                const duration = typeof options.duration === 'number' ? options.duration : 2600;
-                setTimeout(() => {
+             // Translate toast messages (patch showToast)
+                window.showToast = function(message, options = {}) {
+                    const msg = dict[message] || message;
+                    // Remove any existing toast
+                    const old = document.getElementById('omniwrite-toast');
+                    if (old) old.remove();
+                    const toast = document.createElement('div');
+                    toast.id = 'omniwrite-toast';
+                    toast.className = 'liquid-glass';
+                    toast.innerHTML = `
+                        <span style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;transition:transform 0.2s;" id="closeToast">&times;</span>
+                        <div style="padding-right:20px;">${msg}</div>
+                        <div id="toastProgressBar" style="position:absolute;bottom:0;left:0;height:3px;width:100%;background:linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));border-radius:0 0 20px 20px;"></div>
+                    `;
+                    toast.style.position = 'fixed';
+                    toast.style.right = '20px';
+                    toast.style.top = '20px';
+                    toast.style.padding = '16px 40px 16px 20px';
+                    toast.style.fontSize = '15px';
+                    toast.style.zIndex = 999999;
                     toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 300);
-                }, duration);
-            };
-        }
+                    toast.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    toast.style.transform = 'translateY(-20px) scale(0.95)';
+                    toast.style.borderRadius = '10px';
+                    toast.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                    toast.style.color = '#fff';
+                    toast.style.minWidth = '280px';
+                    toast.style.maxWidth = '400px';
+                    toast.style.backdropFilter = 'blur(2px) saturate(180%)';
+                    toast.style.webkitBackdropFilter = 'blur(2px) saturate(180%)';
+
+                    let bg = 'linear-gradient(135deg, rgba(30,30,40,0.85) 0%, rgba(20,20,30,0.92) 100%)';
+                    let accentColor = 'rgba(255,255,255,0.4)';
+                    if (options.type === 'success') {
+                        bg = 'linear-gradient(135deg, rgba(46, 204, 113, 0.25) 0%, rgba(39, 174, 96, 0.35) 100%)';
+                        accentColor = 'rgba(46, 204, 113, 0.6)';
+                    } else if (options.type === 'error') {
+                        bg = 'linear-gradient(135deg, rgba(231, 76, 60, 0.25) 0%, rgba(192, 57, 43, 0.35) 100%)';
+                        accentColor = 'rgba(231, 76, 60, 0.6)';
+                    } else if (options.type === 'info') {
+                        bg = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(41, 128, 185, 0.35) 100%)';
+                        accentColor = 'rgba(52, 152, 219, 0.6)';
+                    }
+                    toast.style.background = bg;
+                    toast.style.borderLeft = `4px solid ${accentColor}`;
+
+                    document.body.appendChild(toast);
+
+                    // Close toast on X icon click with hover effect
+                    const closeBtn = toast.querySelector('#closeToast');
+                    closeBtn.onclick = () => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateY(-20px) scale(0.95)';
+                        setTimeout(() => toast.remove(), 300);
+                    };
+                    closeBtn.onmouseenter = () => {
+                        closeBtn.style.transform = 'scale(1.2) rotate(90deg)';
+                    };
+                    closeBtn.onmouseleave = () => {
+                        closeBtn.style.transform = 'scale(1) rotate(0deg)';
+                    };
+
+                    // Animate in
+                    setTimeout(() => {
+                        toast.style.opacity = '1';
+                        toast.style.transform = 'translateY(0) scale(1)';
+                    }, 10);
+
+                    // Progress bar animation
+                    const duration = typeof options.duration === 'number' ? options.duration : 2600;
+                    const progressBar = toast.querySelector('#toastProgressBar');
+                    progressBar.style.transition = `width ${duration}ms linear`;
+                    setTimeout(() => {
+                        progressBar.style.width = '0';
+                    }, 10);
+
+                    // Remove after duration with fade out animation
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateY(-20px) scale(0.95)';
+                        setTimeout(() => toast.remove(), 300);
+                    }, duration);
+                };
+            }
+        
         
         // On page load, apply theme and translations from localStorage
         applyTheme(localStorage.getItem('omniwrite-theme') || 'system');
@@ -6822,6 +7201,7 @@ if ('serviceWorker' in navigator) {
                     if (dict[el.textContent]) el.textContent = dict[el.textContent];
                 });
                 // Translate toast messages (patch showToast)
+                 // Translate toast messages (patch showToast)
                 window.showToast = function(message, options = {}) {
                     const msg = dict[message] || message;
                     // Remove any existing toast
@@ -6830,42 +7210,81 @@ if ('serviceWorker' in navigator) {
                     const toast = document.createElement('div');
                     toast.id = 'omniwrite-toast';
                     toast.className = 'liquid-glass';
-                    toast.textContent = msg;
+                    toast.innerHTML = `
+                        <span style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;transition:transform 0.2s;" id="closeToast">&times;</span>
+                        <div style="padding-right:20px;">${msg}</div>
+                        <div id="toastProgressBar" style="position:absolute;bottom:0;left:0;height:3px;width:100%;background:linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));border-radius:0 0 20px 20px;"></div>
+                    `;
                     toast.style.position = 'fixed';
-                    toast.style.left = '50%';
-                    toast.style.bottom = '40px';
-                    toast.style.transform = 'translateX(-50%)';
-                    toast.style.padding = '14px 32px';
-                    toast.style.fontSize = '16px';
+                    toast.style.right = '20px';
+                    toast.style.top = '20px';
+                    toast.style.padding = '16px 40px 16px 20px';
+                    toast.style.fontSize = '15px';
                     toast.style.zIndex = 999999;
                     toast.style.opacity = '0';
-                    toast.style.transition = 'opacity 0.2s';
-                    let bg = 'rgba(30,30,40,0.92)';
-                    let color = '#fff';
+                    toast.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    toast.style.transform = 'translateY(-20px) scale(0.95)';
+                    toast.style.borderRadius = '10px';
+                    toast.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+                    toast.style.color = '#fff';
+                    toast.style.minWidth = '280px';
+                    toast.style.maxWidth = '400px';
+                    toast.style.backdropFilter = 'blur(2px) saturate(180%)';
+                    toast.style.webkitBackdropFilter = 'blur(2px) saturate(180%)';
+
+                    let bg = 'linear-gradient(135deg, rgba(30,30,40,0.85) 0%, rgba(20,20,30,0.92) 100%)';
+                    let accentColor = 'rgba(255,255,255,0.4)';
                     if (options.type === 'success') {
-                        bg = 'rgba(46, 204, 113, 0.88)';
-                        color = '#fff';
+                        bg = 'linear-gradient(135deg, rgba(46, 204, 113, 0.25) 0%, rgba(39, 174, 96, 0.35) 100%)';
+                        accentColor = 'rgba(46, 204, 113, 0.6)';
                     } else if (options.type === 'error') {
-                        bg = 'rgba(231, 76, 60, 0.88)';
-                        color = '#fff';
+                        bg = 'linear-gradient(135deg, rgba(231, 76, 60, 0.25) 0%, rgba(192, 57, 43, 0.35) 100%)';
+                        accentColor = 'rgba(231, 76, 60, 0.6)';
                     } else if (options.type === 'info') {
-                        bg = 'rgba(52, 152, 219, 0.88)';
-                        color = '#fff';
+                        bg = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(41, 128, 185, 0.35) 100%)';
+                        accentColor = 'rgba(52, 152, 219, 0.6)';
                     }
                     toast.style.background = bg;
-                    toast.style.color = color;
+                    toast.style.borderLeft = `4px solid ${accentColor}`;
+
                     document.body.appendChild(toast);
+
+                    // Close toast on X icon click with hover effect
+                    const closeBtn = toast.querySelector('#closeToast');
+                    closeBtn.onclick = () => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateY(-20px) scale(0.95)';
+                        setTimeout(() => toast.remove(), 300);
+                    };
+                    closeBtn.onmouseenter = () => {
+                        closeBtn.style.transform = 'scale(1.2) rotate(90deg)';
+                    };
+                    closeBtn.onmouseleave = () => {
+                        closeBtn.style.transform = 'scale(1) rotate(0deg)';
+                    };
+
+                    // Animate in
                     setTimeout(() => {
                         toast.style.opacity = '1';
+                        toast.style.transform = 'translateY(0) scale(1)';
                     }, 10);
+
+                    // Progress bar animation
                     const duration = typeof options.duration === 'number' ? options.duration : 2600;
+                    const progressBar = toast.querySelector('#toastProgressBar');
+                    progressBar.style.transition = `width ${duration}ms linear`;
+                    setTimeout(() => {
+                        progressBar.style.width = '0';
+                    }, 10);
+
+                    // Remove after duration with fade out animation
                     setTimeout(() => {
                         toast.style.opacity = '0';
+                        toast.style.transform = 'translateY(-20px) scale(0.95)';
                         setTimeout(() => toast.remove(), 300);
                     }, duration);
                 };
             }
-
             // On load, apply translations
             applyTranslations(currentLang);
 
@@ -7043,7 +7462,6 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
-
 
 
 
