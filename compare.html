@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OmniWrite vs Google Docs - Feature Comparison</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        font-family: "Google Sans Flex", sans-serif;
+        overflow-x: hidden;
+      }
+
+      body {
+        background: linear-gradient(135deg, #0a031e 0%, #1a0324 100%);
+        background-size: 400% 400%;
+        animation: gradientAnimation 10s ease infinite;
+        color: #e0e0e0;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      @keyframes gradientAnimation {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-variation-settings: "ROND" 90;
+        font-feature-settings:
+          "liga" 0,
+          "ss01" 1;
+      }
+
+      p {
+        font-variation-settings: "ROND" 60;
+        font-feature-settings: "liga" 0;
+      }
+
+      .liquid-glass {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.16) 0%,
+          rgba(255, 255, 255, 0.06) 22%,
+          rgba(255, 255, 255, 0.04) 50%,
+          rgba(255, 255, 255, 0.06) 78%,
+          rgba(255, 255, 255, 0.14) 100%
+        );
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(2px) saturate(190%) brightness(105%)
+          contrast(100%);
+        -webkit-backdrop-filter: blur(1.75px) saturate(200%) brightness(125%)
+          contrast(100%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 24px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 60px;
+        padding: 40px 20px;
+      }
+
+      .header h1 {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: titleGlow 3s ease-in-out infinite;
+      }
+      .card-icon {
+        font-family: "Material Symbols Rounded";
+      }
+      icon {
+        font-family: "Material Symbols Rounded";
+      }
+      @keyframes titleGlow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+        }
+        50% {
+          filter: drop-shadow(0 0 40px rgba(118, 75, 162, 0.7));
+        }
+      }
+
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+      }
+
+      .comparison-card {
+        padding: 40px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .comparison-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+      }
+
+      .comparison-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .comparison-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      .card-icon {
+        font-size: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .card-title {
+        font-size: 2rem;
+      }
+
+      .feature-list {
+        list-style: none;
+        margin-top: 20px;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .feature-item:hover {
+        padding-left: 10px;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 8px;
+      }
+
+      .feature-item icon {
+        font-family: "Material Symbols Rounded";
+        font-size: 24px;
+        color: #667eea;
+        flex-shrink: 0;
+      }
+
+      .feature-item.unavailable icon {
+        color: #999;
+        opacity: 0.5;
+      }
+
+      .feature-text {
+        flex: 1;
+        line-height: 1.6;
+      }
+
+      .feature-item.unavailable .feature-text {
+        opacity: 0.5;
+        text-decoration: line-through;
+      }
+
+      .detailed-comparison {
+        padding: 40px;
+        margin-bottom: 40px;
+      }
+
+      .detailed-comparison h2 {
+        font-size: 2.5rem;
+        margin-bottom: 40px;
+        text-align: center;
+      }
+
+      .comparison-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }
+
+      .comparison-table thead th {
+        padding: 20px;
+        text-align: left;
+        font-size: 1.3rem;
+        position: sticky;
+        top: 0;
+        background: rgba(10, 3, 30, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+      }
+
+      .comparison-table tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .comparison-table tbody tr:hover {
+        transform: scale(1.01);
+      }
+
+      .comparison-table td {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .comparison-table td:first-child {
+        border-radius: 12px 0 0 12px;
+        font-weight: 600;
+      }
+
+      .comparison-table td:last-child {
+        border-radius: 0 12px 12px 0;
+      }
+
+      .checkmark {
+        color: #4ade80;
+        font-size: 24px;
+      }
+
+      .crossmark {
+        color: #f87171;
+        font-size: 24px;
+      }
+
+      .partial {
+        color: #fbbf24;
+        font-size: 24px;
+      }
+
+      .cta-section {
+        text-align: center;
+        padding: 60px 40px;
+        margin-top: 60px;
+      }
+
+      .cta-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 40px;
+        margin-top: 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 69px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);
+      }
+
+      .cta-button:active {
+        transform: scale(0.98);
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .comparison-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .comparison-table {
+          font-size: 0.9rem;
+        }
+
+        .comparison-table td {
+          padding: 12px;
+        }
+      }
+
+      .scroll-indicator {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+        opacity: 0.7;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 69px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 10px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .notice {
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-top: 40px;
+        opacity: 0.7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header Section -->
+      <div class="header">
+        <h1>OmniWrite vs Google Docs</h1>
+        <p>
+          A comprehensive comparison of features, privacy, and performance
+          between Munetios OmniWrite and Google Docs
+        </p>
+      </div>
+
+      <!-- Quick Comparison Cards -->
+      <div class="comparison-grid">
+        <!-- OmniWrite Card -->
+        <div class="comparison-card liquid-glass">
+          <div class="card-header">
+            <icon class="card-icon">edit_note</icon>
+            <div>
+              <h2 class="card-title">OmniWrite</h2>
+              <span class="badge">Privacy First</span>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <icon>shield</icon>
+              <span class="feature-text"
+                ><strong>100% Offline & Private</strong> - Your data never
+                leaves your device</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>lock</icon>
+              <span class="feature-text"
+                ><strong>End-to-End Encryption</strong> - Military-grade AES-256
+                encryption</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>cloud_off</icon>
+              <span class="feature-text"
+                ><strong>No Account Required</strong> - Start writing
+                immediately</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>palette</icon>
+              <span class="feature-text"
+                ><strong>Modern UI</strong> - Beautiful liquid glass
+                design</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>font_download</icon>
+              <span class="feature-text"
+                ><strong>50+ Fonts</strong> - Extensive font library including
+                Google Sans</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>image</icon>
+              <span class="feature-text"
+                ><strong>Image Support</strong> - Upload and embed images in
+                documents</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>download</icon>
+              <span class="feature-text"
+                ><strong>Export Options</strong> - Save as HTML, text, or backup
+                format</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>speed</icon>
+              <span class="feature-text"
+                ><strong>Lightning Fast</strong> - Instant load times, no server
+                delays</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>dark_mode</icon>
+              <span class="feature-text"
+                ><strong>Auto Dark Mode</strong> - Respects system
+                preferences</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>group</icon>
+              <span class="feature-text"
+                >Real-time Collaboration - Coming Soon</span
+              >
+            </li>
+          </ul>
+        </div>
+
+        <!-- Google Docs Card -->
+        <div class="comparison-card liquid-glass">
+          <div class="card-header">
+            <icon class="card-icon">description</icon>
+            <div>
+              <h2 class="card-title">Google Docs</h2>
+              <span
+                class="badge"
+                style="
+                  background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+                "
+                >Cloud Based</span
+              >
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <icon>group</icon>
+              <span class="feature-text"
+                ><strong>Real-time Collaboration</strong> - Multiple users edit
+                simultaneously</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>cloud_done</icon>
+              <span class="feature-text"
+                ><strong>Cloud Storage</strong> - Access from anywhere with
+                internet</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>history</icon>
+              <span class="feature-text"
+                ><strong>Version History</strong> - Detailed revision
+                tracking</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>share</icon>
+              <span class="feature-text"
+                ><strong>Easy Sharing</strong> - Share links with permissions
+                control</span
+              >
+            </li>
+            <li class="feature-item">
+              <icon>integration_instructions</icon>
+              <span class="feature-text"
+                ><strong>Google Integration</strong> - Works with Gmail, Drive,
+                etc.</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>cloud_off</icon>
+              <span class="feature-text"
+                >Offline Mode - Limited functionality</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>shield</icon>
+              <span class="feature-text"
+                >Full Privacy - Requires Google account, data on servers</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>lock</icon>
+              <span class="feature-text"
+                >Client-side Encryption - Server-side only</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>speed</icon>
+              <span class="feature-text"
+                >Instant Load - Depends on internet connection</span
+              >
+            </li>
+            <li class="feature-item unavailable">
+              <icon>visibility_off</icon>
+              <span class="feature-text"
+                >No Tracking - Collects usage data for ads</span
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Detailed Comparison Table -->
+      <div class="detailed-comparison liquid-glass">
+        <h2>Detailed Feature Comparison</h2>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>OmniWrite</th>
+              <th>Google Docs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Privacy & Security</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Data Storage</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Local device only
+              </td>
+              <td><icon class="crossmark">cancel</icon> Google servers</td>
+            </tr>
+            <tr>
+              <td>End-to-End Encryption</td>
+              <td><icon class="checkmark">check_circle</icon> AES-256</td>
+              <td><icon class="crossmark">cancel</icon> Server-side only</td>
+            </tr>
+            <tr>
+              <td>No Account Required</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Anonymous usage
+              </td>
+              <td>
+                <icon class="crossmark">cancel</icon> Google account mandatory
+              </td>
+            </tr>
+            <tr>
+              <td>Offline Access</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Full functionality
+              </td>
+              <td>
+                <icon class="partial">change_circle</icon> Limited features
+              </td>
+            </tr>
+            <tr>
+              <td>Data Mining/Ads</td>
+              <td><icon class="checkmark">check_circle</icon> Zero tracking</td>
+              <td><icon class="crossmark">cancel</icon> Data used for ads</td>
+            </tr>
+            <tr>
+              <td><strong>Editing Features</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Rich Text Editing</td>
+              <td><icon class="checkmark">check_circle</icon> Full support</td>
+              <td><icon class="checkmark">check_circle</icon> Full support</td>
+            </tr>
+            <tr>
+              <td>Font Selection</td>
+              <td><icon class="checkmark">check_circle</icon> 50+ fonts</td>
+              <td><icon class="checkmark">check_circle</icon> 20+ fonts</td>
+            </tr>
+            <tr>
+              <td>Image Support</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Upload & embed
+              </td>
+              <td><icon class="checkmark">check_circle</icon> Full support</td>
+            </tr>
+            <tr>
+              <td>Text Formatting</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Bold, italic,
+                underline, colors
+              </td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Extensive formatting
+              </td>
+            </tr>
+            <tr>
+              <td>Lists & Indentation</td>
+              <td><icon class="checkmark">check_circle</icon> Full support</td>
+              <td><icon class="checkmark">check_circle</icon> Full support</td>
+            </tr>
+            <tr>
+              <td><strong>Collaboration</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Real-time Co-editing</td>
+              <td><icon class="crossmark">cancel</icon> Coming soon</td>
+              <td><icon class="checkmark">check_circle</icon> Yes</td>
+            </tr>
+            <tr>
+              <td>Comments & Suggestions</td>
+              <td><icon class="crossmark">cancel</icon> Not yet</td>
+              <td><icon class="checkmark">check_circle</icon> Yes</td>
+            </tr>
+            <tr>
+              <td>Sharing Options</td>
+              <td>
+                <icon class="partial">change_circle</icon> Export & manual share
+              </td>
+              <td><icon class="checkmark">check_circle</icon> Link sharing</td>
+            </tr>
+            <tr>
+              <td><strong>Performance</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Load Time</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Instant (offline)
+              </td>
+              <td><icon class="partial">change_circle</icon> 2-5 seconds</td>
+            </tr>
+            <tr>
+              <td>Document Save Speed</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Instant (local)
+              </td>
+              <td>
+                <icon class="partial">change_circle</icon> Depends on connection
+              </td>
+            </tr>
+            <tr>
+              <td>Works Without Internet</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> 100% functional
+              </td>
+              <td>
+                <icon class="crossmark">cancel</icon> Setup required, limited
+              </td>
+            </tr>
+            <tr>
+              <td><strong>User Experience</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Modern UI Design</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Liquid glass
+                aesthetics
+              </td>
+              <td>
+                <icon class="partial">change_circle</icon> Traditional interface
+              </td>
+            </tr>
+            <tr>
+              <td>Dark Mode</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Auto-detects system
+              </td>
+              <td><icon class="checkmark">check_circle</icon> Manual toggle</td>
+            </tr>
+            <tr>
+              <td>Search Documents</td>
+              <td><icon class="checkmark">check_circle</icon> Yes</td>
+              <td><icon class="checkmark">check_circle</icon> Yes</td>
+            </tr>
+            <tr>
+              <td>Document Organization</td>
+              <td><icon class="checkmark">check_circle</icon> Local library</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Google Drive folders
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Export & Backup</strong></td>
+              <td>
+                <icon class="partial">change_circle</icon>
+                Limited options
+              </td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Multiple formats
+              </td>
+            </tr>
+            <tr>
+              <td>Backup/Export</td>
+              <td><icon class="checkmark">check_circle</icon> Manual backup</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Auto cloud backup
+              </td>
+            </tr>
+            <tr>
+              <td>File Formats</td>
+              <td><icon class="partial">change_circle</icon> HTML, text</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> PDF, DOCX, many
+                formats
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Cost</strong></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Pricing</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> 100% Free forever
+              </td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Free with limits
+              </td>
+            </tr>
+            <tr>
+              <td>Storage Limits</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> Only device storage
+              </td>
+              <td>
+                <icon class="partial">change_circle</icon> 15GB free, paid for
+                more
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="cta-section liquid-glass">
+        <h2>Ready to Experience OmniWrite?</h2>
+        <p style="font-size: 1.1rem; margin-top: 20px; opacity: 0.9">
+          Start writing with complete privacy and zero setup. No account, no
+          tracking, just pure writing freedom.
+        </p>
+        <a href="index.html" class="cta-button">
+          <icon>edit_note</icon>
+          Try OmniWrite Now
+        </a>
+        <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7">
+          100% free • No credit card required • Works offline
+        </p>
+        <p class="notice">
+          OmniWrite™ is a trademark of Munetios. <br />
+          Google Docs® is a registered trademark of Google LLC. This comparison
+          is for informational purposes only and is not affiliated with or
+          endorsed by Google LLC. All trademarks are the property of their
+          respective owners.
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Smooth scroll for any internal links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Add hover effect to table rows
+      const tableRows = document.querySelectorAll(".comparison-table tbody tr");
+      tableRows.forEach((row) => {
+        row.addEventListener("mouseenter", () => {
+          row.style.background = "rgba(102, 126, 234, 0.1)";
+        });
+        row.addEventListener("mouseleave", () => {
+          row.style.background = "";
+        });
+      });
+    </script>
+  </body>
+</html>
