@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -114,6 +114,7 @@
         border: 1px solid #ffffff28;
         border-radius: 999px;
         color: #fff;
+        font-family: "Google Sans Flex", sans-serif;
         font-size: 1rem;
         cursor: pointer;
       }
@@ -154,6 +155,72 @@
       .footer-links a:hover {
         opacity: 1;
       }
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.8rem;
+        }
+
+        h2 {
+          font-size: 1.3rem;
+        }
+
+        p {
+          font-size: 1rem;
+        }
+
+        .topbar {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .nav-right {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .nav-right a {
+          margin-left: 0;
+          font-size: 0.9rem;
+        }
+
+        section {
+          padding: 2rem 1rem;
+        }
+
+        .container {
+          flex-direction: column;
+        }
+
+        table {
+          font-size: 0.85rem;
+          display: block;
+          overflow-x: auto;
+        }
+
+        th,
+        td {
+          padding: 0.5rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        p {
+          font-size: 0.95rem;
+        }
+
+        .cta-btn {
+          width: 100%;
+          padding: 0.75rem;
+        }
+
+        table {
+          font-size: 0.75rem;
+        }
+      }
     </style>
   </head>
 
@@ -181,7 +248,7 @@
           </p>
           <button
             class="cta-btn"
-            onclick="window.location.href='https://write.munetios.com'"
+            onclick="window.location.href = 'https://write.munetios.com'"
           >
             Get Started
           </button>
@@ -273,6 +340,30 @@
           <td>iOS 26 only</td>
           <td>No</td>
         </tr>
+        <tr>
+          <td>Pin documents</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td>Open source</td>
+          <td>Yes</td>
+          <td>No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td>Folders</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>Yes</td>
+        </tr>
       </table>
     </section>
 
@@ -296,6 +387,10 @@
           <strong>Does OmniWrite work offline?</strong> Yes, offline support is
           built in.
         </li>
+        <li>
+          <strong>Can I use AI features in OmniWrite?</strong> As of now, AI
+          features are not integrated into OmniWrite.
+        </li>
       </ul>
     </section>
 
@@ -316,4 +411,3 @@
     </script>
   </body>
 </html>
-
