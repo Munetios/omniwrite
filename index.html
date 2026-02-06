@@ -700,7 +700,7 @@ if ('serviceWorker' in navigator) {
             display: none;
         }
         @media (max-width: 560px) {
-            #versionHistoryBtn, #shareDocumentBtn {
+            #versionHistoryBtn, #shareDocumentBtn, #splitScreenBtn {
                 display: none;
             }
             #renameMoreOptionsBtn {
@@ -864,6 +864,49 @@ if ('serviceWorker' in navigator) {
         .documents--section p {
             margin-left: 8px;
         }
+        .folder-item {
+            position: relative;
+            padding-right: 40px;
+        }
+        .folder-item icon:last-child {
+            position: absolute;
+            right: 10px;
+            font-size: 20px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .folder-item:hover icon:last-child {
+            opacity: 1;
+        }
+        .folder-documents {
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+        .folder-documents .sidebarnav__item {
+            margin-left: 20px;
+        }
+        .add-folder-button {
+            margin: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s;
+            opacity: 0.8;
+        }
+        .add-folder-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            opacity: 1;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
         .liquid-glass {
                 background:
     linear-gradient(
@@ -891,7 +934,358 @@ if ('serviceWorker' in navigator) {
                 color: #202020;
             }
         }
-            
+                .editor-content-area-container {
+                    display: flex;
+                    gap: 20px;
+                    width: 100%;
+                }
+
+                #editorArea {
+                    width: 100%;
+                }
+                .reading__mode-panel {
+                    display: none;
+                    width: 350px;
+                    min-width: 300px;
+                    max-width: 400px;
+                    height: calc(100vh - 200px);
+                    margin-left: 20px;
+                    padding: 20px;
+                    border-radius: 16px;
+                    overflow-y: auto;
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                    flex-shrink: 0;
+                }
+
+                .reading__mode-panel.active {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .reading__mode-panel::-webkit-scrollbar {
+                    width: 8px;
+                }
+
+                .reading__mode-panel::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .reading__mode-panel::-webkit-scrollbar-thumb {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    border-radius: 20px;
+                }
+
+                .reading-mode-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .reading-mode-title {
+                    font-size: 20px;
+                    font-weight: 600;
+                }
+
+                .reading-mode-close-btn {
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 50%;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .reading-mode-close-btn:hover {
+                    background-color: rgba(231, 76, 60, 0.2);
+                    transform: rotate(90deg) scale(1.2);
+                }
+
+                .reading-mode-close-btn icon {
+                    font-size: 24px;
+                    color: #e74c3c;
+                }
+
+                .reading__mode-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                    flex: 1;
+                }
+
+                .text-reading {
+                    padding: 16px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border-radius: 12px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    font-size: 16px;
+                    line-height: 1.8;
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                }
+
+                .text-reading::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                .text-reading::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .text-reading::-webkit-scrollbar-thumb {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    border-radius: 10px;
+                }
+
+                .controller-actions {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                .controler-action {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 16px;
+                    background: rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    flex: 1;
+                    min-width: 100px;
+                    justify-content: center;
+                }
+
+                .controler-action:hover {
+                    background: rgba(255, 255, 255, 0.15);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                .controler-action icon {
+                    font-size: 22px;
+                }
+
+                .label-controler-action {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                .settings-reading-mode {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-top: 8px;
+                }
+
+                .setting-item {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border-radius: 10px;
+                }
+
+                .setting-label {
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+
+                .setting-item button {
+                    padding: 6px 14px;
+                    font-size: 14px;
+                    min-width: 80px;
+                }
+
+                @media (max-width: 1050px) {
+                    .reading__mode-panel {
+                        width: 100%;
+                        max-width: 100%;
+                        margin-left: 0;
+                        margin-top: 20px;
+                        height: auto;
+                        max-height: 500px;
+                    }
+                    
+                    .editor-content-area-container {
+                        flex-direction: column;
+                    }
+                }
+                .add-folder-button {
+                    cursor: pointer;
+                    padding: 12px 16px;
+                    border-radius: 12px;
+                    margin: 4px 8px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+
+                .add-folder-button:hover {
+                    background-color: rgba(255, 255, 255, 0.12);
+                    transform: translateX(4px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                .add-folder-button::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 4px;
+                    height: 0;
+                    background: linear-gradient(180deg, #667eea, #764ba2);
+                    border-radius: 0 4px 4px 0;
+                    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .add-folder-button:hover::before {
+                    height: 60%;
+                }
+
+                .add-folder-button icon {
+                    font-size: 28px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .add-folder-button:hover icon {
+                    text-shadow: 0 0 12px rgba(102, 126, 234, 0.6),
+                                 0 0 24px rgba(102, 126, 234, 0.4);
+                }
+                /* Folders Section Styling */
+                .folder-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    box-sizing: border-box;
+                    border-radius: 12px;
+                    margin: 4px 8px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                }
+
+                .folder-item::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 4px;
+                    height: 0;
+                    background: linear-gradient(180deg, #667eea, #764ba2);
+                    border-radius: 0 4px 4px 0;
+                    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .folder-item:hover {
+                    background-color: rgba(255, 255, 255, 0.12);
+                    transform: translateX(4px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                .folder-item:hover::before {
+                    height: 60%;
+                }
+
+                .folder-item icon {
+                    font-size: 28px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    color: #ffe066;
+                }
+
+                .folder-item:hover icon {
+                    text-shadow: 0 0 12px rgba(102, 126, 234, 0.6),
+                                 0 0 24px rgba(102, 126, 234, 0.4);
+                    transform: scale(1.1);
+                }
+
+                .folder-item .menu-text {
+                    flex: 1;
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+
+                .folder-actions {
+                    display: flex;
+                    gap: 8px;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+
+                .folder-item:hover .folder-actions {
+                    opacity: 1;
+                }
+
+                .folder-action-btn {
+                    background: transparent;
+                    border: none;
+                    color: rgba(255, 255, 255, 0.7);
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 50%;
+                    transition: all 0.3s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .folder-action-btn:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: #fff;
+                    transform: scale(1.15);
+                }
+
+                .folder-action-btn icon {
+                    font-size: 18px;
+                }
+
+                .folder-item.expanded {
+                    background-color: rgba(255, 255, 255, 0.08);
+                }
+
+                .folder-documents {
+                    padding-left: 32px;
+                    margin-top: 4px;
+                    display: none;
+                }
+
+                .folder-item.expanded + .folder-documents {
+                    display: block;
+                }
+
+                .folder-document-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    margin: 2px 0;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .folder-document-item:hover {
+                    background-color: rgba(255, 255, 255, 0.08);
+                    transform: translateX(2px);
+                }
+
+                .folder-document-item icon {
+                    font-size: 20px;
+                    color: rgba(255, 224, 102, 0.7);
+                }
+
+                .folder-document-item .menu-text {
+                    font-size: 14px;
+                }
     </style>
 </head>
 <body>
@@ -923,14 +1317,27 @@ if ('serviceWorker' in navigator) {
                         <icon>search</icon>
                         <input type="text" placeholder="Search documents" />
                     </div>
-                <div class="sidebar__content">
-                    <div class="documents--section">
+                <div class="sidebar__content">  <div class="documents--section">
                         <h4>Pinned</h4>
                         <div class="documents--list" id="pinnedDocumentsList">
                             <!-- Pinned document items will be dynamically added here -->
                              <p>No pinned documents</p>
                              </div>
                     </div>
+                    <div class="documents--section">
+                        <h4>Folders</h4>
+                        <div class="documents--list" id="foldersList">
+                            <!-- Folder items will be dynamically added here -->
+                            <p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders</p>
+                        </div>
+                        <div class="add-folder-button">
+                            <div id="addFolderBtn" style="display: flex; align-items: center; gap: 10px;">
+                                <icon>create_new_folder</icon>
+                                <span>Add Folder</span>
+                            </div>
+                        </div>
+                    </div>
+                  
                    <div class="documents--section">
                     <h4>Documents</h4>
                     <div class="documents--list" id="documentsList">
@@ -1040,6 +1447,7 @@ if ('serviceWorker' in navigator) {
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
                     <icon id="versionHistoryBtn">history</icon>
                     <icon id="previewBtn" >visibility</icon>
+                    <icon id="readingModeBtn" title="Reading Mode">auto_stories</icon>
                     <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
                     <icon id="shareDocumentBtn">share</icon>
                     <icon id="moreEditorBtn">more_vert</icon>
@@ -1147,12 +1555,58 @@ if ('serviceWorker' in navigator) {
                         <icon>palette</icon>
                     </div>
                 </div>
+                <div class="editor-content-area-container">
                 <div id="editorArea" contenteditable="true" style="padding: 20px; min-height: calc(100vh - 200px); box-sizing: border-box; outline: none; border-radius: 16px; background-color: #1a0f3c; color: #FFFFFF; font-size: 18px; line-height: 1.9; margin-top: 12px;">
                     
                     </div>
+                    <div class="right-editor-content" id="rightEditorContent" style="display: none;"></div>
+                    <omniwrite-reading-panel class="reading__mode-panel liquid-glass" id="readingModePanel">
+                        <div class="reading-mode-header">
+                            <div class="reading-mode-title">Reading Mode</div>
+                            <div class="reading-mode-close-btn" id="closeReadingModeBtn">
+                                <icon>close</icon>
+                            </div>
+                        </div>
+                        <div class="reading__mode-content" id="readingModeContent">
+                            <div class="text-reading" id="documentText"></div>
+                            <div class="controller-actions">
+                                <div class="controler-action" id="playBtn">
+                                    <icon>play_arrow</icon> <div class="label-controler-action">
+                                        Play
+                                    </div>
+                                </div>
+                                <div class="controler-action" id="pauseBtn">
+                                    <icon>pause</icon> <div class="label-controler-action">
+                                        Pause
+                                    </div>
+                                    </div>
+                                <div class="controler-action" id="stopBtn">
+                                    <icon>stop</icon> <div class="label-controler-action">
+                                        Stop
+                                    </div>
+                                    </div>
+                            </div>
+                            <div class="settings-reading-mode">
+                                <div class="setting-item">
+                                    <div class="setting-label">Voice:</div>
+                                    <button id="voiceSelectBtn">Select Voice</button>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-label">Speed:</div>
+                                    <button id="speedDropdownBtn">1x</button>
+                                </div>
+                            </div>
+                        </div>
+                    </omniwrite-reading-panel>
+                </div>
             </div> 
         </div>
     </div> <!-- Close .main-container -->
+        <div class="dropdown-wrapper liquid-glass" id="voicePicker">
+
+            <hr>
+            <div id="voiceOtherActions"></div>
+        </div>
                         <div class="dropdown-wrapper liquid-glass" id="fontSizePicker" style="min-width: 80px;">
                         <div class="dropdown-item" data-size="8"><div class="menu-text" style="font-size:8px;">8 px</div></div>
                         <div class="dropdown-item" data-size="10"><div class="menu-text" style="font-size:10px;">10 px</div></div>
@@ -1465,17 +1919,31 @@ if ('serviceWorker' in navigator) {
     </div>
 </div>
     <div class="dropdown-wrapper liquid-glass" id="createOptions">
-        <div class="dropdown-item">
+        <div class="dropdown-item" id="createNewDocumentBtn">
             <icon>description</icon>
             <div class="menu-text">New Document</div>
         </div>
-        <div class="dropdown-item">
+        <div class="dropdown-item" id="createNewFolderBtn">
+            <icon>folder</icon>
+            <div class="menu-text">New Folder</div>
+        </div>
+        <div class="dropdown-item" id="createNewImageBtn">
             <icon>image</icon>
             <div class="menu-text">New Image</div>
         </div>
-        <div class="dropdown-item">
+        <div class="dropdown-item" id="createImportFileBtn">
             <icon>upload_file</icon>
             <div class="menu-text">Import File</div>
+        </div>
+    </div>
+    <div class="dropdown-wrapper liquid-glass" id="folderMoreOptions">
+        <div class="dropdown-item" id="editFolderBtn">
+            <icon>edit</icon>
+            <div class="menu-text">Edit Folder</div>
+        </div>
+        <div class="dropdown-item" id="deleteFolderBtn" style="color:#e74c3c;">
+            <icon>delete</icon>
+            <div class="menu-text">Delete Folder</div>
         </div>
     </div>
     <div class="color-picker-wrapper liquid-glass" id="colorPicker">
@@ -1533,9 +2001,11 @@ if ('serviceWorker' in navigator) {
        
     // --- IndexedDB + Encryption Setup ---
     let documents = [];
+    let folders = [];
     const DB_NAME = 'omniwrite-db';
-    const DB_VERSION = 1;
+    const DB_VERSION = 3;
     const DOC_STORE = 'documents';
+    const FOLDER_STORE = 'folders';
     const KEY_STORE = 'cryptoKey';
     let db = null;
     let cryptoKey = null;
@@ -1555,6 +2025,9 @@ if ('serviceWorker' in navigator) {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(DOC_STORE)) {
                     db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                    db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
                 }
                 if (!db.objectStoreNames.contains(KEY_STORE)) {
                     db.createObjectStore(KEY_STORE, { keyPath: 'name' });
@@ -1782,6 +2255,77 @@ if ('serviceWorker' in navigator) {
         });
     }
 
+    // Save all folders to IndexedDB (encrypted)
+    async function saveFolders() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Check if FOLDER_STORE exists
+                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                    console.warn('Folder store not found, skipping save');
+                    resolve();
+                    return;
+                }
+                const tx = db.transaction(FOLDER_STORE, 'readwrite');
+                const store = tx.objectStore(FOLDER_STORE);
+                // Clear store
+                store.clear();
+                // Encrypt and store each folder
+                for (const folder of folders) {
+                    const encName = await encryptData(folder.name);
+                    const encDocIds = await encryptData(JSON.stringify(folder.documentIds || []));
+                    const encrypted = {
+                        id: folder.id,
+                        name: encName,
+                        documentIds: encDocIds,
+                        createdAt: folder.createdAt
+                    };
+                    store.put(encrypted);
+                }
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    // Load all folders from IndexedDB (decrypt)
+    async function loadFolders() {
+        folders = [];
+        return new Promise((resolve, reject) => {
+            // Check if FOLDER_STORE exists
+            if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                console.warn('Folder store not found, skipping load');
+                resolve();
+                return;
+            }
+            const tx = db.transaction(FOLDER_STORE, 'readonly');
+            const store = tx.objectStore(FOLDER_STORE);
+            const req = store.getAll();
+            req.onsuccess = async function() {
+                const items = req.result || [];
+                for (const item of items) {
+                    try {
+                        const name = await decryptData(item.name);
+                        const docIdsStr = await decryptData(item.documentIds);
+                        const documentIds = JSON.parse(docIdsStr);
+                        const folder = {
+                            id: item.id,
+                            name: name,
+                            documentIds: documentIds,
+                            createdAt: item.createdAt
+                        };
+                        folders.push(folder);
+                    } catch (e) {
+                        console.error('Failed to decrypt folder:', e);
+                    }
+                }
+                resolve();
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
     // Prevent reload/close if document is being saved or has unsaved changes
     window.addEventListener('beforeunload', function(e) {
         if (!isSaved || savePending) {
@@ -1799,11 +2343,15 @@ if ('serviceWorker' in navigator) {
                 const origOpenDB = openDB;
                 openDB = function() {
                     return new Promise((resolve, reject) => {
-                        const req = indexedDB.open(DB_NAME, DB_VERSION + 2);
+                        // Use a higher version to ensure upgrade happens
+                        const req = indexedDB.open(DB_NAME, 5);
                         req.onupgradeneeded = function(e) {
                             const db = e.target.result;
                             if (!db.objectStoreNames.contains(DOC_STORE)) {
                                 db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+                            }
+                            if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                                db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
                             }
                             if (!db.objectStoreNames.contains(KEY_STORE)) {
                                 db.createObjectStore(KEY_STORE, { keyPath: 'name' });
@@ -1831,8 +2379,10 @@ if ('serviceWorker' in navigator) {
         db = await openDB();
         cryptoKey = await getOrCreateKey();
         await loadDocuments();
+        await loadFolders();
         // Render documents list in sorted order
         renderDocumentsList();
+        renderFoldersList();
         // Now handle hash after documents are loaded
         handleHashChangeWithDocument();
         window.addEventListener('hashchange', handleHashChangeWithDocument);
@@ -1953,6 +2503,108 @@ if ('serviceWorker' in navigator) {
             });
         }
     }
+
+    // Render folders list
+    function renderFoldersList() {
+        const foldersList = document.getElementById('foldersList');
+        if (!foldersList) return;
+        
+        foldersList.innerHTML = '';
+        
+        if (folders.length === 0) {
+            foldersList.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders</p>';
+            return;
+        }
+        
+        folders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
+        folders.forEach(folder => {
+            const div = document.createElement('div');
+            div.className = 'sidebarnav__item folder-item';
+            div.dataset.folderId = folder.id;
+            
+            const docCount = folder.documentIds ? folder.documentIds.length : 0;
+            
+            div.innerHTML = `
+                <icon>folder</icon>
+                <div class="menu-text">${folder.name} (${docCount})</div>
+                <icon class="folder-more-btn" data-folder-id="${folder.id}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
+            `;
+            
+            // Click folder to expand/collapse
+            div.addEventListener('click', (e) => {
+                if (e.target.classList.contains('folder-more-btn')) return;
+                toggleFolder(folder.id);
+            });
+            
+            // More button
+            const moreBtn = div.querySelector('.folder-more-btn');
+            moreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showFolderMoreOptions(folder.id, e.target);
+            });
+            
+            foldersList.appendChild(div);
+            
+            // Add documents in folder (collapsed by default)
+            const docsContainer = document.createElement('div');
+            docsContainer.className = 'folder-documents';
+            docsContainer.id = `folder-docs-${folder.id}`;
+            docsContainer.style.display = 'none';
+            docsContainer.style.paddingLeft = '30px';
+            
+            if (folder.documentIds && folder.documentIds.length > 0) {
+                folder.documentIds.forEach(docId => {
+                    const doc = documents.find(d => d.id === docId);
+                    if (doc) {
+                        const docEl = createDocumentElement(doc);
+                        docsContainer.appendChild(docEl);
+                    }
+                });
+            }
+            
+            foldersList.appendChild(docsContainer);
+        });
+    }
+
+    // Toggle folder expand/collapse
+    function toggleFolder(folderId) {
+        const docsContainer = document.getElementById(`folder-docs-${folderId}`);
+        if (docsContainer) {
+            const isVisible = docsContainer.style.display !== 'none';
+            docsContainer.style.display = isVisible ? 'none' : 'block';
+            
+            // Update folder icon
+            const folderItem = document.querySelector(`[data-folder-id="${folderId}"]`);
+            const icon = folderItem?.querySelector('icon:first-child');
+            if (icon) {
+                icon.textContent = isVisible ? 'folder' : 'folder_open';
+            }
+        }
+    }
+
+    // Show folder more options dropdown
+    let currentFolderId = null;
+    function showFolderMoreOptions(folderId, targetElement) {
+        currentFolderId = folderId;
+        const dropdown = document.getElementById('folderMoreOptions');
+        const rect = targetElement.getBoundingClientRect();
+        dropdown.style.position = 'absolute';
+        dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        dropdown.style.left = (rect.left + window.scrollX - 150) + 'px';
+        dropdown.style.display = 'block';
+        dropdown.style.zIndex = '1000000';
+    }
+
+    // Hide folder more options when clicking outside
+    document.addEventListener('mousedown', function(e) {
+        const dropdown = document.getElementById('folderMoreOptions');
+        if (dropdown && dropdown.style.display === 'block' && 
+            !dropdown.contains(e.target) && 
+            !e.target.classList.contains('folder-more-btn')) {
+            dropdown.style.display = 'none';
+        }
+    });
 
     // Flag to track if toolbar listeners have been initialized
     let toolbarListenersInitialized = false;
@@ -3673,6 +4325,7 @@ if ('serviceWorker' in navigator) {
             versionList.appendChild(div);
             });
         });
+        
         // --- Find in Document Functionality ---
         const findInDocumentBtn = document.getElementById('findInDocumentBtn');
         let findBar = null;
@@ -3840,7 +4493,258 @@ if ('serviceWorker' in navigator) {
             findBar.remove();
             }
         });
+    // --- Reading Mode Functionality ---
+    const readingModeBtn = document.getElementById('readingModeBtn');
+    const readingModePanel = document.getElementById('readingModePanel');
+    const closeReadingModeBtn = document.getElementById('closeReadingModeBtn');
+    const documentTextDiv = document.getElementById('documentText');
+    const playBtnReading = document.getElementById('playBtn');
+    const pauseBtnReading = document.getElementById('pauseBtn');
+    const stopBtnReading = document.getElementById('stopBtn');
+    const voiceSelectBtn = document.getElementById('voiceSelectBtn');
+    const speedDropdownBtn = document.getElementById('speedDropdownBtn');
 
+    let speechSynthesis = window.speechSynthesis;
+    let currentUtterance = null;
+    let isPaused = false;
+    let currentSpeed = 1;
+    let selectedVoice = null;
+    let toneLoaded = false;
+
+    // Load Tone.js from CDN
+    const toneScript = document.createElement('script');
+    toneScript.src = 'https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.min.js';
+    toneScript.onload = function() {
+        toneLoaded = true;
+    };
+    document.head.appendChild(toneScript);
+
+    // Sound effects using Tone.js
+    function playStartSound() {
+        if (!toneLoaded || typeof Tone === 'undefined') return;
+        try {
+            const synth = new Tone.Synth().toDestination();
+            synth.triggerAttackRelease("C5", "8n");
+        } catch (e) {
+            console.warn('Could not play start sound:', e);
+        }
+    }
+
+    function playStopSound() {
+        if (!toneLoaded || typeof Tone === 'undefined') return;
+        try {
+            const synth = new Tone.Synth().toDestination();
+            synth.triggerAttackRelease("C3", "8n");
+        } catch (e) {
+            console.warn('Could not play stop sound:', e);
+        }
+    }
+
+    // Open reading mode
+    readingModeBtn.addEventListener('click', function() {
+        const { doc, editorArea } = getCurrentDocAndEditor();
+        if (!doc || !editorArea) return;
+        
+        // Get plain text from editor
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = editorArea.innerHTML;
+        const text = tempDiv.innerText || tempDiv.textContent || '';
+        
+        if (!text.trim()) {
+            showToast('No text to read.', { type: 'info' });
+            return;
+        }
+        
+        // Play sound when opening reading mode
+        playStartSound();
+        
+        // Show panel
+        readingModePanel.classList.add('active');
+        documentTextDiv.textContent = text;
+        
+        // Load available voices
+        loadVoices();
+    });
+
+    // Close reading mode
+    closeReadingModeBtn.addEventListener('click', function() {
+        stopReading();
+        readingModePanel.classList.remove('active');
+        playStopSound();
+    });
+
+    // Load available voices
+    function loadVoices() {
+        const voices = speechSynthesis.getVoices();
+        const voicePicker = document.getElementById('voicePicker');
+        const voiceOtherActions = document.getElementById('voiceOtherActions');
+        
+        voiceOtherActions.innerHTML = '';
+        
+        voices.forEach((voice, index) => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `<div class="menu-text">${voice.name} (${voice.lang})</div>`;
+            item.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                selectedVoice = voice;
+                voiceSelectBtn.textContent = voice.name;
+                voicePicker.style.display = 'none';
+            });
+            voiceOtherActions.appendChild(item);
+        });
+    }
+
+    // Voice select button
+    voiceSelectBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const voicePicker = document.getElementById('voicePicker');
+        const rect = voiceSelectBtn.getBoundingClientRect();
+        voicePicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        voicePicker.style.left = (rect.left + window.scrollX - 200) + 'px';
+        voicePicker.style.display = voicePicker.style.display === 'block' ? 'none' : 'block';
+        
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.addEventListener('voiceschanged', loadVoices);
+        } else {
+            loadVoices();
+        }
+    });
+
+    // Hide voice picker when clicking outside
+    document.addEventListener('mousedown', function(e) {
+        const voicePicker = document.getElementById('voicePicker');
+        if (voicePicker.style.display === 'block' && 
+            !voicePicker.contains(e.target) && 
+            !voiceSelectBtn.contains(e.target)) {
+            voicePicker.style.display = 'none';
+        }
+    });
+
+    // Speed dropdown
+    let speedDropdown = null;
+    speedDropdownBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        if (speedDropdown) {
+            speedDropdown.remove();
+            speedDropdown = null;
+            return;
+        }
+        
+        speedDropdown = document.createElement('div');
+        speedDropdown.className = 'dropdown-wrapper liquid-glass';
+        speedDropdown.style.position = 'absolute';
+        speedDropdown.style.minWidth = '80px';
+        speedDropdown.style.zIndex = '1000000';
+        
+        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+        speeds.forEach(speed => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `<div class="menu-text">${speed}x</div>`;
+            item.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                currentSpeed = speed;
+                speedDropdownBtn.textContent = speed + 'x';
+                if (currentUtterance && !isPaused) {
+                    // Restart with new speed
+                    const text = documentTextDiv.textContent;
+                    stopReading();
+                    startReading(text);
+                }
+                speedDropdown.remove();
+                speedDropdown = null;
+            });
+            speedDropdown.appendChild(item);
+        });
+        
+        const rect = speedDropdownBtn.getBoundingClientRect();
+        speedDropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        speedDropdown.style.left = (rect.left + window.scrollX - 30) + 'px';
+        speedDropdown.style.display = 'block';
+        document.body.appendChild(speedDropdown);
+    });
+
+    // Hide speed dropdown when clicking outside
+    document.addEventListener('mousedown', function(e) {
+        if (speedDropdown && !speedDropdown.contains(e.target) && !speedDropdownBtn.contains(e.target)) {
+            speedDropdown.remove();
+            speedDropdown = null;
+        }
+    });
+
+    // Play button
+    playBtnReading.addEventListener('click', function() {
+        const text = documentTextDiv.textContent;
+        if (!text.trim()) return;
+        
+        if (isPaused && currentUtterance) {
+            // Resume
+            speechSynthesis.resume();
+            isPaused = false;
+            playStartSound();
+        } else {
+            // Start new
+            startReading(text);
+        }
+    });
+
+    // Pause button
+    pauseBtnReading.addEventListener('click', function() {
+        if (currentUtterance && speechSynthesis.speaking) {
+            speechSynthesis.pause();
+            isPaused = true;
+            playStopSound();
+        }
+    });
+
+    // Stop button
+    stopBtnReading.addEventListener('click', function() {
+        stopReading();
+    });
+
+    function startReading(text) {
+        stopReading();
+        
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        currentUtterance.rate = currentSpeed;
+        
+        if (selectedVoice) {
+            currentUtterance.voice = selectedVoice;
+        }
+        
+        currentUtterance.onend = function() {
+            currentUtterance = null;
+            isPaused = false;
+            playStopSound();
+        };
+        
+        currentUtterance.onerror = function(e) {
+            console.error('Speech synthesis error:', e);
+            showToast('Error reading text.', { type: 'error' });
+            stopReading();
+        };
+        
+        speechSynthesis.speak(currentUtterance);
+        isPaused = false;
+        playStartSound();
+    }
+
+    function stopReading() {
+        if (currentUtterance) {
+            speechSynthesis.cancel();
+            currentUtterance = null;
+            isPaused = false;
+            playStopSound();
+        }
+    }
+
+    // Stop reading when switching documents or pages
+    window.addEventListener('hashchange', function() {
+        stopReading();
+        readingModePanel.classList.remove('active');
+    });
         // --- Share Document Functionality (Download as PDF) ---
         const shareDocumentBtn = document.getElementById('shareDocumentBtn');
         let shareModal = null;
@@ -4463,8 +5367,9 @@ if ('serviceWorker' in navigator) {
     // --- Split Screen Functionality ---
     const splitScreenBtn = document.getElementById('splitScreenBtn');
     let isSplitView = false;
-    let splitLeftDocId = null;
     let splitRightDocId = null;
+    let isResizing = false;
+    let lastX = 0;
 
     splitScreenBtn.addEventListener('click', function() {
         if (isSplitView) {
@@ -4491,7 +5396,6 @@ if ('serviceWorker' in navigator) {
             <div class="modal-content" style="position:relative;max-width:500px;">
                 <span class="modal-content-close" id="closeSplitSelectModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
                 <h2>Select Document for Split View</h2>
-                <P>Note: If you split screen and edit the document you might be unable to get out of split view. Like e.g Close button just brings the caret and come editable</P>
                 <div style="margin:18px 0;max-height:300px;overflow-y:auto;">
                     ${documents.filter(d => d.id !== currentDocId).map(d => 
                         `<div class="sidebarnav__item" data-doc-id="${d.id}" style="cursor:pointer;margin-bottom:8px;">
@@ -4517,104 +5421,163 @@ if ('serviceWorker' in navigator) {
 
     function activateSplitView(leftDocId, rightDocId) {
         isSplitView = true;
-        splitLeftDocId = leftDocId;
         splitRightDocId = rightDocId;
 
-        const editorArea = document.getElementById('editorArea');
-        const leftDoc = documents.find(d => d.id === leftDocId);
+        const editorContentContainer = document.querySelector('.editor-content-area-container');
+        const leftEditor = document.getElementById('editorArea');
+        const rightEditorContent = document.getElementById('rightEditorContent');
         const rightDoc = documents.find(d => d.id === rightDocId);
 
-        if (!leftDoc || !rightDoc) return;
+        if (!rightDoc) return;
 
-        // Save original content
-        editorArea.dataset.originalContent = editorArea.innerHTML;
+        // Set left editor width to 50%
+        leftEditor.style.flex = 'none';
+        leftEditor.style.width = '50%';
 
-        // Create split container
-        editorArea.innerHTML = `
-            <div class="split-screen-container">
-                <div class="split-pane" id="splitLeft">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:12px;">
-                        <span style="font-size:16px;font-weight:500;">${leftDoc.title}</span>
-                    </div>
-                    <div contenteditable="true" class="split-editor" data-doc-id="${leftDocId}" style="padding:20px;min-height:calc(100vh - 300px);outline:none;border-radius:8px;background-color:#1a0f3c;color:#FFFFFF;font-size:18px;line-height:1.9;overflow-y:auto;">${leftDoc.content || ''}</div>
-                </div>
-                <div class="split-divider" id="splitDivider"></div>
-                <div class="split-pane" id="splitRight">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:12px;">
-                        <span style="font-size:16px;font-weight:500;">${rightDoc.title}</span>
-                        <button class="split-close-btn" id="closeSplitBtn">
-                            <icon>close</icon> Exit Split View
-                        </button>
-                    </div>
-                    <div contenteditable="true" class="split-editor" data-doc-id="${rightDocId}" style="padding:20px;min-height:calc(100vh - 300px);outline:none;border-radius:8px;background-color:#1a0f3c;color:#FFFFFF;font-size:18px;line-height:1.9;overflow-y:auto;">${rightDoc.content || ''}</div>
-                </div>
+        // Show right editor content with 50% width
+        rightEditorContent.style.display = 'block';
+        rightEditorContent.style.flex = 'none';
+        rightEditorContent.style.width = '50%';
+        rightEditorContent.style.marginLeft = '0';
+
+        // Create resize divider
+        let resizeDivider = document.createElement('div');
+        resizeDivider.id = 'splitResizeDivider';
+        resizeDivider.style.width = '8px';
+        resizeDivider.style.cursor = 'col-resize';
+        resizeDivider.style.background = 'rgba(255,255,255,0.1)';
+        resizeDivider.style.position = 'relative';
+        resizeDivider.style.transition = 'background 0.2s';
+        resizeDivider.innerHTML = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:3px;height:40px;background:rgba(255,255,255,0.5);border-radius:2px;"></div>';
+
+        // Insert divider between left and right editors
+        editorContentContainer.insertBefore(resizeDivider, rightEditorContent);
+
+        // Resize functionality
+        resizeDivider.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isResizing = true;
+            lastX = e.clientX;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+            
+            const containerWidth = editorContentContainer.offsetWidth;
+            const dividerWidth = 8;
+            const deltaX = e.clientX - lastX;
+            
+            const currentLeftWidth = leftEditor.offsetWidth;
+            const newLeftWidth = currentLeftWidth + deltaX;
+            const newRightWidth = containerWidth - newLeftWidth - dividerWidth;
+            
+            // Minimum width constraints (200px)
+            if (newLeftWidth >= 200 && newRightWidth >= 200) {
+                const leftPercent = (newLeftWidth / containerWidth) * 100;
+                const rightPercent = (newRightWidth / containerWidth) * 100;
+                
+                leftEditor.style.width = leftPercent + '%';
+                rightEditorContent.style.width = rightPercent + '%';
+                lastX = e.clientX;
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // Hover effect for divider
+        resizeDivider.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(102, 126, 234, 0.5)';
+        });
+        resizeDivider.addEventListener('mouseleave', function() {
+            if (!isResizing) {
+                this.style.background = 'rgba(255,255,255,0.1)';
+            }
+        });
+
+        // Create right editor with header
+        rightEditorContent.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:12px;">
+                <span style="font-size:16px;font-weight:500;">${rightDoc.title}</span>
+                <button class="split-close-btn" id="closeSplitBtn" style="background:rgba(231, 76, 60, 0.2);color:#e74c3c;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;gap:5px;border:none;">
+                    <icon>close</icon> <span>Exit Split View</span>
+                </button>
             </div>
+            <div contenteditable="true" class="split-editor" data-doc-id="${rightDocId}" style="padding:20px;min-height:calc(100vh - 300px);outline:none;border-radius:8px;background-color:#1a0f3c;color:#FFFFFF;font-size:18px;line-height:1.9;overflow-y:auto;">${rightDoc.content || ''}</div>
         `;
 
-        // Add input handlers for both editors (debounced to prevent race conditions)
-        document.querySelectorAll('.split-editor').forEach(editor => {
-            editor.oninput = function() {
-                const docId = this.getAttribute('data-doc-id');
-                const doc = documents.find(d => d.id === docId);
-                if (doc) {
-                    doc.content = this.innerHTML;
-                    doc.timestamp = Date.now();
-                    debouncedSaveDocuments(300);
-                }
-            };
+        // Add input handler for right editor (debounced to prevent race conditions)
+        const rightEditor = rightEditorContent.querySelector('.split-editor');
+        rightEditor.oninput = function() {
+            const docId = this.getAttribute('data-doc-id');
+            const doc = documents.find(d => d.id === docId);
+            if (doc) {
+                doc.content = this.innerHTML;
+                doc.timestamp = Date.now();
+                debouncedSaveDocuments(300);
+            }
+        };
+
+        // Resolve images, videos, and audio in right editor
+        // Resolve images
+        rightEditor.querySelectorAll('img[data-omniwrite-image-id]').forEach(img => {
+            const imageId = Number(img.getAttribute('data-omniwrite-image-id'));
+            if (!isNaN(imageId)) {
+                const tx = db.transaction('images', 'readonly');
+                const store = tx.objectStore('images');
+                const req = store.get(imageId);
+                req.onsuccess = function() {
+                    if (req.result && req.result.file) {
+                        const url = URL.createObjectURL(req.result.file);
+                        img.src = url;
+                        img.addEventListener('load', () => {
+                            setTimeout(() => URL.revokeObjectURL(url), 60000);
+                        });
+                    }
+                };
+            }
         });
 
-        // Resolve images, videos, and audio in both editors
-        document.querySelectorAll('.split-editor').forEach(editor => {
-            // Resolve images
-            editor.querySelectorAll('img[data-omniwrite-image-id]').forEach(img => {
-                const imageId = Number(img.getAttribute('data-omniwrite-image-id'));
-                if (!isNaN(imageId)) {
-                    const tx = db.transaction('images', 'readonly');
-                    const store = tx.objectStore('images');
-                    const req = store.get(imageId);
-                    req.onsuccess = function() {
-                        if (req.result && req.result.file) {
-                            const url = URL.createObjectURL(req.result.file);
-                            img.src = url;
-                        }
-                    };
-                }
-            });
-
-            // Resolve videos
-            editor.querySelectorAll('video[data-omniwrite-video-id]').forEach(video => {
-                const videoId = Number(video.getAttribute('data-omniwrite-video-id'));
-                if (!isNaN(videoId)) {
-                    const tx = db.transaction(VIDEO_STORE, 'readonly');
-                    const store = tx.objectStore(VIDEO_STORE);
-                    const req = store.get(videoId);
-                    req.onsuccess = function() {
-                        if (req.result && req.result.file) {
-                            video.src = URL.createObjectURL(req.result.file);
-                        }
-                    };
-                }
-            });
-
-            // Resolve audio
-            editor.querySelectorAll('audio[data-omniwrite-audio-id]').forEach(audio => {
-                const audioId = Number(audio.getAttribute('data-omniwrite-audio-id'));
-                if (!isNaN(audioId)) {
-                    const tx = db.transaction(AUDIO_STORE, 'readonly');
-                    const store = tx.objectStore(AUDIO_STORE);
-                    const req = store.get(audioId);
-                    req.onsuccess = function() {
-                        if (req.result && req.result.file) {
-                            audio.src = URL.createObjectURL(req.result.file);
-                        }
-                    };
-                }
-            });
+        // Resolve videos
+        rightEditor.querySelectorAll('video[data-omniwrite-video-id]').forEach(video => {
+            const videoId = Number(video.getAttribute('data-omniwrite-video-id'));
+            if (!isNaN(videoId)) {
+                const tx = db.transaction(VIDEO_STORE, 'readonly');
+                const store = tx.objectStore(VIDEO_STORE);
+                const req = store.get(videoId);
+                req.onsuccess = function() {
+                    if (req.result && req.result.file) {
+                        video.src = URL.createObjectURL(req.result.file);
+                    }
+                };
+            }
         });
 
-        // Setup resizable divider
-        setupSplitDivider();
+        // Resolve audio
+        rightEditor.querySelectorAll('audio[data-omniwrite-audio-id]').forEach(audio => {
+            const audioId = Number(audio.getAttribute('data-omniwrite-audio-id'));
+            if (!isNaN(audioId)) {
+                const tx = db.transaction(AUDIO_STORE, 'readonly');
+                const store = tx.objectStore(AUDIO_STORE);
+                const req = store.get(audioId);
+                req.onsuccess = function() {
+                    if (req.result && req.result.file) {
+                        audio.src = URL.createObjectURL(req.result.file);
+                    }
+                };
+            }
+        });
+
+        // Upgrade video and audio players with custom controls
+        if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers();
+        if (typeof upgradeAudioPlayers === 'function') upgradeAudioPlayers();
 
         // Close button handler
         document.getElementById('closeSplitBtn').onclick = exitSplitView;
@@ -4622,28 +5585,32 @@ if ('serviceWorker' in navigator) {
         // Update split screen button icon
         splitScreenBtn.querySelector('icon').textContent = 'close_fullscreen';
         splitScreenBtn.title = 'Exit Split Screen';
+
+        showToast('Split view activated.', { type: 'success' });
     }
 
     function exitSplitView() {
         isSplitView = false;
-        const editorArea = document.getElementById('editorArea');
+        const leftEditor = document.getElementById('editorArea');
+        const rightEditorContent = document.getElementById('rightEditorContent');
+        const resizeDivider = document.getElementById('splitResizeDivider');
         
-        // Restore original editor
-        const currentDocId = splitLeftDocId || window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
-        const doc = documents.find(d => d.id === currentDocId);
+        // Reset left editor width
+        leftEditor.style.flex = '';
+        leftEditor.style.width = '';
         
-        if (doc) {
-            editorArea.contentEditable = 'true';
-            editorArea.innerHTML = doc.content || '';
-            editorArea.oninput = function() {
-                doc.content = editorArea.innerHTML;
-                doc.timestamp = Date.now();
-                debouncedSaveDocuments(300);
-            };
+        // Hide right editor content
+        rightEditorContent.style.display = 'none';
+        rightEditorContent.style.flex = '';
+        rightEditorContent.style.width = '';
+        rightEditorContent.innerHTML = '';
+
+        // Remove resize divider
+        if (resizeDivider) {
+            resizeDivider.remove();
         }
 
         // Reset split view state
-        splitLeftDocId = null;
         splitRightDocId = null;
 
         // Update split screen button icon
@@ -4653,40 +5620,6 @@ if ('serviceWorker' in navigator) {
         showToast('Exited split view.', { type: 'info' });
     }
 
-    function setupSplitDivider() {
-        const divider = document.getElementById('splitDivider');
-        const leftPane = document.getElementById('splitLeft');
-        const rightPane = document.getElementById('splitRight');
-        
-        let isDragging = false;
-
-        divider.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            document.body.style.cursor = 'col-resize';
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-
-            const container = divider.parentElement;
-            const containerRect = container.getBoundingClientRect();
-            const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-
-            // Limit resize between 20% and 80%
-            if (newLeftWidth > 20 && newLeftWidth < 80) {
-                leftPane.style.flex = `0 0 ${newLeftWidth}%`;
-                rightPane.style.flex = `0 0 ${100 - newLeftWidth}%`;
-            }
-        });
-
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                document.body.style.cursor = '';
-            }
-        });
-    }
         // Font Size and Font Family Picker logic as functions to re-attach event listeners
         function setupFontPickers(doc, editorArea) {
             // Always get fresh references after cloning
@@ -4981,20 +5914,207 @@ if ('serviceWorker' in navigator) {
             list.appendChild(div);
         });
     }
+    
+    // --- Folder Management Functionality ---
+    // Show folder creation/edit modal
+    function showFolderModal(folderId = null) {
+        const isEdit = !!folderId;
+        const folder = isEdit ? folders.find(f => f.id === folderId) : null;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h2>${isEdit ? 'Edit Folder' : 'Create New Folder'}</h2>
+                    <icon id="closeFolderModal" style="cursor: pointer;">close</icon>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Folder Name</label>
+                        <input type="text" id="folderNameInput" value="${isEdit && folder ? folder.name : ''}" 
+                               placeholder="Enter folder name" 
+                               style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); 
+                                      border-radius: 8px; background: rgba(255,255,255,0.05); 
+                                      color: inherit; font-size: 14px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Select Documents</label>
+                        <div id="folderDocumentsSelect" style="max-height: 300px; overflow-y: auto; 
+                                                               border: 1px solid rgba(255,255,255,0.2); 
+                                                               border-radius: 8px; padding: 10px;">
+                            ${documents.map(doc => {
+                                const isSelected = isEdit && folder && folder.documentIds && folder.documentIds.includes(doc.id);
+                                return `
+                                    <div class="folder-doc-checkbox" style="padding: 8px; cursor: pointer; 
+                                                                             border-radius: 4px; margin-bottom: 4px;
+                                                                             display: flex; align-items: center; gap: 10px;
+                                                                             background: ${isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent'};">
+                                        <input type="checkbox" value="${doc.id}" ${isSelected ? 'checked' : ''} 
+                                               style="cursor: pointer;">
+                                        <icon>description</icon>
+                                        <span>${doc.title}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button id="cancelFolderBtn" class="btn" style="padding: 10px 20px; border-radius: 8px; 
+                                                                         background: rgba(255,255,255,0.1); 
+                                                                       cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button id="saveFolderBtn" class="btn" style="padding: 10px 20px; border-radius: 8px; 
+                                                                       background: #6366f1; color: white; 
+                                                                        cursor: pointer;">
+                            ${isEdit ? 'Save Changes' : 'Create Folder'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Focus name input
+        setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+        
+        // Handle checkbox clicks
+        modal.querySelectorAll('.folder-doc-checkbox').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox') {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                }
+                // Update background
+                this.style.background = this.querySelector('input[type="checkbox"]').checked 
+                    ? 'rgba(99, 102, 241, 0.2)' 
+                    : 'transparent';
+            });
+        });
+        
+        // Close modal
+        modal.querySelector('#closeFolderModal').onclick = () => modal.remove();
+        modal.querySelector('#cancelFolderBtn').onclick = () => modal.remove();
+        
+        // Save folder
+        modal.querySelector('#saveFolderBtn').onclick = async () => {
+            const name = document.getElementById('folderNameInput').value.trim();
+            if (!name) {
+                showToast('Please enter a folder name.', { type: 'error' });
+                return;
+            }
+            
+            const selectedDocs = Array.from(modal.querySelectorAll('#folderDocumentsSelect input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            if (isEdit && folder) {
+                // Update existing folder
+                folder.name = name;
+                folder.documentIds = selectedDocs;
+            } else {
+                // Create new folder
+                const newFolder = {
+                    id: 'folder-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    name: name,
+                    documentIds: selectedDocs,
+                    createdAt: Date.now()
+                };
+                folders.push(newFolder);
+            }
+            
+            await saveFolders();
+            renderFoldersList();
+            modal.remove();
+            showToast(isEdit ? 'Folder updated.' : 'Folder created.', { type: 'success' });
+        };
+    }
+    
+    // Add Folder Button
+    document.getElementById('addFolderBtn').addEventListener('click', function() {
+        showFolderModal();
+    });
+    
+    // Edit Folder Button (in dropdown)
+    document.getElementById('editFolderBtn').addEventListener('click', function() {
+        document.getElementById('folderMoreOptions').style.display = 'none';
+        if (currentFolderId) {
+            showFolderModal(currentFolderId);
+        }
+    });
+    
+    // Delete Folder Button (in dropdown)
+    document.getElementById('deleteFolderBtn').addEventListener('click', async function() {
+        document.getElementById('folderMoreOptions').style.display = 'none';
+        
+        if (!currentFolderId) return;
+        
+        const folder = folders.find(f => f.id === currentFolderId);
+        if (!folder) return;
+        
+        const confirmModal = document.createElement('div');
+        confirmModal.className = 'modal';
+        confirmModal.innerHTML = `
+            <div class="modal-content liquid-glass" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h2>Delete Folder</h2>
+                    <icon id="closeDeleteFolderModal" style="cursor: pointer;">close</icon>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <p>Are you sure you want to delete the folder "${folder.name}"?</p>
+                    <p style="margin-top: 10px; opacity: 0.7; font-size: 14px;">
+                        The documents inside will not be deleted, only the folder.
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button id="cancelDeleteFolderBtn" class="btn" style="padding: 10px 20px; border-radius: 8px; 
+                                                                              background: rgba(255,255,255,0.1); 
+                                                                              border: none; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button id="confirmDeleteFolderBtn" class="btn" style="padding: 10px 20px; border-radius: 8px; 
+                                                                               background: #e74c3c; color: white; 
+                                                                               border: none; cursor: pointer;">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmModal);
+        
+        confirmModal.querySelector('#closeDeleteFolderModal').onclick = () => confirmModal.remove();
+        confirmModal.querySelector('#cancelDeleteFolderBtn').onclick = () => confirmModal.remove();
+        confirmModal.querySelector('#confirmDeleteFolderBtn').onclick = async () => {
+            const index = folders.findIndex(f => f.id === currentFolderId);
+            if (index > -1) {
+                folders.splice(index, 1);
+                await saveFolders();
+                renderFoldersList();
+                confirmModal.remove();
+                showToast('Folder deleted.', { type: 'success' });
+            }
+        };
+    });
+    
     // --- Document Search Bar Functionality ---
     const searchBarInput = document.querySelector('.search-bar input');
     searchBarInput.addEventListener('input', function () {
         const query = this.value.trim().toLowerCase();
         const pinnedList = document.getElementById('pinnedDocumentsList');
         const documentsList = document.getElementById('documentsList');
+        const foldersList = document.getElementById('foldersList');
         const pinnedSection = pinnedList ? pinnedList.closest('.documents--section') : null;
         
         if (!query) {
-            // Show all documents with proper sorting
+            // Show all documents and folders with proper sorting
             renderDocumentsList();
+            renderFoldersList();
         } else {
             // Filter documents
             const filteredDocs = documents.filter(doc => doc.title && doc.title.toLowerCase().includes(query));
+            
+            // Filter folders
+            const filteredFolders = folders.filter(folder => folder.name && folder.name.toLowerCase().includes(query));
             
             // Separate into pinned and unpinned
             const pinnedDocs = filteredDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -5002,6 +6122,7 @@ if ('serviceWorker' in navigator) {
             
             if (pinnedList) pinnedList.innerHTML = '';
             if (documentsList) documentsList.innerHTML = '';
+            if (foldersList) foldersList.innerHTML = '';
             
             // Show pinned section if there are pinned results
             if (pinnedList) {
@@ -5013,6 +6134,35 @@ if ('serviceWorker' in navigator) {
                     if (pinnedSection) pinnedSection.style.display = 'block';
                 } else {
                     pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">No pinned documents</p>';
+                }
+            }
+            
+            // Show folder results
+            if (foldersList) {
+                if (filteredFolders.length > 0) {
+                    filteredFolders.forEach(folder => {
+                        const div = document.createElement('div');
+                        div.className = 'sidebarnav__item folder-item';
+                        div.dataset.folderId = folder.id;
+                        const docCount = folder.documentIds ? folder.documentIds.length : 0;
+                        div.innerHTML = `
+                            <icon>folder</icon>
+                            <div class="menu-text">${folder.name} (${docCount})</div>
+                            <icon class="folder-more-btn" data-folder-id="${folder.id}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
+                        `;
+                        div.addEventListener('click', (e) => {
+                            if (e.target.classList.contains('folder-more-btn')) return;
+                            toggleFolder(folder.id);
+                        });
+                        const moreBtn = div.querySelector('.folder-more-btn');
+                        moreBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showFolderMoreOptions(folder.id, e.target);
+                        });
+                        foldersList.appendChild(div);
+                    });
+                } else {
+                    foldersList.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders found</p>';
                 }
             }
             
@@ -5036,7 +6186,7 @@ if ('serviceWorker' in navigator) {
         };
     })();
     // Handle create document click
-    document.querySelectorAll('#createOptions .dropdown-item')[0].addEventListener('click', async function() {
+    document.getElementById('createNewDocumentBtn').addEventListener('click', async function() {
         // Hide dropdown
         document.getElementById('createOptions').style.display = 'none';
         // Create new doc
@@ -5048,6 +6198,14 @@ if ('serviceWorker' in navigator) {
         addDocumentToList(newDoc);
         openDocument(newDoc.id);
         await saveDocuments();
+    });
+    
+    // Handle create folder click
+    document.getElementById('createNewFolderBtn').addEventListener('click', function() {
+        // Hide dropdown
+        document.getElementById('createOptions').style.display = 'none';
+        // Show folder modal
+        showFolderModal();
     });
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(page => {
@@ -5088,8 +6246,7 @@ if ('serviceWorker' in navigator) {
             window.location.hash = '';
         });
         // --- Import File Functionality ---
-        // "Import File" is the third dropdown-item in #createOptions
-        document.querySelectorAll('#createOptions .dropdown-item')[2].addEventListener('click', async function() {
+        document.getElementById('createImportFileBtn').addEventListener('click', async function() {
             // Hide dropdown
             document.getElementById('createOptions').style.display = 'none';
             // Open file picker
@@ -5486,8 +6643,7 @@ if ('serviceWorker' in navigator) {
         });
     }
     // --- Upload Image from Create Options ---
-    // "New Image" is the second dropdown-item in #createOptions
-    document.querySelectorAll('#createOptions .dropdown-item')[1].addEventListener('click', async function() {
+    document.getElementById('createNewImageBtn').addEventListener('click', async function() {
         // Hide dropdown
         document.getElementById('createOptions').style.display = 'none';
         // Open file picker
@@ -5796,21 +6952,22 @@ if ('serviceWorker' in navigator) {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
-                        <li>v1.0.0 - Initial release of OmniWrite.</li>
-                        <li>v1.0.1 - Fixed a bug when font family/font size wasn't opening after switching documents.</li>
-                        <li>v1.0.2 - Improvements and fixed a bug when text color picker wasn't opening after switching documents.</li>
-                        <li>v1.0.3 - Added voice-to-text writing and split screen for enhanced productivity.</li>
-                        <li>v1.0.4 - Fix the font family bug</li>
-                        <li>v1.0.5 - Add Split Screen functionality, Add sidebar position settings, Add reduce transparency and compact mode settings</li>
-                        <li>v1.0.6 - Added download formats, Share includes Share with Gmail, facebook, whatsapp, reddit. Fix a bug when switching documents and editing or creating too quickly overwrites content. and added more fonts in font family picker</li>
-                        <li>v1.0.7 - Added Pin Documents feature, Removed the Voice To Text because it can send voice data to Google or Microsoft or Apple.</li>
-                        <li>v1.0.8 - UI Improvements.</li>
+                        <li>v1.10.0 - Added Folders support, Added Reader Mode, Improved Split Screen.</li>
                         <li>v1.0.9 - Added Try Beta button with warning modal, UI Improvements and redesigned showToast.</li>
-                        </ul>
+                        <li>v1.0.8 - UI Improvements.</li>
+                        <li>v1.0.7 - Added Pin Documents feature, Removed the Voice To Text because it can send voice data to Google or Microsoft or Apple.</li>
+                        <li>v1.0.6 - Added download formats, Share includes Share with Gmail, facebook, whatsapp, reddit. Fix a bug when switching documents and editing or creating too quickly overwrites content. and added more fonts in font family picker</li>
+                        <li>v1.0.5 - Add Split Screen functionality, Add sidebar position settings, Add reduce transparency and compact mode settings</li>
+                        <li>v1.0.4 - Fix the font family bug</li>
+                        <li>v1.0.3 - Added voice-to-text writing and split screen for enhanced productivity.</li>
+                        <li>v1.0.2 - Improvements and fixed a bug when text color picker wasn't opening after switching documents.</li>
+                        <li>v1.0.1 - Fixed a bug when font family/font size wasn't opening after switching documents.</li>
+                        <li>v1.0.0 - Initial release of OmniWrite.</li>
+                    </ul>
                     <h3>Copyright</h3>
                     <div style="font-size:14px;opacity:0.7;margin-top:8px;">
                         &copy; 2025-2026 Munetios. <br>
-                        Munetios OmniWrite is a unregistered trademark of Munetios.<br>
+                        OmniWrite&trade; is a trademark of Munetios.<br>
                         Website <a href="https://munetios.com" target="_self" style="color:#ffe066;">munetios.com</a>
                     <br>OmniWrite is open source. See <a href="https://github.com/munetios/omniwrite" target="_self" style="color:#ffe066;">github.com/munetios/omniwrite</a><br> <br>
                     <a href="https://write.munetios.com/overview" target="_self" style="color:#ffe066;">Overview</a>
