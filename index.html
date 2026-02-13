@@ -8591,7 +8591,7 @@ if ('serviceWorker' in navigator) {
     });
    
     // Check for IndexedDB and Web Crypto API support
-    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/Munetios/.test(navigator.userAgent)) {
         // Create unsupported browser modal
         const unsupportedModal = document.createElement('div');
         unsupportedModal.className = 'modal';
