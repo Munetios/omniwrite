@@ -272,7 +272,9 @@ if ('serviceWorker' in navigator) {
             box-sizing: border-box;
             scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
             -ms-overflow-style: none;  /* IE and Edge Legacy */
-            height: calc(100% - 570px);
+            height: calc(100% - 510px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         .sidebar__content::-webkit-scrollbar {
             display: none; /* Safari */
@@ -1346,7 +1348,7 @@ if ('serviceWorker' in navigator) {
                 </div>
                 </div>
                 <div class="sidebar__bottom">
-                    <div class="try-beta-item sidebarnav__item">
+                    <div class="try-beta-item sidebarnav__item" style="display: none;">
                         <icon>new_releases</icon>
                         <div class="menu-text">Try Beta</div>
                     </div>
@@ -2041,60 +2043,80 @@ if ('serviceWorker' in navigator) {
     // Generate or load encryption key from IndexedDB
     async function getOrCreateKey() {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(KEY_STORE, 'readwrite');
-            const store = tx.objectStore(KEY_STORE);
-            const getReq = store.get('main');
-            getReq.onsuccess = async function() {
-                if (getReq.result && getReq.result.key) {
-                    // Import key
-                    const raw = getReq.result.key;
-                    const key = await window.crypto.subtle.importKey(
-                        'raw', raw, 'AES-GCM', true, ['encrypt', 'decrypt']
-                    );
-                    resolve(key);
-                } else {
-                    // Generate new key
-                    const key = await window.crypto.subtle.generateKey(
-                        { name: 'AES-GCM', length: 256 },
-                        true, // Set extractable to true so we can export the key
-                        ['encrypt', 'decrypt']
-                    );
-                    const raw = await window.crypto.subtle.exportKey('raw', key);
-                    
-                    // Start a new transaction for writing (Firefox/Safari require this)
-                    const writeTx = db.transaction(KEY_STORE, 'readwrite');
-                    const writeStore = writeTx.objectStore(KEY_STORE);
-                    writeStore.put({ name: 'main', key: raw });
-                    
-                    writeTx.oncomplete = () => resolve(key);
-                    writeTx.onerror = () => reject(writeTx.error);
-                }
-            };
-            getReq.onerror = () => reject(getReq.error);
+            try {
+                const tx = db.transaction(KEY_STORE, 'readwrite');
+                const store = tx.objectStore(KEY_STORE);
+                const getReq = store.get('main');
+                getReq.onsuccess = async function() {
+                    try {
+                        if (getReq.result && getReq.result.key) {
+                            // Import key
+                            const raw = getReq.result.key;
+                            const key = await window.crypto.subtle.importKey(
+                                'raw', raw, 'AES-GCM', true, ['encrypt', 'decrypt']
+                            );
+                            resolve(key);
+                        } else {
+                            // Generate new key
+                            const key = await window.crypto.subtle.generateKey(
+                                { name: 'AES-GCM', length: 256 },
+                                true, // Set extractable to true so we can export the key
+                                ['encrypt', 'decrypt']
+                            );
+                            const raw = await window.crypto.subtle.exportKey('raw', key);
+                            
+                            // Start a new transaction for writing (Firefox/Safari require this)
+                            const writeTx = db.transaction(KEY_STORE, 'readwrite');
+                            const writeStore = writeTx.objectStore(KEY_STORE);
+                            writeStore.put({ name: 'main', key: raw });
+                            
+                            writeTx.oncomplete = () => resolve(key);
+                            writeTx.onerror = () => reject(writeTx.error);
+                        }
+                    } catch (e) {
+                        console.error('Failed to import/generate encryption key:', e);
+                        reject(e);
+                    }
+                };
+                getReq.onerror = () => reject(getReq.error);
+            } catch (e) {
+                console.error('Failed to open key store transaction:', e);
+                reject(e);
+            }
         });
     }
 
     // Encrypt data (Uint8Array or string)
     async function encryptData(data) {
-        const enc = new TextEncoder();
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const encoded = typeof data === 'string' ? enc.encode(data) : data;
-        const ciphertext = await window.crypto.subtle.encrypt(
-            { name: 'AES-GCM', iv }, cryptoKey, encoded
-        );
-        // Store iv + ciphertext
-        return { iv: Array.from(iv), data: Array.from(new Uint8Array(ciphertext)) };
+        try {
+            const enc = new TextEncoder();
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encoded = typeof data === 'string' ? enc.encode(data) : data;
+            const ciphertext = await window.crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv }, cryptoKey, encoded
+            );
+            // Store iv + ciphertext
+            return { iv: Array.from(iv), data: Array.from(new Uint8Array(ciphertext)) };
+        } catch (e) {
+            console.error('Encryption failed:', e);
+            throw e;
+        }
     }
 
     // Decrypt data
     async function decryptData(encObj) {
-        const dec = new TextDecoder();
-        const iv = new Uint8Array(encObj.iv);
-        const ciphertext = new Uint8Array(encObj.data);
-        const plaintext = await window.crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv }, cryptoKey, ciphertext
-        );
-        return dec.decode(plaintext);
+        try {
+            const dec = new TextDecoder();
+            const iv = new Uint8Array(encObj.iv);
+            const ciphertext = new Uint8Array(encObj.data);
+            const plaintext = await window.crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv }, cryptoKey, ciphertext
+            );
+            return dec.decode(plaintext);
+        } catch (e) {
+            console.error('Decryption failed:', e);
+            throw e;
+        }
     }
 
     // Update saving status UI
@@ -2184,7 +2206,7 @@ if ('serviceWorker' in navigator) {
             console.error('Error saving documents:', error);
             isSaved = false; // Keep as unsaved if error
             updateSavingStatus('Save failed');
-            
+            showToast('Failed to save this document. Please try again.');
             // Revert to "End to end encrypted" after 3 seconds
             setTimeout(() => {
                 updateSavingStatus('End to end encrypted');
@@ -2247,6 +2269,7 @@ if ('serviceWorker' in navigator) {
                         };
                         documents.push(doc);
                         addDocumentToList(doc);
+                        showToast('Failed to load some documents.');
                     }
                 }
                 resolve();
@@ -2285,6 +2308,7 @@ if ('serviceWorker' in navigator) {
                 tx.onerror = () => reject(tx.error);
             } catch (error) {
                 reject(error);
+                showToast('Failed to save folders. Please try again.');
             }
         });
     }
@@ -2318,6 +2342,7 @@ if ('serviceWorker' in navigator) {
                         folders.push(folder);
                     } catch (e) {
                         console.error('Failed to decrypt folder:', e);
+                        showToast('Failed to load folders.');
                     }
                 }
                 resolve();
@@ -2387,33 +2412,43 @@ if ('serviceWorker' in navigator) {
         handleHashChangeWithDocument();
         window.addEventListener('hashchange', handleHashChangeWithDocument);
     }
-    initializeApp();
+    initializeApp().catch(function(e) {
+        console.error('Failed to initialize app:', e);
+        if (typeof showToast === 'function') {
+            showToast('Failed to initialize the app. Please refresh the page.', { type: 'error' });
+        }
+    });
 
     // Custom hash navigation for documents: #/document/<id>
     function handleHashChangeWithDocument() {
-        const hash = window.location.hash;
-        const docMatch = hash.match(/^#\/document\/(.+)$/);
-        if (docMatch) {
-            const docId = docMatch[1];
-            // Exit split view when navigating away
-            if (isSplitView) {
-                exitSplitView();
-            }
-            openDocument(docId);
-        } else {
-            // Exit split view when leaving document view
-            if (isSplitView) {
-                exitSplitView();
-            }
-            if (hash === '#/tasks') {
-                switchPage('tasksApp');
-            } else if (hash === '#/images') {
-                switchPage('imagesApp');
-            } else if (hash === '#/templates') {
-                switchPage('templatesApp');
+        try {
+            const hash = window.location.hash;
+            const docMatch = hash.match(/^#\/document\/(.+)$/);
+            if (docMatch) {
+                const docId = docMatch[1];
+                // Exit split view when navigating away
+                if (isSplitView) {
+                    exitSplitView();
+                }
+                openDocument(docId);
             } else {
-                switchPage('selectArea');
+                // Exit split view when leaving document view
+                if (isSplitView) {
+                    exitSplitView();
+                }
+                if (hash === '#/tasks') {
+                    switchPage('tasksApp');
+                } else if (hash === '#/images') {
+                    switchPage('imagesApp');
+                } else if (hash === '#/templates') {
+                    switchPage('templatesApp');
+                } else {
+                    switchPage('selectArea');
+                }
             }
+        } catch (e) {
+            console.error('Navigation error:', e);
+            try { switchPage('selectArea'); } catch(e2) {}
         }
     }
     // Remove any duplicate or conflicting hashchange listeners
@@ -4807,14 +4842,14 @@ if ('serviceWorker' in navigator) {
             shareModal.querySelector('#shareFacebook').onclick = function() {
                 const url = encodeURIComponent(window.location.href);
                 const text = encodeURIComponent(doc.title + '\n\n' + bodyText);
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank');
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank', 'rel="noopener noreferrer"');
             };
             
             // Gmail share
             shareModal.querySelector('#shareGmail').onclick = function() {
                 const subject = encodeURIComponent(doc.title);
                 const body = encodeURIComponent(bodyText + '\n\n' + window.location.href);
-                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank');
+                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank', 'rel="noopener noreferrer"');
             };
             
             // WhatsApp share
@@ -4828,7 +4863,7 @@ if ('serviceWorker' in navigator) {
                 const url = encodeURIComponent(window.location.href);
                 const title = encodeURIComponent(doc.title);
                 const text = encodeURIComponent(bodyText);
-                window.open(`https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`, '_blank');
+                window.open(`https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`, '_blank', 'rel="noopener noreferrer"');
             };
 
             // Download as PDF button
@@ -5897,19 +5932,24 @@ if ('serviceWorker' in navigator) {
             div.style.marginBottom = '8px';
             div.innerHTML = `<icon>description</icon><div class="menu-text">${tpl.name}</div>`;
             div.addEventListener('click', async () => {
-                // Create a new document from template
-                const newDoc = {
-                    id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                    title: tpl.name + ' ' + new Date().toLocaleTimeString(),
-                    content: tpl.content,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    pinned: false
-                };
-                documents.push(newDoc);
-                renderDocumentsList();
-                openDocument(newDoc.id);
-                await saveDocuments();
+                try {
+                    // Create a new document from template
+                    const newDoc = {
+                        id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                        title: tpl.name + ' ' + new Date().toLocaleTimeString(),
+                        content: tpl.content,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        pinned: false
+                    };
+                    documents.push(newDoc);
+                    renderDocumentsList();
+                    openDocument(newDoc.id);
+                    await saveDocuments();
+                } catch (e) {
+                    console.error('Failed to create document from template:', e);
+                    showToast('Failed to create document from template.', { type: 'error' });
+                }
             });
             list.appendChild(div);
         });
@@ -5999,34 +6039,39 @@ if ('serviceWorker' in navigator) {
         
         // Save folder
         modal.querySelector('#saveFolderBtn').onclick = async () => {
-            const name = document.getElementById('folderNameInput').value.trim();
-            if (!name) {
-                showToast('Please enter a folder name.', { type: 'error' });
-                return;
+            try {
+                const name = document.getElementById('folderNameInput').value.trim();
+                if (!name) {
+                    showToast('Please enter a folder name.', { type: 'error' });
+                    return;
+                }
+                
+                const selectedDocs = Array.from(modal.querySelectorAll('#folderDocumentsSelect input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+                
+                if (isEdit && folder) {
+                    // Update existing folder
+                    folder.name = name;
+                    folder.documentIds = selectedDocs;
+                } else {
+                    // Create new folder
+                    const newFolder = {
+                        id: 'folder-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                        name: name,
+                        documentIds: selectedDocs,
+                        createdAt: Date.now()
+                    };
+                    folders.push(newFolder);
+                }
+                
+                await saveFolders();
+                renderFoldersList();
+                modal.remove();
+                showToast(isEdit ? 'Folder updated.' : 'Folder created.', { type: 'success' });
+            } catch (e) {
+                console.error('Failed to save folder:', e);
+                showToast('Failed to save folder. Please try again.', { type: 'error' });
             }
-            
-            const selectedDocs = Array.from(modal.querySelectorAll('#folderDocumentsSelect input[type="checkbox"]:checked'))
-                .map(cb => cb.value);
-            
-            if (isEdit && folder) {
-                // Update existing folder
-                folder.name = name;
-                folder.documentIds = selectedDocs;
-            } else {
-                // Create new folder
-                const newFolder = {
-                    id: 'folder-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                    name: name,
-                    documentIds: selectedDocs,
-                    createdAt: Date.now()
-                };
-                folders.push(newFolder);
-            }
-            
-            await saveFolders();
-            renderFoldersList();
-            modal.remove();
-            showToast(isEdit ? 'Folder updated.' : 'Folder created.', { type: 'success' });
         };
     }
     
@@ -6085,13 +6130,18 @@ if ('serviceWorker' in navigator) {
         confirmModal.querySelector('#closeDeleteFolderModal').onclick = () => confirmModal.remove();
         confirmModal.querySelector('#cancelDeleteFolderBtn').onclick = () => confirmModal.remove();
         confirmModal.querySelector('#confirmDeleteFolderBtn').onclick = async () => {
-            const index = folders.findIndex(f => f.id === currentFolderId);
-            if (index > -1) {
-                folders.splice(index, 1);
-                await saveFolders();
-                renderFoldersList();
-                confirmModal.remove();
-                showToast('Folder deleted.', { type: 'success' });
+            try {
+                const index = folders.findIndex(f => f.id === currentFolderId);
+                if (index > -1) {
+                    folders.splice(index, 1);
+                    await saveFolders();
+                    renderFoldersList();
+                    confirmModal.remove();
+                    showToast('Folder deleted.', { type: 'success' });
+                }
+            } catch (e) {
+                console.error('Failed to delete folder:', e);
+                showToast('Failed to delete folder. Please try again.', { type: 'error' });
             }
         };
     });
@@ -6187,17 +6237,22 @@ if ('serviceWorker' in navigator) {
     })();
     // Handle create document click
     document.getElementById('createNewDocumentBtn').addEventListener('click', async function() {
-        // Hide dropdown
-        document.getElementById('createOptions').style.display = 'none';
-        // Create new doc
-        const newDoc = {
-            id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-            title: 'Untitled Document'
-        };
-        documents.push(newDoc);
-        addDocumentToList(newDoc);
-        openDocument(newDoc.id);
-        await saveDocuments();
+        try {
+            // Hide dropdown
+            document.getElementById('createOptions').style.display = 'none';
+            // Create new doc
+            const newDoc = {
+                id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                title: 'Untitled Document'
+            };
+            documents.push(newDoc);
+            addDocumentToList(newDoc);
+            openDocument(newDoc.id);
+            await saveDocuments();
+        } catch (e) {
+            console.error('Failed to create document:', e);
+            showToast('Failed to create document. Please try again.', { type: 'error' });
+        }
     });
     
     // Handle create folder click
@@ -6260,16 +6315,21 @@ if ('serviceWorker' in navigator) {
                 let title = file.name.replace(/\.[^/.]+$/, '');
                 // Helper: create and open new doc
                 async function createAndOpenDoc(content, title) {
-                    const newDoc = {
-                        id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                        title: title || 'Imported Document',
-                        content: content
-                    };
-                    documents.push(newDoc);
-                    addDocumentToList(newDoc);
-                    openDocument(newDoc.id);
-                    await saveDocuments();
-                    showToast('File imported.', { type: 'success' });
+                    try {
+                        const newDoc = {
+                            id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
+                            title: title || 'Imported Document',
+                            content: content
+                        };
+                        documents.push(newDoc);
+                        addDocumentToList(newDoc);
+                        openDocument(newDoc.id);
+                        await saveDocuments();
+                        showToast('File imported.', { type: 'success' });
+                    } catch (e) {
+                        console.error('Failed to create doc from import:', e);
+                        showToast('Failed to import file.', { type: 'error' });
+                    }
                 }
                 // TXT/MD
                 if (file.type === 'text/plain' || file.name.match(/\.(txt|md)$/i)) {
@@ -6471,113 +6531,161 @@ if ('serviceWorker' in navigator) {
 
     async function addImageToDB(file) {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IMAGE_STORE, 'readwrite');
-            const store = tx.objectStore(IMAGE_STORE);
-            const imgObj = {
-                name: file.name,
-                type: file.type,
-                created: Date.now(),
-                file
-            };
-            const req = store.add(imgObj);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+            try {
+                const tx = db.transaction(IMAGE_STORE, 'readwrite');
+                const store = tx.objectStore(IMAGE_STORE);
+                const imgObj = {
+                    name: file.name,
+                    type: file.type,
+                    created: Date.now(),
+                    file
+                };
+                const req = store.add(imgObj);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => { showToast('Failed to save image to library.', { type: 'error' }); reject(req.error); };
+            } catch (e) {
+                console.error('Failed to add image to DB:', e);
+                showToast('Failed to save image to library.', { type: 'error' });
+                reject(e);
+            }
         });
     }
 
     // --- Video Logic ---
     async function addVideoToDB(file) {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(VIDEO_STORE, 'readwrite');
-            const store = tx.objectStore(VIDEO_STORE);
-            const videoObj = {
-                name: file.name,
-                type: file.type,
-                created: Date.now(),
-                file
-            };
-            const req = store.add(videoObj);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+            try {
+                const tx = db.transaction(VIDEO_STORE, 'readwrite');
+                const store = tx.objectStore(VIDEO_STORE);
+                const videoObj = {
+                    name: file.name,
+                    type: file.type,
+                    created: Date.now(),
+                    file
+                };
+                const req = store.add(videoObj);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => { showToast('Failed to save video to library.', { type: 'error' }); reject(req.error); };
+            } catch (e) {
+                console.error('Failed to add video to DB:', e);
+                showToast('Failed to save video to library.', { type: 'error' });
+                reject(e);
+            }
         });
     }
 
     // --- Audio Logic ---
     async function addAudioToDB(file) {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(AUDIO_STORE, 'readwrite');
-            const store = tx.objectStore(AUDIO_STORE);
-            const audioObj = {
-                name: file.name,
-                type: file.type,
-                created: Date.now(),
-                file
-            };
-            const req = store.add(audioObj);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+            try {
+                const tx = db.transaction(AUDIO_STORE, 'readwrite');
+                const store = tx.objectStore(AUDIO_STORE);
+                const audioObj = {
+                    name: file.name,
+                    type: file.type,
+                    created: Date.now(),
+                    file
+                };
+                const req = store.add(audioObj);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => { showToast('Failed to save audio to library.', { type: 'error' }); reject(req.error); };
+            } catch (e) {
+                console.error('Failed to add audio to DB:', e);
+                showToast('Failed to save audio to library.', { type: 'error' });
+                reject(e);
+            }
         });
     }
 
     async function addImageToDB(file) {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(IMAGE_STORE, 'readwrite');
-            const store = tx.objectStore(IMAGE_STORE);
-            const imgObj = {
-                name: file.name,
-                type: file.type,
-                created: Date.now(),
-                file
-            };
-            const req = store.add(imgObj);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+            try {
+                const tx = db.transaction(IMAGE_STORE, 'readwrite');
+                const store = tx.objectStore(IMAGE_STORE);
+                const imgObj = {
+                    name: file.name,
+                    type: file.type,
+                    created: Date.now(),
+                    file
+                };
+                const req = store.add(imgObj);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => { showToast('Failed to save image to library.', { type: 'error' }); reject(req.error); };
+            } catch (e) {
+                console.error('Failed to add image to DB:', e);
+                showToast('Failed to save image to library.', { type: 'error' });
+                reject(e);
+            }
         });
     }
 
     async function getAllImages(storeName = IMAGE_STORE) {
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(storeName, 'readonly');
-            const store = tx.objectStore(storeName);
-            const req = store.getAll();
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+            try {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => { console.error('getAllImages error:', req.error); resolve([]); };
+            } catch (e) {
+                console.error('Failed to get images from DB:', e);
+                showToast('Failed to load images from library.', { type: 'error' });
+                resolve([]);
+            }
         });
     }
 
     async function deleteImage(id, toTrash = true) {
-        // Move to trash or delete permanently
-        if (toTrash) {
-            // Move to trash store
-            const tx = db.transaction([IMAGE_STORE, TRASH_STORE], 'readwrite');
-            const imgStore = tx.objectStore(IMAGE_STORE);
-            const trashStore = tx.objectStore(TRASH_STORE);
-            const getReq = imgStore.get(id);
-            getReq.onsuccess = function() {
-                if (getReq.result) {
-                    trashStore.add(getReq.result);
-                    imgStore.delete(id);
-                }
-            };
-        } else {
-            // Delete from trash
-            const tx = db.transaction(TRASH_STORE, 'readwrite');
-            tx.objectStore(TRASH_STORE).delete(id);
+        try {
+            // Move to trash or delete permanently
+            if (toTrash) {
+                // Move to trash store
+                const tx = db.transaction([IMAGE_STORE, TRASH_STORE], 'readwrite');
+                const imgStore = tx.objectStore(IMAGE_STORE);
+                const trashStore = tx.objectStore(TRASH_STORE);
+                const getReq = imgStore.get(id);
+                getReq.onsuccess = function() {
+                    if (getReq.result) {
+                        trashStore.add(getReq.result);
+                        imgStore.delete(id);
+                    }
+                };
+                getReq.onerror = function() {
+                    console.error('Failed to move image to trash:', getReq.error);
+                    showToast('Failed to move image to trash.', { type: 'error' });
+                };
+            } else {
+                // Delete from trash
+                const tx = db.transaction(TRASH_STORE, 'readwrite');
+                tx.objectStore(TRASH_STORE).delete(id);
+            }
+        } catch (e) {
+            console.error('Failed to delete image:', e);
+            showToast('Failed to delete image.', { type: 'error' });
         }
     }
 
     async function restoreImageFromTrash(id) {
-        // Move from trash to images
-        const tx = db.transaction([IMAGE_STORE, TRASH_STORE], 'readwrite');
-        const imgStore = tx.objectStore(IMAGE_STORE);
-        const trashStore = tx.objectStore(TRASH_STORE);
-        const getReq = trashStore.get(id);
-        getReq.onsuccess = function() {
-            if (getReq.result) {
-                imgStore.add(getReq.result);
-                trashStore.delete(id);
-            }
-        };
+        try {
+            // Move from trash to images
+            const tx = db.transaction([IMAGE_STORE, TRASH_STORE], 'readwrite');
+            const imgStore = tx.objectStore(IMAGE_STORE);
+            const trashStore = tx.objectStore(TRASH_STORE);
+            const getReq = trashStore.get(id);
+            getReq.onsuccess = function() {
+                if (getReq.result) {
+                    imgStore.add(getReq.result);
+                    trashStore.delete(id);
+                }
+            };
+            getReq.onerror = function() {
+                console.error('Failed to restore image from trash:', getReq.error);
+                showToast('Failed to restore image.', { type: 'error' });
+            };
+        } catch (e) {
+            console.error('Failed to restore image from trash:', e);
+            showToast('Failed to restore image.', { type: 'error' });
+        }
     }
 
     function renderImagesList() {
@@ -6621,47 +6729,76 @@ if ('serviceWorker' in navigator) {
             // Delete/restore handlers
             imagesList.querySelectorAll('.img-delete-btn').forEach(btn => {
                 btn.onclick = async e => {
-                    const id = Number(btn.getAttribute('data-id'));
-                    await deleteImage(id, true);
-                    renderImagesList();
+                    try {
+                        const id = Number(btn.getAttribute('data-id'));
+                        await deleteImage(id, true);
+                        renderImagesList();
+                    } catch (e) {
+                        console.error('Failed to delete image:', e);
+                        showToast('Failed to delete image.', { type: 'error' });
+                    }
                 };
             });
             imagesList.querySelectorAll('.img-restore-btn').forEach(btn => {
                 btn.onclick = async e => {
-                    const id = Number(btn.getAttribute('data-id'));
-                    await restoreImageFromTrash(id);
-                    renderImagesList();
+                    try {
+                        const id = Number(btn.getAttribute('data-id'));
+                        await restoreImageFromTrash(id);
+                        renderImagesList();
+                    } catch (e) {
+                        console.error('Failed to restore image:', e);
+                        showToast('Failed to restore image.', { type: 'error' });
+                    }
                 };
             });
             imagesList.querySelectorAll('.img-delete-perm-btn').forEach(btn => {
                 btn.onclick = async e => {
-                    const id = Number(btn.getAttribute('data-id'));
-                    await deleteImage(id, false);
-                    renderImagesList();
+                    try {
+                        const id = Number(btn.getAttribute('data-id'));
+                        await deleteImage(id, false);
+                        renderImagesList();
+                    } catch (e) {
+                        console.error('Failed to permanently delete image:', e);
+                        showToast('Failed to permanently delete image.', { type: 'error' });
+                    }
                 };
             });
+        }).catch(e => {
+            console.error('Failed to render images list:', e);
+            imagesList.innerHTML = '<p style="opacity:0.6;padding:12px;">Failed to load images.</p>';
+            showToast('Failed to load images.', { type: 'error' });
         });
     }
     // --- Upload Image from Create Options ---
     document.getElementById('createNewImageBtn').addEventListener('click', async function() {
-        // Hide dropdown
-        document.getElementById('createOptions').style.display = 'none';
-        // Open file picker
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async function(e) {
-            const file = input.files[0];
-            if (file) {
-                await addImageToDB(file);
-                // Switch to images tab and refresh list
-                window.location.hash = '#/images';
-                imagesTabMode = 'main';
-                renderImagesList();
-                showToast('Image uploaded and added to library.', { type: 'success' });
-            }
-        };
-        input.click();
+        try {
+            // Hide dropdown
+            document.getElementById('createOptions').style.display = 'none';
+            // Open file picker
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async function(e) {
+                try {
+                    const file = input.files[0];
+                    if (file) {
+                        await addImageToDB(file);
+                        // Switch to images tab and refresh list
+                        window.location.hash = '#/images';
+                        imagesTabMode = 'main';
+                        renderImagesList();
+                        showToast('Image uploaded and added to library.', { type: 'success' });
+                    }
+                } catch (e) {
+                    console.error('Failed to upload image:', e);
+                    showToast('Failed to upload image.', { type: 'error' });
+                }
+            };
+            input.click();
+        } catch (e) {
+            console.error('Failed to open image upload:', e);
+            showToast('Failed to open image upload.', { type: 'error' });
+        }
     });
     // --- Upload Image Button ---
     document.getElementById('uploadImageBtn').addEventListener('click', function() {
@@ -6669,10 +6806,16 @@ if ('serviceWorker' in navigator) {
         input.type = 'file';
         input.accept = 'image/*';
         input.onchange = async function(e) {
-            const file = input.files[0];
-            if (file) {
-                await addImageToDB(file);
-                renderImagesList();
+            try {
+                const file = input.files[0];
+                if (file) {
+                    await addImageToDB(file);
+                    renderImagesList();
+                    showToast('Image added to library.', { type: 'success' });
+                }
+            } catch (e) {
+                console.error('Failed to upload image:', e);
+                showToast('Failed to upload image.', { type: 'error' });
             }
         };
         input.click();
@@ -6952,6 +7095,7 @@ if ('serviceWorker' in navigator) {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.11.0 - Added Unsupported Browser if in Firefox or Safari because their are strict. and also some Improvements.</li>
                         <li>v1.10.0 - Added Folders support, Added Reader Mode, Improved Split Screen.</li>
                         <li>v1.0.9 - Added Try Beta button with warning modal, UI Improvements and redesigned showToast.</li>
                         <li>v1.0.8 - UI Improvements.</li>
@@ -7820,11 +7964,11 @@ if ('serviceWorker' in navigator) {
         
         
         // On page load, apply theme and translations from localStorage
-        applyTheme(localStorage.getItem('omniwrite-theme') || 'system');
-        applyTranslations(localStorage.getItem('omniwrite-lang') || 'en');
-        applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left');
-        applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true');
-        applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true');
+        try { applyTheme(localStorage.getItem('omniwrite-theme') || 'system'); } catch(e) { applyTheme('system'); }
+        try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) { applyTranslations('en'); }
+        try { applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left'); } catch(e) { applySidebarPosition('left'); }
+        try { applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true'); } catch(e) {}
+        try { applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true'); } catch(e) {}
         
         settingsItem.addEventListener('click', function () {
             // Remove any existing modal
@@ -7918,7 +8062,7 @@ if ('serviceWorker' in navigator) {
             themeDropdown.querySelectorAll('.dropdown-item').forEach(item => {
                 item.onclick = function () {
                     const value = this.getAttribute('data-value');
-                    localStorage.setItem('omniwrite-theme', value);
+                    try { localStorage.setItem('omniwrite-theme', value); } catch(e) { console.warn('localStorage unavailable:', e); }
                     applyTheme(value);
                     themeSelectBtn.textContent = this.textContent;
                     themeDropdown.style.display = 'none';
@@ -8043,8 +8187,8 @@ if ('serviceWorker' in navigator) {
                             });
                             
                             customModal.querySelector('#applyCustomThemeBtn').onclick = function () {
-                                localStorage.setItem('omniwrite-custom-bg', selectedBgColor);
-                                localStorage.setItem('omniwrite-custom-text', selectedTextColor);
+                                try { localStorage.setItem('omniwrite-custom-bg', selectedBgColor); } catch(e) { console.warn('localStorage unavailable:', e); }
+                                try { localStorage.setItem('omniwrite-custom-text', selectedTextColor); } catch(e) { console.warn('localStorage unavailable:', e); }
                                 document.body.style.background = selectedBgColor;
                                 document.body.style.color = selectedTextColor;
                                 customColorPicker.remove();
@@ -8102,7 +8246,7 @@ if ('serviceWorker' in navigator) {
             languageDropdown.querySelectorAll('.dropdown-item').forEach(item => {
                 item.onclick = function () {
                     const value = this.getAttribute('data-value');
-                    localStorage.setItem('omniwrite-lang', value);
+                    try { localStorage.setItem('omniwrite-lang', value); } catch(e) { console.warn('localStorage unavailable:', e); }
                     languageSelectBtn.textContent = this.textContent;
                     languageDropdown.style.display = 'none';
                     showToast('Language updated.', { type: 'success' });
@@ -8157,7 +8301,7 @@ if ('serviceWorker' in navigator) {
             sidebarPositionDropdown.querySelectorAll('.dropdown-item').forEach(item => {
                 item.onclick = function () {
                     const value = this.getAttribute('data-value');
-                    localStorage.setItem('omniwrite-sidebar-position', value);
+                    try { localStorage.setItem('omniwrite-sidebar-position', value); } catch(e) { console.warn('localStorage unavailable:', e); }
                     sidebarPositionBtn.textContent = this.textContent;
                     sidebarPositionDropdown.style.display = 'none';
                     applySidebarPosition(value);
@@ -8181,7 +8325,7 @@ if ('serviceWorker' in navigator) {
             
             reduceTransparencyToggle.onchange = function() {
                 const enabled = this.checked;
-                localStorage.setItem('omniwrite-reduce-transparency', enabled);
+                try { localStorage.setItem('omniwrite-reduce-transparency', enabled); } catch(e) { console.warn('localStorage unavailable:', e); }
                 applyReduceTransparency(enabled);
                 showToast('Transparency setting updated.', { type: 'success' });
             };
@@ -8193,7 +8337,7 @@ if ('serviceWorker' in navigator) {
             
             compactModeToggle.onchange = function() {
                 const enabled = this.checked;
-                localStorage.setItem('omniwrite-compact-mode', enabled);
+                try { localStorage.setItem('omniwrite-compact-mode', enabled); } catch(e) { console.warn('localStorage unavailable:', e); }
                 applyCompactMode(enabled);
                 showToast('Compact mode updated.', { type: 'success' });
             };
@@ -8203,22 +8347,27 @@ if ('serviceWorker' in navigator) {
 
             // Export backup
             settingsModal.querySelector('#exportBackupBtn').onclick = async function () {
-                // Export all documents as JSON
-                const backup = {
-                    documents: documents,
-                    time: Date.now()
-                };
-                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'omniwrite-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    URL.revokeObjectURL(a.href);
-                    a.remove();
-                }, 100);
-                showToast('Backup exported.', { type: 'success' });
+                try {
+                    // Export all documents as JSON
+                    const backup = {
+                        documents: documents,
+                        time: Date.now()
+                    };
+                    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'omniwrite-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        URL.revokeObjectURL(a.href);
+                        a.remove();
+                    }, 100);
+                    showToast('Backup exported.', { type: 'success' });
+                } catch (e) {
+                    console.error('Failed to export backup:', e);
+                    showToast('Failed to export backup. Please try again.', { type: 'error' });
+                }
             };
 
             // Import backup
@@ -8238,15 +8387,20 @@ if ('serviceWorker' in navigator) {
                         }
                         // Import all documents
                         for (const doc of backup.documents) {
-                            await saveDocument(doc);
-                            documents.push(doc);
-                            addDocumentToList(doc);
+                            if (!documents.find(d => d.id === doc.id)) {
+                                documents.push(doc);
+                            }
                         }
+                        await saveDocuments();
+                        renderDocumentsList();
                         showToast('Backup imported.', { type: 'success' });
                     } catch (err) {
-                        console.error(err);
+                        console.error('Failed to import backup:', err);
                         showToast('Failed to import backup.', { type: 'error' });
                     }
+                };
+                reader.onerror = function() {
+                    showToast('Failed to read backup file.', { type: 'error' });
                 };
                 reader.readAsText(file);
             };
@@ -8319,11 +8473,16 @@ if ('serviceWorker' in navigator) {
 
                         if (warningCount > 3) {
                             // Perform the reset
-                            const tx = db.transaction(KEY_STORE, 'readwrite');
-                            tx.objectStore(KEY_STORE).delete('main');
-                            showToast('Encryption key reset. Existing documents are now unreadable.', { type: 'success' });
-                            settingsModal.remove();
-                            setTimeout(() => window.location.reload(), 1200);
+                            try {
+                                const tx = db.transaction(KEY_STORE, 'readwrite');
+                                tx.objectStore(KEY_STORE).delete('main');
+                                showToast('Encryption key reset. Existing documents are now unreadable.', { type: 'success' });
+                                settingsModal.remove();
+                                setTimeout(() => window.location.reload(), 1200);
+                            } catch (e) {
+                                console.error('Failed to reset encryption key:', e);
+                                showToast('Failed to reset encryption key. Please try again.', { type: 'error' });
+                            }
                         } else {
                             showWarningModal();
                         }
@@ -8447,27 +8606,28 @@ if ('serviceWorker' in navigator) {
 
             // Export backup
             settingsModal.querySelector('#exportBackupBtn').onclick = async function () {
-                // Export all documents as JSON
-                const backup = {
-                    documents: documents,
-                    time: Date.now()
-                };
-                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'omniwrite-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    URL.revokeObjectURL(a.href);
-                    a.remove();
-                }, 100);
-                showToast('Backup exported.', { type: 'success' });
+                try {
+                    // Export all documents as JSON
+                    const backup = {
+                        documents: documents,
+                        time: Date.now()
+                    };
+                    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'omniwrite-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        URL.revokeObjectURL(a.href);
+                        a.remove();
+                    }, 100);
+                    showToast('Backup exported.', { type: 'success' });
+                } catch (e) {
+                    console.error('Failed to export backup:', e);
+                    showToast('Failed to export backup. Please try again.', { type: 'error' });
+                }
             };
-
-       
-            
-            // Danger Zone: Delete Everything
             settingsModal.querySelector('#deleteEverythingBtn').onclick = async function () {
                 let warningCount = 0;
 
@@ -8537,7 +8697,7 @@ if ('serviceWorker' in navigator) {
                         if (warningCount > 4) {
                             // Perform the deletion
                             documents = [];
-                            localStorage.clear(); // Clear all localStorage data
+                            try { localStorage.clear(); } catch(e) { console.warn('localStorage.clear failed:', e); }
 
                             // Clear all stores using transactions
                             const storesToClear = ['documents', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
@@ -8591,18 +8751,37 @@ if ('serviceWorker' in navigator) {
     });
    
     // Check for IndexedDB and Web Crypto API support
-    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) && !/Munetios/.test(navigator.userAgent)) {
+    function detectBrowser() {
+        const userAgent = navigator.userAgent;
+        const isChrome = /Chrome|Chromium|CriOS/.test(userAgent) && !/Edge|Edg/.test(userAgent);
+        const isEdge = /Edge|Edg/.test(userAgent);
+        const isFirefox = /Firefox|FxiOS/.test(userAgent);
+        const isSafari = /Safari/.test(userAgent) && !/Chrome|Chromium|CriOS|Edge|Edg|Firefox/.test(userAgent);
+        const isOpera = /OPR|Opera/.test(userAgent);
+        const isMunetios = /Munetios|MunetiosWebView|MunetiosBrowser/.test(userAgent);
+        
+        return { isChrome, isEdge, isFirefox, isSafari, isOpera, isMunetios };
+    }
+    
+    const browser = detectBrowser();
+    const isUnsupportedBrowser = (browser.isFirefox || browser.isSafari) && !window.location.hostname.includes('munetios') && !browser.isMunetios;
+    
+    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || isUnsupportedBrowser) {
         // Create unsupported browser modal
         const unsupportedModal = document.createElement('div');
         unsupportedModal.className = 'modal';
         unsupportedModal.innerHTML = `
             <div class="modal-content" style="position:relative;max-width:500px;">
                 <h2>Unsupported Browser</h2>
-                <p>Your browser does not support the required features for this application, such as IndexedDB or Web Crypto API.</p>
-                <p>Additionally, Safari is known to have issues with IndexedDB, which may cause instability in OmniWrite.</p>
-                <p>Please update your browser or switch to a modern browser like Chrome, Firefox, or Edge.</p>
+                <p>Munetios OmniWrite was designed for Chromium-based browsers (Chrome, Edge, etc.).</p>
+                <p>Firefox and Safari are known to have issues with folders, documents, and other features, which may cause instability in OmniWrite.</p>
+                <p>Please update your browser or switch to a modern Chromium-based browser like Chrome or Edge for the best experience.</p>
                 <p>Or, if you're feeling adventurous, you can try OmniWrite anyway by clicking the "Try Anyway" button.</p>
-                <button id="closeUnsupportedModal" style="margin-top:20px;">Try Anyway</button>
+                <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
+                    <button id="closeUnsupportedModal">Try Anyway</button>
+                    <button id="downloadChromeBtn">Download Chrome</button>
+                    <button id="downloadEdgeBtn">Download Edge</button>
+                </div>
             </div>
         `;
         document.body.appendChild(unsupportedModal);
@@ -8612,8 +8791,20 @@ if ('serviceWorker' in navigator) {
             unsupportedModal.remove();
         };
 
-        // Prevent further script execution
-        throw new Error('Unsupported browser');
+        // Download Chrome button
+        unsupportedModal.querySelector('#downloadChromeBtn').onclick = () => {
+            window.open('https://www.google.com/chrome/', '_top');
+        };
+
+        // Download Edge button
+        unsupportedModal.querySelector('#downloadEdgeBtn').onclick = () => {
+            window.open('https://www.microsoft.com/en-us/edge', '_top');
+        };
+
+        // Prevent further script execution if truly unsupported
+        if (!window.indexedDB || !window.crypto || !window.crypto.subtle) {
+            throw new Error('Unsupported browser: Missing required APIs');
+        }
     }
    
     </script>
