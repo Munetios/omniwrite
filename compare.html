@@ -8,18 +8,37 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded"
     />
-    <style>
+    <meta http-equiv="Content-Security-Policy"
+content="
+default-src 'self';
+script-src 'self' 'nonce-omniwrite123';
+style-src 'self' 'nonce-omniwrite123' https://fonts.googleapis.com;
+font-src https://fonts.gstatic.com;
+img-src 'self' data:;
+connect-src 'self';
+frame-src 'none';
+object-src 'none';
+base-uri 'self';
+form-action 'self';
+upgrade-insecure-requests;
+">
+    <style nonce="omniwrite123">
       @import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap");
 
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+             font-variation-settings:
+          "slnt" 0,
+          "wdth" 100,
+          "GRAD" 0,
+          "ROND" 80;
       }
 
       html,
       body {
-        font-family: "Google Sans Flex", sans-serif;
+        font-family: "Google Sans Flex", sans-serif !important;
         overflow-x: hidden;
       }
 
@@ -382,6 +401,12 @@
         margin-top: 40px;
         opacity: 0.7;
       }
+      .free-notice {
+        margin-top: 20px; font-size: 0.9rem; opacity: 0.7;
+        }
+      .notice-1 {
+        font-size: 1.1rem; margin-top: 20px; opacity: 0.9;
+      }
     </style>
   </head>
   <body>
@@ -641,8 +666,7 @@
             <tr>
               <td>Text Formatting</td>
               <td>
-                <icon class="checkmark">check_circle</icon> Bold, italic,
-                underline, colors
+                <icon class="checkmark">check_circle</icon> Extensive formatting
               </td>
               <td>
                 <icon class="checkmark">check_circle</icon> Extensive formatting
@@ -685,7 +709,7 @@
               <td>
                 <icon class="checkmark">check_circle</icon> Instant (offline)
               </td>
-              <td><icon class="partial">change_circle</icon> 2-5 seconds</td>
+              <td><icon class="partial">change_circle</icon> Depends on internet</td>
             </tr>
             <tr>
               <td>Document Save Speed</td>
@@ -694,6 +718,24 @@
               </td>
               <td>
                 <icon class="partial">change_circle</icon> Depends on connection
+              </td>
+            </tr>
+                  <tr>
+              <td>Reading Mode</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> 
+              </td>
+              <td>
+                <icon class="partial">change_circle</icon> Limited
+              </td>
+            </tr>
+                  <tr>
+              <td>Split Screen</td>
+              <td>
+                <icon class="checkmark">check_circle</icon> 
+              </td>
+              <td>
+                <icon class="crossmark">cancel</icon> 
               </td>
             </tr>
             <tr>
@@ -725,7 +767,7 @@
               <td>
                 <icon class="checkmark">check_circle</icon> Auto-detects system
               </td>
-              <td><icon class="checkmark">check_circle</icon> Manual toggle</td>
+              <td><icon class="crossmark">cancel</icon></td>
             </tr>
             <tr>
               <td>Search Documents</td>
@@ -734,7 +776,7 @@
             </tr>
             <tr>
               <td>Document Organization</td>
-              <td><icon class="checkmark">check_circle</icon> Local library</td>
+              <td><icon class="checkmark">check_circle</icon> OmniWrite Folders</td>
               <td>
                 <icon class="checkmark">check_circle</icon> Google Drive folders
               </td>
@@ -758,7 +800,7 @@
             </tr>
             <tr>
               <td>File Formats</td>
-              <td><icon class="partial">change_circle</icon> HTML, text</td>
+              <td><icon class="partial">change_circle</icon> HTML, TXT, DOCX, MD</td>
               <td>
                 <icon class="checkmark">check_circle</icon> PDF, DOCX, many
                 formats
@@ -795,7 +837,7 @@
       <!-- Call to Action -->
       <div class="cta-section liquid-glass">
         <h2>Ready to Experience OmniWrite?</h2>
-        <p style="font-size: 1.1rem; margin-top: 20px; opacity: 0.9">
+        <p class="notice-1">
           Start writing with complete privacy and zero setup. No account, no
           tracking, just pure writing freedom.
         </p>
@@ -803,7 +845,7 @@
           <icon>edit_note</icon>
           Try OmniWrite Now
         </a>
-        <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.7">
+        <p class="free-notice">
           100% free • No credit card required • Works offline
         </p>
         <p class="notice">
@@ -816,7 +858,7 @@
       </div>
     </div>
 
-    <script>
+    <script nonce="omniwrite123">
       // Smooth scroll for any internal links
       document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
         anchor.addEventListener("click", function (e) {
