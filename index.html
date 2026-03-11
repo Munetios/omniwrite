@@ -2154,6 +2154,68 @@ if ('serviceWorker' in navigator) {
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
             border-color: rgba(255,255,255,0.7);
         }
+        /* --- Image floating toolbar --- */
+        .omni-img-toolbar {
+            position: fixed;
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.027);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 10px;
+            padding: 4px 8px;
+            z-index: 999998;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            pointer-events: all;
+        }
+        .omni-img-toolbar button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+        .omni-img-toolbar button:hover { background: rgba(255,255,255,0.15); }
+        .omni-img-toolbar button icon { font-size: 18px; }
+        /* resize handle highlight on selected image */
+        img.omni-selected {
+            outline: 2px solid #ffe066;
+            outline-offset: 2px;
+        }
+        /* --- Custom context menu --- */
+        .omni-ctx-menu {
+            position: fixed;
+            min-width: 200px;
+            background: rgba(255, 255, 255, 0.075);
+            backdrop-filter: blur(2px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 6px 0;
+            z-index: 1000001;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .omni-ctx-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            cursor: pointer;
+            color: #f0eeff;
+            font-size: 14px;
+            transition: background 0.12s;
+        }
+        .omni-ctx-item:hover { background: rgba(255,255,255,0.1); }
+        .omni-ctx-item icon { font-size: 18px; color: rgba(255,255,255,0.7); }
+        .omni-ctx-separator { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+        .omni-ctx-item.danger { color: #ff6b6b; }
+        .omni-ctx-item.danger icon { color: #ff6b6b; }
     </style>
 
     <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui"> 
@@ -2593,6 +2655,25 @@ if ('serviceWorker' in navigator) {
     function handleHashChangeWithDocument() {
         try {
             const hash = window.location.hash;
+
+            // #create?name=...&content=... → create and open a new document
+            if (hash.startsWith('#create?')) {
+                const params = new URLSearchParams(hash.slice('#create?'.length));
+                const name    = params.get('name')    || 'Untitled Document';
+                const content = params.get('content') || '';
+                const newDoc = {
+                    id:        Date.now().toString(36) + Math.random().toString(36).slice(2),
+                    title:     name,
+                    content:   content,
+                    timestamp: Date.now()
+                };
+                documents.unshift(newDoc);
+                saveDocuments();
+                renderDocumentList();
+                openDocument(newDoc.id);
+                return;
+            }
+
             const docMatch = hash.match(/^#\/document\/(.+)$/);
             if (docMatch) {
                 const docId = docMatch[1];
@@ -2640,6 +2721,7 @@ if ('serviceWorker' in navigator) {
         editable.addEventListener('blur', function() {
             doc.title = this.textContent.trim() || 'Untitled Document';
             this.textContent = doc.title;
+            document.title = doc.title + ' — Munetios OmniWrite';
             doc.timestamp = Date.now();
             // Update sidebar
             const item = document.querySelector(`.document-item[data-doc-id="${doc.id}"] .menu-text`);
@@ -2829,7 +2911,8 @@ if ('serviceWorker' in navigator) {
         }
         // Show editor page
         switchPage('editorContent');
-        // Set editor content
+        // Update browser tab title to document name
+        document.title = doc.title + ' — Munetios OmniWrite';
         const editorArea = document.getElementById('editorArea');
         editorArea.contentEditable = 'true';
         editorArea.innerHTML = doc.content || '';
@@ -2851,10 +2934,7 @@ if ('serviceWorker' in navigator) {
                             if (req.result && req.result.file) {
                                 const url = URL.createObjectURL(req.result.file);
                                 img.src = url;
-                                // Optionally, revokeObjectURL on image unload
-                                img.addEventListener('load', () => {
-                                    setTimeout(() => URL.revokeObjectURL(url), 60000);
-                                });
+                                window.addEventListener('beforeunload', () => URL.revokeObjectURL(url), { once: true });
                             } else {
                                 img.alt = '[Image not found]';
                             }
@@ -3224,7 +3304,7 @@ if ('serviceWorker' in navigator) {
                             <input type="url" id="linkUrlInput" class="link-insert-input" placeholder="https://…">
                         </div>
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:6px 0;">
-                            <input type="checkbox" id="linkNewTabCheck" checked style="width:18px;height:18px;cursor:pointer;accent-color:#667eea;">
+                            <input type="checkbox" id="linkNewTabCheck" style="width:18px;height:18px;cursor:pointer;accent-color:#667eea;">
                             <span data-i18n="link_open_new_tab">Open in new tab</span>
                         </label>
                         <div style="display:flex; gap:12px; margin-top:4px;">
@@ -3438,70 +3518,150 @@ if ('serviceWorker' in navigator) {
             showMusicInsertModal();
         });
         // --- Insert Quote Functionality ---
-        // Add context menu for quote color
+        // ---- Full custom context menu (replaces browser default) ----
         document.getElementById('editorArea').addEventListener('contextmenu', function(e) {
-            // Only show for blockquote
+            e.preventDefault();
+            // Remove any existing custom menu
+            document.querySelectorAll('.omni-ctx-menu').forEach(m => m.remove());
+
+            const editorArea = document.getElementById('editorArea');
+            const sel = window.getSelection();
+            const hasSelection = sel && sel.toString().trim().length > 0;
+
+            // Check if right-clicked on a blockquote
+            let quoteNode = null;
             let node = e.target;
-            while (node && node !== this) {
-            if (node.nodeName === 'BLOCKQUOTE') {
-                e.preventDefault();
-                // Remove any existing context menu
-                let oldMenu = document.getElementById('quote-context-menu');
-                if (oldMenu) oldMenu.remove();
-                // Create menu
-                const menu = document.createElement('div');
-                menu.id = 'quote-context-menu';
-                menu.style.position = 'fixed';
-                menu.style.top = e.clientY + 'px';
-                menu.style.left = e.clientX + 'px';
-                menu.style.background = 'rgba(30,30,40,0.1)';
-                menu.style.backdropFilter = 'blur(2px)';
-                menu.style.border = '1px solid rgba(255,255,255,0.2)';
-                menu.style.color = '#fff';
-                menu.style.padding = '10px 18px';
-                menu.style.borderRadius = '10px';
-                menu.style.boxShadow = '0 2px 16px rgba(0,0,0,0.18)';
-                menu.style.zIndex = 999999;
-                menu.style.cursor = 'pointer';
-                menu.style.fontSize = '15px';
-                menu.textContent = 'Change Quote Color';
-                menu.onmousedown = function(ev) { ev.preventDefault(); };
-                menu.onclick = function() {
-                // Show color picker below menu
-                const colorPicker = document.getElementById('colorPicker');
-                colorPicker.style.display = 'flex';
-                colorPicker.style.top = (e.clientY + 8) + 'px';
-                colorPicker.style.left = (e.clientX - 150) + 'px';
-                // When color picked, apply to blockquote border
-                let handler = function(ev2) {
-                    // Get color from display
-                    const hex = document.getElementById('colorHexDisplay').textContent;
-                    node.style.borderLeft = '4px solid ' + hex;
-                    // Save doc
-                    const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                    doc.content = document.getElementById('editorArea').innerHTML;
-                    saveDocuments();
-                    }
-                    colorPicker.style.display = 'none';
-                    menu.remove();
-                    colorPicker.querySelector('.color-swatch-gradient').removeEventListener('mousedown', handler);
-                };
-                colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', handler);
-                };
-                document.body.appendChild(menu);
-                // Remove menu on click elsewhere
-                document.addEventListener('mousedown', function removeMenu(ev2) {
-                if (!menu.contains(ev2.target)) {
-                    menu.remove();
-                    document.removeEventListener('mousedown', removeMenu);
+            while (node && node !== editorArea) {
+                if (node.nodeName === 'BLOCKQUOTE') { quoteNode = node; break; }
+                node = node.parentNode;
+            }
+
+            // Text to HTML (markdown paste helper)
+            function mdToHtml(md) {
+                return md
+                    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/^#{3}\s+(.+)$/gm,'<h3>$1</h3>')
+                    .replace(/^#{2}\s+(.+)$/gm,'<h2>$1</h2>')
+                    .replace(/^#\s+(.+)$/gm,'<h1>$1</h1>')
+                    .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+                    .replace(/\*(.+?)\*/g,'<i>$1</i>')
+                    .replace(/`(.+?)`/g,'<code>$1</code>')
+                    .replace(/^[-*]\s+(.+)$/gm,'<li>$1</li>')
+                    .replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>')
+                    .replace(/\n/g,'<br>');
+            }
+
+            // HTML to markdown (copy as markdown helper)
+            function htmlToMd(html) {
+                const d = document.createElement('div');
+                d.innerHTML = html;
+                let md = '';
+                function walk(n) {
+                    if (n.nodeType === 3) { md += n.textContent; return; }
+                    const t = n.nodeName;
+                    if (t==='H1'){md+='# ';[...n.childNodes].forEach(walk);md+='\n';}
+                    else if(t==='H2'){md+='## ';[...n.childNodes].forEach(walk);md+='\n';}
+                    else if(t==='H3'){md+='### ';[...n.childNodes].forEach(walk);md+='\n';}
+                    else if(t==='B'||t==='STRONG'){md+='**';[...n.childNodes].forEach(walk);md+='**';}
+                    else if(t==='I'||t==='EM'){md+='*';[...n.childNodes].forEach(walk);md+='*';}
+                    else if(t==='CODE'){md+='`';[...n.childNodes].forEach(walk);md+='`';}
+                    else if(t==='LI'){md+='- ';[...n.childNodes].forEach(walk);md+='\n';}
+                    else if(t==='BR'){md+='\n';}
+                    else if(t==='P'){[...n.childNodes].forEach(walk);md+='\n';}
+                    else {[...n.childNodes].forEach(walk);}
                 }
-                });
-                break;
+                [...d.childNodes].forEach(walk);
+                return md;
             }
-            node = node.parentNode;
+
+            const menu = document.createElement('div');
+            menu.className = 'omni-ctx-menu';
+
+            const items = [
+                { icon:'content_cut',   label:_t('ctx_cut'),    key:'ctx_cut',    action: async ()=>{ document.execCommand('cut'); } },
+                { icon:'content_copy',  label:_t('ctx_copy'),   key:'ctx_copy',   action: async ()=>{ document.execCommand('copy'); } },
+                { icon:'content_paste', label:_t('ctx_paste'),  key:'ctx_paste',  action: async ()=>{
+                    try { const t = await navigator.clipboard.readText(); document.execCommand('insertText', false, t); }
+                    catch(err) { document.execCommand('paste'); }
+                }},
+                { icon:'format_clear',  label:_t('ctx_paste_plain'), key:'ctx_paste_plain', action: async ()=>{
+                    try {
+                        const t = await navigator.clipboard.readText();
+                        document.execCommand('insertText', false, t);
+                    } catch(err) { document.execCommand('paste'); }
+                }},
+                { sep: true },
+                { icon:'code',          label:_t('ctx_paste_md'),   key:'ctx_paste_md', action: async ()=>{
+                    try {
+                        const t = await navigator.clipboard.readText();
+                        const html = mdToHtml(t);
+                        const r = sel.rangeCount ? sel.getRangeAt(0) : null;
+                        if (r) { r.deleteContents(); const frag = document.createRange().createContextualFragment(html); r.insertNode(frag); }
+                    } catch(err) { showToast(_t('ctx_paste_md_error') || 'Clipboard read failed', {type:'error'}); }
+                }},
+                { icon:'integration_instructions', label:_t('ctx_copy_md'), key:'ctx_copy_md', action: ()=>{
+                    if (!hasSelection) return;
+                    const html = sel.getRangeAt(0).cloneContents();
+                    const div = document.createElement('div'); div.appendChild(html);
+                    const md = htmlToMd(div.innerHTML);
+                    navigator.clipboard.writeText(md).catch(()=>{});
+                }},
+                { sep: true },
+                { icon:'link',          label:_t('insert_link'),    key:'insert_link', action: ()=>{ document.getElementById('insertLinkBtn') && document.getElementById('insertLinkBtn').dispatchEvent(new MouseEvent('mousedown',{bubbles:true})); }},
+                { icon:'format_clear',  label:_t('ctx_clear_fmt'),  key:'ctx_clear_fmt', action: ()=>{ document.execCommand('removeFormat'); }},
+            ];
+
+            // Add quote color change if right-clicked blockquote
+            if (quoteNode) {
+                items.push({ sep: true });
+                items.push({ icon:'format_color_fill', label:_t('ctx_quote_color'), key:'ctx_quote_color', action: ()=>{
+                    const colorPicker = document.getElementById('colorPicker');
+                    colorPicker.style.display = 'flex';
+                    colorPicker.style.top = (e.clientY + 8) + 'px';
+                    colorPicker.style.left = (e.clientX - 150) + 'px';
+                    const handler = function(ev2) {
+                        const hex = document.getElementById('colorHexDisplay').textContent;
+                        quoteNode.style.borderLeft = '4px solid ' + hex;
+                        const docId2 = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                        const d2 = documents.find(d=>d.id===docId2);
+                        if(d2){d2.content=editorArea.innerHTML;saveDocuments();}
+                        colorPicker.style.display='none';
+                        colorPicker.querySelector('.color-swatch-gradient').removeEventListener('mousedown',handler);
+                    };
+                    colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', handler);
+                }});
             }
+
+            items.forEach(item => {
+                if (item.sep) {
+                    const sep = document.createElement('div');
+                    sep.className = 'omni-ctx-separator';
+                    menu.appendChild(sep);
+                    return;
+                }
+                const el = document.createElement('div');
+                el.className = 'omni-ctx-item';
+                el.innerHTML = `<icon>${item.icon}</icon><span>${item.label}</span>`;
+                el.addEventListener('mousedown', ev2 => { ev2.preventDefault(); });
+                el.addEventListener('click', () => { menu.remove(); item.action(); });
+                menu.appendChild(el);
+            });
+
+            // Position menu
+            menu.style.left = Math.min(e.clientX, window.innerWidth - 220) + 'px';
+            menu.style.top  = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 10) + 'px';
+            document.body.appendChild(menu);
+
+            // After append, re-clamp vertical
+            requestAnimationFrame(() => {
+                const mh = menu.getBoundingClientRect().height;
+                if (e.clientY + mh > window.innerHeight - 10) {
+                    menu.style.top = Math.max(4, e.clientY - mh) + 'px';
+                }
+            });
+
+            const removeMenu = ev2 => { if (!menu.contains(ev2.target)) { menu.remove(); document.removeEventListener('mousedown', removeMenu); } };
+            setTimeout(() => document.addEventListener('mousedown', removeMenu), 0);
         });
         document.getElementById('insertQuoteBtn').addEventListener('mousedown', function(e) {
             e.preventDefault();
@@ -4465,41 +4625,19 @@ if ('serviceWorker' in navigator) {
             input.accept = 'image/*';
             input.onchange = async function() {
                 const file = input.files[0];
-                if (file) {
-                    // Show progress indicator
-                    const progressToast = showToast(_t('preparing_image'), { type: 'info', duration: 2000 });
-                    
-                    // For large files (>5MB), use Blob URL; for smaller files, use data URL
-                    if (file.size > 5 * 1024 * 1024) {
-                        // Large file: use Blob URL
-                        const blobUrl = URL.createObjectURL(file);
-                        if (progressToast && progressToast.remove) progressToast.remove();
-                        insertImageAtCaret(blobUrl, file.name);
-                        await addImageToDB(file);
-                        imageInsertModal.remove();
-                        imageInsertModal = null;
-                        showToast(_t('image_inserted_library'), { type: 'success' });
-                    } else {
-                        // Small file: use data URL (better for saving)
-                        const reader = new FileReader();
-                        
-                        reader.onload = async function(ev) {
-                            if (progressToast && progressToast.remove) progressToast.remove();
-                            const dataUrl = ev.target.result;
-                            insertImageAtCaret(dataUrl, file.name);
-                            await addImageToDB(file);
-                            imageInsertModal.remove();
-                            imageInsertModal = null;
-                            showToast(_t('image_inserted_library'), { type: 'success' });
-                        };
-                        
-                        reader.onerror = function() {
-                            if (progressToast && progressToast.remove) progressToast.remove();
-                            showToast(_t('failed_load_image'), { type: 'error' });
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
+                if (!file) return;
+                const progressToast = showToast(_t('preparing_image'), { type: 'info', duration: 2000 });
+                try {
+                    // Always save to DB first so we get a stable ID that survives reload
+                    const imageId = await addImageToDB(file);
+                    if (progressToast && progressToast.remove) progressToast.remove();
+                    insertImageAtCaret('data-omniwrite-image-id:' + imageId, file.name);
+                    imageInsertModal.remove();
+                    imageInsertModal = null;
+                    showToast(_t('image_inserted_library'), { type: 'success' });
+                } catch (e) {
+                    if (progressToast && progressToast.remove) progressToast.remove();
+                    showToast(_t('failed_load_image'), { type: 'error' });
                 }
             };
             input.click();
@@ -4530,6 +4668,214 @@ if ('serviceWorker' in navigator) {
             };
             };
         }
+
+        // ---- Image floating toolbar + drag-to-move ----
+        let _activeImgToolbar = null;
+        let _dragImg = null, _dragOffX = 0, _dragOffY = 0, _dragPlaceholder = null;
+
+        function removeImgToolbar() {
+            if (_activeImgToolbar) { _activeImgToolbar.remove(); _activeImgToolbar = null; }
+            document.querySelectorAll('img.omni-selected').forEach(i => i.classList.remove('omni-selected'));
+        }
+
+        function showImgToolbar(img) {
+            removeImgToolbar();
+            img.classList.add('omni-selected');
+            const toolbar = document.createElement('div');
+            toolbar.className = 'omni-img-toolbar';
+            toolbar.innerHTML = `
+                <button id="imgCropBtn" title="${_t('img_crop')}"><icon>crop</icon><span>${_t('img_crop')}</span></button>
+                <button id="imgDeleteBtn" title="${_t('img_delete')}" style="color:#ff6b6b;"><icon>delete</icon><span>${_t('img_delete')}</span></button>
+                <button id="imgAlignLeftBtn" title="${_t('img_align_left')}"><icon>format_align_left</icon></button>
+                <button id="imgAlignCenterBtn" title="${_t('img_align_center')}"><icon>format_align_center</icon></button>
+                <button id="imgAlignRightBtn" title="${_t('img_align_right')}"><icon>format_align_right</icon></button>
+            `;
+            toolbar.addEventListener('mousedown', ev => ev.stopPropagation());
+
+            // Crop button — opens native crop via canvas
+            toolbar.querySelector('#imgCropBtn').onclick = () => {
+                removeImgToolbar();
+                const cropModal = document.createElement('div');
+                cropModal.className = 'modal';
+                cropModal.innerHTML = `
+                    <div class="modal-content liquid-glass" style="position:relative;max-width:700px;">
+                        <span class="modal-content-close" id="closeCropModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                        <h2 style="display:flex;align-items:center;gap:8px;"><icon>crop</icon> ${_t('img_crop')}</h2>
+                        <p style="font-size:13px;opacity:0.7;">${_t('img_crop_hint')}</p>
+                        <div style="position:relative;display:inline-block;user-select:none;" id="cropContainer">
+                            <img id="cropSourceImg" src="${img.src}" style="max-width:100%;display:block;" draggable="false">
+                            <div id="cropBox" style="position:absolute;border:2px dashed #ffe066;box-sizing:border-box;left:10%;top:10%;width:80%;height:80%;cursor:move;"></div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px;">
+                            <button id="applyCropBtn"><icon>check</icon> ${_t('img_crop_apply')}</button>
+                            <button id="cancelCropBtn"><icon>close</icon> ${_t('cancel')}</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(cropModal);
+                cropModal.querySelector('#closeCropModal').onclick = () => cropModal.remove();
+                cropModal.querySelector('#cancelCropBtn').onclick = () => cropModal.remove();
+
+                // Simple drag-to-reposition crop box
+                const box = cropModal.querySelector('#cropBox');
+                const container = cropModal.querySelector('#cropContainer');
+                let dragging = false, ox=0, oy=0, bx=0, by=0;
+                box.addEventListener('mousedown', function(ev) {
+                    dragging = true; ox=ev.clientX; oy=ev.clientY;
+                    bx = box.offsetLeft; by = box.offsetTop;
+                    ev.preventDefault();
+                });
+                document.addEventListener('mousemove', function mv(ev) {
+                    if(!dragging) return;
+                    const cw=container.offsetWidth, ch=container.offsetHeight;
+                    const bw=box.offsetWidth, bh=box.offsetHeight;
+                    let nx=bx+(ev.clientX-ox), ny=by+(ev.clientY-oy);
+                    nx=Math.max(0,Math.min(nx,cw-bw)); ny=Math.max(0,Math.min(ny,ch-bh));
+                    box.style.left=nx+'px'; box.style.top=ny+'px';
+                });
+                document.addEventListener('mouseup', () => { dragging=false; });
+
+                cropModal.querySelector('#applyCropBtn').onclick = () => {
+                    const srcImg = cropModal.querySelector('#cropSourceImg');
+                    const scaleX = srcImg.naturalWidth / srcImg.offsetWidth;
+                    const scaleY = srcImg.naturalHeight / srcImg.offsetHeight;
+                    const cx = box.offsetLeft * scaleX, cy = box.offsetTop * scaleY;
+                    const cw = box.offsetWidth * scaleX, ch = box.offsetHeight * scaleY;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = cw; canvas.height = ch;
+                    canvas.getContext('2d').drawImage(srcImg, cx, cy, cw, ch, 0, 0, cw, ch);
+                    img.src = canvas.toDataURL('image/png');
+                    // Remove DB ref since now a data URL crop
+                    img.removeAttribute('data-omniwrite-image-id');
+                    cropModal.remove();
+                    // Save
+                    const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                    const doc = documents.find(d=>d.id===docId);
+                    if(doc){doc.content=document.getElementById('editorArea').innerHTML;saveDocuments();}
+                };
+            };
+
+            // Delete button
+            toolbar.querySelector('#imgDeleteBtn').onclick = () => {
+                img.remove();
+                removeImgToolbar();
+                const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                const doc = documents.find(d=>d.id===docId);
+                if(doc){doc.content=document.getElementById('editorArea').innerHTML;saveDocuments();}
+            };
+
+            // Align buttons
+            toolbar.querySelector('#imgAlignLeftBtn').onclick   = () => { img.style.display='block'; img.style.marginLeft='0'; img.style.marginRight='auto'; };
+            toolbar.querySelector('#imgAlignCenterBtn').onclick = () => { img.style.display='block'; img.style.margin='8px auto'; };
+            toolbar.querySelector('#imgAlignRightBtn').onclick  = () => { img.style.display='block'; img.style.marginLeft='auto'; img.style.marginRight='0'; };
+
+            document.body.appendChild(toolbar);
+            _activeImgToolbar = toolbar;
+            positionImgToolbar(img);
+        }
+
+        function positionImgToolbar(img) {
+            if (!_activeImgToolbar) return;
+            const r = img.getBoundingClientRect();
+            const tw = _activeImgToolbar.offsetWidth || 260;
+            let left = r.left + r.width/2 - tw/2;
+            left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+            let top = r.top - 48;
+            if (top < 8) top = r.bottom + 8;
+            _activeImgToolbar.style.left = left + 'px';
+            _activeImgToolbar.style.top  = top  + 'px';
+        }
+
+        // Click on image → show toolbar
+        document.getElementById('editorArea').addEventListener('click', function(e) {
+            const img = e.target.closest('img');
+            if (img && this.contains(img)) {
+                e.stopPropagation();
+                showImgToolbar(img);
+            } else {
+                removeImgToolbar();
+            }
+        });
+
+        // Click outside editor → hide toolbar
+        document.addEventListener('mousedown', function(e) {
+            if (_activeImgToolbar && !_activeImgToolbar.contains(e.target)) {
+                const edA = document.getElementById('editorArea');
+                if (!edA || !edA.contains(e.target)) removeImgToolbar();
+            }
+        });
+
+        // Drag image to reposition (press-and-hold then move)
+        document.getElementById('editorArea').addEventListener('mousedown', function(e) {
+            const img = e.target.closest('img');
+            if (!img || !this.contains(img)) return;
+            let holdTimer = setTimeout(() => {
+                _dragImg = img;
+                _dragOffX = e.clientX - img.getBoundingClientRect().left;
+                _dragOffY = e.clientY - img.getBoundingClientRect().top;
+                // placeholder to maintain doc flow
+                _dragPlaceholder = document.createElement('span');
+                _dragPlaceholder.style.display='inline-block';
+                _dragPlaceholder.style.width = img.offsetWidth+'px';
+                _dragPlaceholder.style.height = img.offsetHeight+'px';
+                img.parentNode.insertBefore(_dragPlaceholder, img);
+                img.style.position = 'fixed';
+                img.style.zIndex   = '999997';
+                img.style.pointerEvents = 'none';
+                img.style.left = (e.clientX - _dragOffX)+'px';
+                img.style.top  = (e.clientY - _dragOffY)+'px';
+                img.style.width  = _dragPlaceholder.style.width;
+                img.style.maxWidth = 'none';
+            }, 350);
+
+            const onMove = (me) => {
+                if (!_dragImg) return;
+                _dragImg.style.left = (me.clientX - _dragOffX) + 'px';
+                _dragImg.style.top  = (me.clientY - _dragOffY) + 'px';
+                // Find insertion point
+                const over = document.elementFromPoint(me.clientX, me.clientY);
+                const edA = document.getElementById('editorArea');
+                if (over && edA.contains(over) && over !== _dragImg) {
+                    const r2 = over.getBoundingClientRect();
+                    const mid = r2.top + r2.height / 2;
+                    if (over.nodeType === Node.ELEMENT_NODE && over !== _dragPlaceholder) {
+                        if (me.clientY < mid) over.parentNode.insertBefore(_dragPlaceholder, over);
+                        else over.parentNode.insertBefore(_dragPlaceholder, over.nextSibling);
+                    }
+                }
+            };
+
+            const onUp = () => {
+                clearTimeout(holdTimer);
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                if (!_dragImg) return;
+                // Return image to doc flow at placeholder position
+                _dragImg.style.position='';
+                _dragImg.style.zIndex='';
+                _dragImg.style.pointerEvents='';
+                _dragImg.style.left='';
+                _dragImg.style.top='';
+                _dragImg.style.width='';
+                _dragImg.style.maxWidth='100%';
+                _dragPlaceholder.parentNode.insertBefore(_dragImg, _dragPlaceholder);
+                _dragPlaceholder.remove();
+                _dragPlaceholder = null;
+                _dragImg = null;
+                // Save
+                const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+                const doc = documents.find(d=>d.id===docId);
+                if(doc){doc.content=document.getElementById('editorArea').innerHTML;saveDocuments();}
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+        // reposition toolbar on scroll
+        document.getElementById('editorArea').closest('.main-container')?.addEventListener('scroll', () => {
+            if (_activeImgToolbar) {
+                const sel2 = document.querySelector('img.omni-selected');
+                if (sel2) positionImgToolbar(sel2);
+            }
+        });
 
         function insertImageAtCaret(url, alt = '') {
             const editorArea = document.getElementById('editorArea');
@@ -4562,7 +4908,9 @@ if ('serviceWorker' in navigator) {
                             if (req.result && req.result.file) {
                                 const blobUrl = URL.createObjectURL(req.result.file);
                                 img.src = blobUrl;
-                                // Make image resizable
+                                // Revoke blob URL when the document is unloaded to free memory
+                                window.addEventListener('beforeunload', () => URL.revokeObjectURL(blobUrl), { once: true });
+                                // Make image resizable via native resize handle
                                 img.style.resize = 'both';
                                 img.style.overflow = 'auto';
                                 img.style.maxWidth = '100%';
@@ -4570,15 +4918,6 @@ if ('serviceWorker' in navigator) {
                                 img.style.minWidth = '40px';
                                 img.style.minHeight = '40px';
                                 img.style.display = 'block';
-                                img.addEventListener('mousedown', function(e) {
-                                    // Prevent drag selection when resizing
-                                    if (e.offsetX > img.clientWidth - 16 && e.offsetY > img.clientHeight - 16) {
-                                        e.preventDefault();
-                                    }
-                                });
-                                img.addEventListener('load', () => {
-                                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-                                });
                             } else {
                                 img.alt = '[Image not found]';
                             }
@@ -5311,11 +5650,16 @@ if ('serviceWorker' in navigator) {
                     <icon>forum</icon>
                     <span>${_t('share_reddit')}</span>
                 </button>
+                <button id="shareCopyLink" style="justify-content: center; background: #5865f2;">
+                    <icon>link</icon>
+                    <span id="shareCopyLinkLabel">${_t('share_copy_link')}</span>
+                </button>
                 <button id="downloadPdfBtn" style="justify-content: center; background: #6c757d; margin-top: 10px;">
                     <icon>download</icon>
                     <span>${_t('download_as_pdf')}</span>
                 </button>
             </div>
+            <p style="margin-top:18px;font-size:12px;opacity:0.55;text-align:center;">${_t('share_collab_coming_soon')}</p>
             </div>
             `;
             document.body.appendChild(shareModal);
@@ -5335,14 +5679,14 @@ if ('serviceWorker' in navigator) {
             shareModal.querySelector('#shareFacebook').onclick = function() {
                 const url = encodeURIComponent(window.location.href);
                 const text = encodeURIComponent(doc.title + '\n\n' + bodyText);
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank', 'rel="noopener noreferrer"');
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_top', 'rel="noopener noreferrer"');
             };
             
             // Gmail share
             shareModal.querySelector('#shareGmail').onclick = function() {
                 const subject = encodeURIComponent(doc.title);
                 const body = encodeURIComponent(bodyText + '\n\n' + window.location.href);
-                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_blank', 'rel="noopener noreferrer"');
+                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, '_top', 'rel="noopener noreferrer"');
             };
             
             // WhatsApp share
@@ -5357,6 +5701,23 @@ if ('serviceWorker' in navigator) {
                 const title = encodeURIComponent(doc.title);
                 const text = encodeURIComponent(bodyText);
                 window.open(`https://www.reddit.com/submit?url=${url}&title=${title}&text=${text}`, '_blank', 'rel="noopener noreferrer"');
+            };
+
+            // Copy Link share (#create? URL)
+            shareModal.querySelector('#shareCopyLink').onclick = function() {
+                const base = window.location.origin + window.location.pathname;
+                const link = base + '#create?name=' + encodeURIComponent(doc.title) + '&content=' + encodeURIComponent(doc.content);
+                navigator.clipboard.writeText(link).then(() => {
+                    const lbl = shareModal.querySelector('#shareCopyLinkLabel');
+                    if (lbl) { lbl.textContent = _t('share_link_copied'); setTimeout(() => { lbl.textContent = _t('share_copy_link'); }, 2000); }
+                }).catch(() => {
+                    // Fallback prompt
+                    const ta = document.createElement('textarea');
+                    ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+                    const lbl = shareModal.querySelector('#shareCopyLinkLabel');
+                    if (lbl) { lbl.textContent = _t('share_link_copied'); setTimeout(() => { lbl.textContent = _t('share_copy_link'); }, 2000); }
+                });
             };
 
             // Download as PDF button
@@ -5438,6 +5799,7 @@ if ('serviceWorker' in navigator) {
         editable.addEventListener('blur', function() {
             doc.title = this.textContent.trim() || 'Untitled Document';
             this.textContent = doc.title;
+            document.title = doc.title + ' — Munetios OmniWrite';
             doc.timestamp = Date.now();
             // Update sidebar
             const item = document.querySelector(`.document-item[data-doc-id="${doc.id}"] .menu-text`);
@@ -7105,6 +7467,8 @@ if ('serviceWorker' in navigator) {
             });
             const target = document.getElementById(pageId);
             if (target) target.classList.add('active');
+            // Reset browser title when leaving editor
+            if (pageId !== 'editorContent') document.title = 'Munetios OmniWrite';
         }
 
         // Hash-based navigation
@@ -8424,6 +8788,28 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'Compare Documents',
                 'compare_select_doc': 'Select document to compare:',
                 'compare_btn': 'Compare',
+                // --- Image toolbar ---
+                'img_crop': 'Crop',
+                'img_crop_hint': 'Drag the selection box, then click Apply.',
+                'img_crop_apply': 'Apply Crop',
+                'img_delete': 'Delete',
+                'img_align_left': 'Align left',
+                'img_align_center': 'Center',
+                'img_align_right': 'Align right',
+                // --- Context menu ---
+                'ctx_cut': 'Cut',
+                'ctx_copy': 'Copy',
+                'ctx_paste': 'Paste',
+                'ctx_paste_plain': 'Paste without formatting',
+                'ctx_paste_md': 'Paste from Markdown',
+                'ctx_copy_md': 'Copy as Markdown',
+                'ctx_insert_link': 'Insert Link',
+                'ctx_clear_fmt': 'Clear formatting',
+                'ctx_quote_color': 'Change quote color',
+                // --- Share modal additions ---
+                'share_copy_link': 'Copy Link',
+                'share_link_copied': 'Copied!',
+                'share_collab_coming_soon': 'Real time collaboration is coming soon.',
             },
             es: {
                 'Welcome to Munetios OmniWrite': 'Bienvenido a Munetios OmniWrite',
@@ -8763,6 +9149,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'Comparar Documentos',
                 'compare_select_doc': 'Seleccionar documento para comparar:',
                 'compare_btn': 'Comparar',
+                'img_crop': 'Recortar',
+                'img_crop_hint': 'Arrastra el cuadro de selección y haz clic en Aplicar.',
+                'img_crop_apply': 'Aplicar recorte',
+                'img_delete': 'Eliminar',
+                'img_align_left': 'Alinear a la izquierda',
+                'img_align_center': 'Centrar',
+                'img_align_right': 'Alinear a la derecha',
+                'ctx_cut': 'Cortar',
+                'ctx_copy': 'Copiar',
+                'ctx_paste': 'Pegar',
+                'ctx_paste_plain': 'Pegar sin formato',
+                'ctx_paste_md': 'Pegar desde Markdown',
+                'ctx_copy_md': 'Copiar como Markdown',
+                'ctx_insert_link': 'Insertar enlace',
+                'ctx_clear_fmt': 'Borrar formato',
+                'ctx_quote_color': 'Cambiar color de cita',
+                'share_copy_link': 'Copiar enlace',
+                'share_link_copied': '¡Copiado!',
+                'share_collab_coming_soon': 'La colaboración en tiempo real llegará pronto.',
             },
             fr: {
                 'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
@@ -9101,6 +9506,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'Comparer les documents',
                 'compare_select_doc': 'Sélectionner un document à comparer :',
                 'compare_btn': 'Comparer',
+                'img_crop': 'Rogner',
+                'img_crop_hint': 'Faites glisser le cadre de sélection, puis cliquez sur Appliquer.',
+                'img_crop_apply': 'Appliquer le rognage',
+                'img_delete': 'Supprimer',
+                'img_align_left': 'Aligner à gauche',
+                'img_align_center': 'Centrer',
+                'img_align_right': 'Aligner à droite',
+                'ctx_cut': 'Couper',
+                'ctx_copy': 'Copier',
+                'ctx_paste': 'Coller',
+                'ctx_paste_plain': 'Coller sans mise en forme',
+                'ctx_paste_md': 'Coller depuis Markdown',
+                'ctx_copy_md': 'Copier en Markdown',
+                'ctx_insert_link': 'Insérer un lien',
+                'ctx_clear_fmt': 'Effacer la mise en forme',
+                'ctx_quote_color': 'Changer la couleur de la citation',
+                'share_copy_link': 'Copier le lien',
+                'share_link_copied': 'Copié !',
+                'share_collab_coming_soon': 'La collaboration en temps réel arrive bientôt.',
             },
             de: {
                 'Welcome to Munetios OmniWrite': 'Willkommen bei Munetios OmniWrite',
@@ -9439,6 +9863,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'Dokumente vergleichen',
                 'compare_select_doc': 'Dokument zum Vergleich auswählen:',
                 'compare_btn': 'Vergleichen',
+                'img_crop': 'Zuschneiden',
+                'img_crop_hint': 'Ziehe das Auswahlfeld und klicke auf Anwenden.',
+                'img_crop_apply': 'Zuschnitt anwenden',
+                'img_delete': 'Löschen',
+                'img_align_left': 'Linksbündig',
+                'img_align_center': 'Zentrieren',
+                'img_align_right': 'Rechtsbündig',
+                'ctx_cut': 'Ausschneiden',
+                'ctx_copy': 'Kopieren',
+                'ctx_paste': 'Einfügen',
+                'ctx_paste_plain': 'Ohne Formatierung einfügen',
+                'ctx_paste_md': 'Aus Markdown einfügen',
+                'ctx_copy_md': 'Als Markdown kopieren',
+                'ctx_insert_link': 'Link einfügen',
+                'ctx_clear_fmt': 'Formatierung löschen',
+                'ctx_quote_color': 'Zitat-Farbe ändern',
+                'share_copy_link': 'Link kopieren',
+                'share_link_copied': 'Kopiert!',
+                'share_collab_coming_soon': 'Echtzeit-Zusammenarbeit kommt bald.',
             },
             zh: {
                 'Welcome to Munetios OmniWrite': '欢迎使用 Munetios OmniWrite',
@@ -9777,6 +10220,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': '比较文档',
                 'compare_select_doc': '选择要比较的文档:',
                 'compare_btn': '比较',
+                'img_crop': '裁剪',
+                'img_crop_hint': '拖动选择框，然后点击应用。',
+                'img_crop_apply': '应用裁剪',
+                'img_delete': '删除',
+                'img_align_left': '左对齐',
+                'img_align_center': '居中',
+                'img_align_right': '右对齐',
+                'ctx_cut': '剪切',
+                'ctx_copy': '复制',
+                'ctx_paste': '粘贴',
+                'ctx_paste_plain': '无格式粘贴',
+                'ctx_paste_md': '从 Markdown 粘贴',
+                'ctx_copy_md': '复制为 Markdown',
+                'ctx_insert_link': '插入链接',
+                'ctx_clear_fmt': '清除格式',
+                'ctx_quote_color': '更改引用颜色',
+                'share_copy_link': '复制链接',
+                'share_link_copied': '已复制！',
+                'share_collab_coming_soon': '实时协作即将推出。',
             },
             ja: {
                 'Welcome to Munetios OmniWrite': 'Munetios OmniWrite へようこそ',
@@ -10115,6 +10577,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'ドキュメントを比較',
                 'compare_select_doc': '比較するドキュメントを選択:',
                 'compare_btn': '比較',
+                'img_crop': 'トリミング',
+                'img_crop_hint': '選択ボックスをドラッグして、適用をクリックしてください。',
+                'img_crop_apply': 'トリミングを適用',
+                'img_delete': '削除',
+                'img_align_left': '左揃え',
+                'img_align_center': '中央揃え',
+                'img_align_right': '右揃え',
+                'ctx_cut': '切り取り',
+                'ctx_copy': 'コピー',
+                'ctx_paste': '貼り付け',
+                'ctx_paste_plain': '書式なしで貼り付け',
+                'ctx_paste_md': 'Markdown から貼り付け',
+                'ctx_copy_md': 'Markdown としてコピー',
+                'ctx_insert_link': 'リンクを挿入',
+                'ctx_clear_fmt': '書式をクリア',
+                'ctx_quote_color': '引用の色を変更',
+                'share_copy_link': 'リンクをコピー',
+                'share_link_copied': 'コピーしました！',
+                'share_collab_coming_soon': 'リアルタイムコラボレーションは近日公開予定です。',
             },
             ar: {
                 'Welcome to Munetios OmniWrite': 'مرحباً بك في Munetios OmniWrite',
@@ -10453,6 +10934,25 @@ if ('serviceWorker' in navigator) {
                 'compare_documents': 'مقارنة المستندات',
                 'compare_select_doc': 'اختر مستنداً للمقارنة:',
                 'compare_btn': 'مقارنة',
+                'img_crop': 'اقتصاص',
+                'img_crop_hint': 'اسحب مربع التحديد ثم انقر على تطبيق.',
+                'img_crop_apply': 'تطبيق الاقتصاص',
+                'img_delete': 'حذف',
+                'img_align_left': 'محاذاة لليسار',
+                'img_align_center': 'توسيط',
+                'img_align_right': 'محاذاة لليمين',
+                'ctx_cut': 'قص',
+                'ctx_copy': 'نسخ',
+                'ctx_paste': 'لصق',
+                'ctx_paste_plain': 'لصق بدون تنسيق',
+                'ctx_paste_md': 'لصق من Markdown',
+                'ctx_copy_md': 'نسخ كـ Markdown',
+                'ctx_insert_link': 'إدراج رابط',
+                'ctx_clear_fmt': 'مسح التنسيق',
+                'ctx_quote_color': 'تغيير لون الاقتباس',
+                'share_copy_link': 'نسخ الرابط',
+                'share_link_copied': 'تم النسخ!',
+                'share_collab_coming_soon': 'التعاون في الوقت الفعلي قادم قريباً.',
             },
         };
 
