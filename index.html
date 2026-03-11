@@ -2656,9 +2656,9 @@ if ('serviceWorker' in navigator) {
         try {
             const hash = window.location.hash;
 
-            // #create?name=...&content=... → create and open a new document
-            if (hash.startsWith('#create?')) {
-                const params = new URLSearchParams(hash.slice('#create?'.length));
+            // #/create?name=...&content=... → create and open a new document
+            if (hash.startsWith('#/create?')) {
+                const params = new URLSearchParams(hash.slice('#/create?'.length));
                 const name    = params.get('name')    || 'Untitled Document';
                 const content = params.get('content') || '';
                 const newDoc = {
@@ -2669,7 +2669,7 @@ if ('serviceWorker' in navigator) {
                 };
                 documents.unshift(newDoc);
                 saveDocuments();
-                renderDocumentList();
+                renderDocumentsList();
                 openDocument(newDoc.id);
                 return;
             }
@@ -5706,7 +5706,7 @@ if ('serviceWorker' in navigator) {
             // Copy Link share (#create? URL)
             shareModal.querySelector('#shareCopyLink').onclick = function() {
                 const base = window.location.origin + window.location.pathname;
-                const link = base + '#create?name=' + encodeURIComponent(doc.title) + '&content=' + encodeURIComponent(doc.content);
+                const link = base + '#/create?name=' + encodeURIComponent(doc.title) + '&content=' + encodeURIComponent(doc.content);
                 navigator.clipboard.writeText(link).then(() => {
                     const lbl = shareModal.querySelector('#shareCopyLinkLabel');
                     if (lbl) { lbl.textContent = _t('share_link_copied'); setTimeout(() => { lbl.textContent = _t('share_copy_link'); }, 2000); }
@@ -8296,6 +8296,8 @@ if ('serviceWorker' in navigator) {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.11.12 - Fixed a bug when creating documents did not work when used a hash</li>
+                        <li>v1.11.11 - You can create documents using a hash at end for e.g #/create?name=DocumentName&content=DocumentContent, Added right click context menu, Fixed performance bugs, Images in documents now have actions.</li>
                         <li>v1.11.10 - Added Print Feature, new templates experience, added more formatting, added default document font, and more.</li>
                         <li>v1.11.1 - New Reading Mode, cloud voices show a warning modal now.</li>
                         <li>v1.11.0 - Added Unsupported Browser if in Firefox or Safari because their are strict. and also some Improvements.</li>
@@ -8810,6 +8812,11 @@ if ('serviceWorker' in navigator) {
                 'share_copy_link': 'Copy Link',
                 'share_link_copied': 'Copied!',
                 'share_collab_coming_soon': 'Real time collaboration is coming soon.',
+                // --- Missing keys ---
+                'document_pinned': 'Document pinned.',
+                'document_unpinned': 'Document unpinned.',
+                'download_as_pdf': 'Download as PDF',
+                'ctx_paste_md_error': 'Clipboard read failed',
             },
             es: {
                 'Welcome to Munetios OmniWrite': 'Bienvenido a Munetios OmniWrite',
