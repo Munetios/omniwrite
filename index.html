@@ -5444,6 +5444,13 @@ if ('serviceWorker' in navigator) {
         let previewModal = null;
 
         previewBtn.addEventListener('click', function () {
+            // Block if document is locked with prevent-viewing
+            const _pvDocId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+            const _pvDoc = documents.find(d => d.id === _pvDocId);
+            if (_pvDoc && isEffectivelyLocked(_pvDoc) && _pvDoc.lockPreventViewing) {
+                showToast(_t('doc_locked_no_preview'), { type: 'error' });
+                return;
+            }
             // Remove any existing modal from DOM
             document.querySelectorAll('.modal').forEach(m => m.remove());
             previewModal = null;
@@ -5555,6 +5562,11 @@ if ('serviceWorker' in navigator) {
         };
 
         versionHistoryBtn.addEventListener('click', function () {
+            // Block if document is locked with prevent-viewing
+            if (isEffectivelyLocked(doc)) {
+                showToast(_t('doc_locked_no_history'), { type: 'error' });
+                return;
+            }
             // Remove any existing modal from DOM
             document.querySelectorAll('.modal').forEach(m => m.remove());
             versionHistoryModal = null;
@@ -5847,6 +5859,12 @@ if ('serviceWorker' in navigator) {
     readingModeBtn.addEventListener('click', function() {
         const { doc, editorArea } = getCurrentDocAndEditor();
         if (!doc || !editorArea) return;
+
+        // Block if document is locked with prevent-viewing
+        if (isEffectivelyLocked(doc) && doc.lockPreventViewing) {
+            showToast(_t('doc_locked_no_reading_mode'), { type: 'error' });
+            return;
+        }
         
         // Get plain text from editor
         const tempDiv = document.createElement('div');
@@ -6386,6 +6404,10 @@ if ('serviceWorker' in navigator) {
         const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        if (isEffectivelyLocked(doc)) {
+            showToast(_t('doc_locked_no_pin'), { type: 'error' });
+            return;
+        }
         
         // Toggle pinned state
         doc.pinned = !doc.pinned;
@@ -6412,6 +6434,12 @@ if ('serviceWorker' in navigator) {
     document.getElementById('versionHistoryMoreOptionsBtn').addEventListener('mousedown', function (e) {
         e.preventDefault();
         editorMoreOptions.style.display = 'none';
+        const _vhDocId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        const _vhDoc = documents.find(d => d.id === _vhDocId);
+        if (_vhDoc && isEffectivelyLocked(_vhDoc)) {
+            showToast(_t('doc_locked_no_history'), { type: 'error' });
+            return;
+        }
         versionHistoryBtn.click();
     });
 
@@ -6424,6 +6452,10 @@ if ('serviceWorker' in navigator) {
         const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        if (isEffectivelyLocked(doc)) {
+            showToast(_t('doc_locked_no_download'), { type: 'error' });
+            return;
+        }
         
         let downloadModal = document.createElement('div');
         downloadModal.className = 'modal';
@@ -6652,6 +6684,11 @@ if ('serviceWorker' in navigator) {
         const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        // Block if document is locked with prevent-viewing
+        if (isEffectivelyLocked(doc) && doc.lockPreventViewing) {
+            showToast(_t('doc_locked_no_compare'), { type: 'error' });
+            return;
+        }
         // Modal
         let modal = document.createElement('div');
         modal.className = 'modal';
@@ -6823,6 +6860,10 @@ if ('serviceWorker' in navigator) {
         const docId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        if (isEffectivelyLocked(doc)) {
+            showToast(_t('doc_locked_no_duplicate'), { type: 'error' });
+            return;
+        }
         const newDoc = {
             id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
             title: doc.title + ' (Copy)',
@@ -6839,6 +6880,12 @@ if ('serviceWorker' in navigator) {
     document.getElementById('deleteMoreOptionsBtn').addEventListener('mousedown', async function (e) {
         e.preventDefault();
         editorMoreOptions.style.display = 'none';
+        const _delDocId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        const _delDoc = documents.find(d => d.id === _delDocId);
+        if (_delDoc && isEffectivelyLocked(_delDoc)) {
+            showToast(_t('doc_locked_no_delete'), { type: 'error' });
+            return;
+        }
         // Confirm delete
         let modal = document.createElement('div');
         modal.className = 'modal';
@@ -7389,7 +7436,14 @@ if ('serviceWorker' in navigator) {
     function applyDocumentLockState(doc, editorArea) {
         const toolbar = document.querySelector('.toolbar');
         const lockBannerId = 'docLockBanner';
+        const blurOverlayId = 'docLockBlurOverlay';
         let existing = document.getElementById(lockBannerId);
+
+        // Helper refs for preview/reading-mode buttons (may or may not be in DOM)
+        const previewBtn = document.getElementById('previewBtn');
+        const readingModeBtn = document.getElementById('readingModeBtn');
+        const versionHistoryBtn = document.getElementById('versionHistoryBtn');
+        const compareMoreOptionsBtn = document.getElementById('compareMoreOptionsBtn');
 
         if (doc && isEffectivelyLocked(doc)) {
             editorArea.contentEditable = 'false';
@@ -7400,6 +7454,45 @@ if ('serviceWorker' in navigator) {
             // Lock title editing
             const editableTitle = document.getElementById('editableTitle');
             if (editableTitle) editableTitle.contentEditable = 'false';
+
+            // --- Prevent-viewing: blur overlay ---
+            if (doc.lockPreventViewing) {
+                let blurOverlay = document.getElementById(blurOverlayId);
+                if (!blurOverlay) {
+                    blurOverlay = document.createElement('div');
+                    blurOverlay.id = blurOverlayId;
+                    blurOverlay.style.cssText = 'position:absolute;inset:0;z-index:10;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(17,7,54,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;border-radius:inherit;pointer-events:all;';
+                    blurOverlay.innerHTML = '<icon style="font-size:48px;color:#ffe066;">lock</icon>'
+                        + '<span style="font-size:18px;font-weight:600;color:#fff;text-align:center;padding:0 24px;">' + _t('doc_locked_prevent_viewing_msg') + '</span>'
+                        + '<button id="unlockBlurOverlayBtn" style="padding:10px 28px;font-size:15px;background:#ffe066;color:#110736;border-radius:10px;border:none;cursor:pointer;font-weight:700;">' + _t('unlock_document') + '</button>';
+                    // insert relative to editorArea parent
+                    const editorParent = editorArea.parentElement;
+                    if (editorParent) {
+                        const prevPos = editorParent.style.position;
+                        if (!prevPos || prevPos === 'static') editorParent.style.position = 'relative';
+                        editorParent.appendChild(blurOverlay);
+                    }
+                    blurOverlay.querySelector('#unlockBlurOverlayBtn').addEventListener('click', function() {
+                        const { doc: curDoc } = getCurrentDocAndEditor();
+                        if (curDoc) showLockDocumentModal(curDoc);
+                    });
+                }
+                // Disable preview and reading-mode buttons
+                if (previewBtn) { previewBtn.style.opacity = '0.35'; previewBtn.style.pointerEvents = 'none'; previewBtn.title = _t('doc_locked_no_preview'); }
+                if (readingModeBtn) { readingModeBtn.style.opacity = '0.35'; readingModeBtn.style.pointerEvents = 'none'; readingModeBtn.title = _t('doc_locked_no_reading_mode'); }
+                if (compareMoreOptionsBtn) { compareMoreOptionsBtn.style.opacity = '0.35'; compareMoreOptionsBtn.style.pointerEvents = 'none'; compareMoreOptionsBtn.title = _t('doc_locked_no_compare'); }
+            } else {
+                // Remove blur overlay if it exists (e.g., unlock-session after prevent-viewing lock)
+                const blurOverlay = document.getElementById(blurOverlayId);
+                if (blurOverlay) blurOverlay.remove();
+                if (previewBtn) { previewBtn.style.opacity = ''; previewBtn.style.pointerEvents = ''; previewBtn.title = ''; }
+                if (readingModeBtn) { readingModeBtn.style.opacity = ''; readingModeBtn.style.pointerEvents = ''; readingModeBtn.title = ''; }
+                if (compareMoreOptionsBtn) { compareMoreOptionsBtn.style.opacity = ''; compareMoreOptionsBtn.style.pointerEvents = ''; compareMoreOptionsBtn.title = ''; }
+            }
+
+            // Disable version history top-right icon
+            if (versionHistoryBtn) { versionHistoryBtn.style.opacity = '0.35'; versionHistoryBtn.style.pointerEvents = 'none'; versionHistoryBtn.title = _t('doc_locked_no_history'); }
+
             if (!existing) {
                 const banner = document.createElement('div');
                 banner.id = lockBannerId;
@@ -7433,6 +7526,14 @@ if ('serviceWorker' in navigator) {
             if (existing) existing.remove();
             const br = document.getElementById('docLockBannerBr');
             if (br) br.remove();
+            // Remove blur overlay
+            const blurOverlay = document.getElementById(blurOverlayId);
+            if (blurOverlay) blurOverlay.remove();
+            // Restore preview/reading-mode/version-history buttons
+            if (previewBtn) { previewBtn.style.opacity = ''; previewBtn.style.pointerEvents = ''; previewBtn.title = ''; }
+            if (readingModeBtn) { readingModeBtn.style.opacity = ''; readingModeBtn.style.pointerEvents = ''; readingModeBtn.title = ''; }
+            if (versionHistoryBtn) { versionHistoryBtn.style.opacity = ''; versionHistoryBtn.style.pointerEvents = ''; versionHistoryBtn.title = ''; }
+            if (compareMoreOptionsBtn) { compareMoreOptionsBtn.style.opacity = ''; compareMoreOptionsBtn.style.pointerEvents = ''; compareMoreOptionsBtn.title = ''; }
             const lbl = document.getElementById('lockDocumentLabel');
             const ico = document.getElementById('lockDocumentIcon');
             if (lbl) lbl.textContent = _t('lock_document');
@@ -7467,6 +7568,15 @@ if ('serviceWorker' in navigator) {
                     <label style="display:block;margin-bottom:5px;font-size:14px;opacity:0.8;">${_t('lock_passphrase_confirm_label')}</label>
                     <input type="password" id="lockPassphraseConfirmInput" autocomplete="new-password" placeholder="${_t('lock_passphrase_confirm_placeholder')}" style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.07);color:#fff;font-size:15px;">
                 </div>
+                <div style="margin-bottom:20px;padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.10);">
+                    <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;user-select:none;">
+                        <input type="checkbox" id="lockPreventViewingCheck" style="width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:#e74c3c;flex-shrink:0;">
+                        <div>
+                            <span style="font-size:14px;font-weight:600;display:block;">${_t('lock_prevent_viewing')}</span>
+                            <span style="font-size:12px;opacity:0.7;line-height:1.5;display:block;margin-top:3px;">${_t('lock_prevent_viewing_desc')}</span>
+                        </div>
+                    </label>
+                </div>
                 <div style="display:flex;gap:12px;">
                     <button id="confirmLockBtn" style="flex:1;background:#ffe066;color:#110736;"><icon>lock</icon> ${_t('lock_document_btn')}</button>
                     <button id="cancelLockBtn" style="flex:1;">${_t('cancel')}</button>
@@ -7483,6 +7593,7 @@ if ('serviceWorker' in navigator) {
                 if (pw !== pw2) { showToast(_t('lock_passphrase_mismatch'), { type: 'error' }); return; }
                 doc.locked = true;
                 doc.lockPassphraseHash = await hashPassphrase(pw);
+                doc.lockPreventViewing = !!modal.querySelector('#lockPreventViewingCheck').checked;
                 await saveDocuments();
                 modal.remove();
                 const editorArea = document.getElementById('editorArea');
@@ -8391,7 +8502,7 @@ if ('serviceWorker' in navigator) {
         sidebarContainer.style.top = '0';
         sidebarContainer.style.zIndex = '10001';
         sidebarContainer.style.height = '100vh';
-        sidebarContainer.style.background = 'rgba(17,7,54,0.55)';
+        sidebarContainer.style.background = 'rgba(17,7,54,0.50)';
         sidebarContainer.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.4)';
         sidebarContainer.style.transition = 'left 0.3s';
         sidebarContainer.style.display = 'block';
@@ -9077,6 +9188,7 @@ if ('serviceWorker' in navigator) {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.11.20 - Improved the lock document feature.</li>
                         <li>v1.11.13 - Added Apps, added custom fonts, added lock feature for documents, more language support and more.</li>
                         <li>v1.11.12 - Fixed a bug when creating documents did not work when used a hash</li>
                         <li>v1.11.11 - You can create documents using a hash at end for e.g #/create?name=DocumentName&content=DocumentContent, Added right click context menu, Fixed performance bugs, Images in documents now have actions.</li>
@@ -10114,6 +10226,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'This document is locked. Copying is disabled.',
                 'doc_locked_no_print': 'This document is locked. Printing is disabled.',
                 'doc_locked_rename': 'Cannot rename a locked document.',
+                'doc_locked_no_download': 'This document is locked. Downloading is disabled.',
+                'doc_locked_no_duplicate': 'This document is locked. Duplicating is disabled.',
+                'doc_locked_no_pin': 'This document is locked. Pinning is disabled.',
+                'doc_locked_no_delete': 'This document is locked. Deleting is disabled.',
+                'doc_locked_no_history': 'This document is locked. Version history is disabled.',
+                'lock_prevent_viewing': 'Prevent Viewing',
+                'lock_prevent_viewing_desc': 'Blur the document contents and disable preview, reading mode, and compare while locked.',
+                'doc_locked_no_preview': 'This document is locked. Preview is disabled.',
+                'doc_locked_no_reading_mode': 'This document is locked. Reading mode is disabled.',
+                'doc_locked_no_compare': 'This document is locked. Compare is disabled.',
+                'doc_locked_prevent_viewing_msg': 'This document is locked. Unlock it to view the contents.',
                 'sharing_disabled_title': 'Sharing is Disabled',
                 'sharing_disabled_desc': 'Sharing is disabled because this document is locked. Unlock the document to enable sharing.',
                 'locked_danger_zone_title': 'Locked Documents Detected',
@@ -10528,6 +10651,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Este documento está bloqueado. La copia está desactivada.',
                 'doc_locked_no_print': 'Este documento está bloqueado. La impresión está desactivada.',
                 'doc_locked_rename': 'No se puede cambiar el nombre de un documento bloqueado.',
+                'doc_locked_no_download': 'Este documento está bloqueado. La descarga está desactivada.',
+                'doc_locked_no_duplicate': 'Este documento está bloqueado. La duplicación está desactivada.',
+                'doc_locked_no_pin': 'Este documento está bloqueado. Fijar está desactivado.',
+                'doc_locked_no_delete': 'Este documento está bloqueado. La eliminación está desactivada.',
+                'doc_locked_no_history': 'Este documento está bloqueado. El historial de versiones está desactivado.',
+                'lock_prevent_viewing': 'Impedir Visualización',
+                'lock_prevent_viewing_desc': 'Difumina el contenido y desactiva la vista previa, el modo lectura y la comparación mientras está bloqueado.',
+                'doc_locked_no_preview': 'Este documento está bloqueado. La vista previa está desactivada.',
+                'doc_locked_no_reading_mode': 'Este documento está bloqueado. El modo lectura está desactivado.',
+                'doc_locked_no_compare': 'Este documento está bloqueado. La comparación está desactivada.',
+                'doc_locked_prevent_viewing_msg': 'Este documento está bloqueado. Desbloquéalo para ver el contenido.',
                 'sharing_disabled_title': 'Compartir está desactivado',
                 'sharing_disabled_desc': 'Compartir está desactivado porque el documento está bloqueado. Desbloquéalo para habilitar la opción de compartir.',
                 'locked_danger_zone_title': 'Documentos bloqueados detectados',
@@ -10955,6 +11089,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Ce document est verrouill\u00e9. La copie est d\u00e9sactiv\u00e9e.',
                 'doc_locked_no_print': 'Ce document est verrouill\u00e9. L\'impression est d\u00e9sactiv\u00e9e.',
                 'doc_locked_rename': 'Impossible de renommer un document verrouill\u00e9.',
+                'doc_locked_no_download': 'Ce document est verrouill\u00e9. Le t\u00e9l\u00e9chargement est d\u00e9sactiv\u00e9.',
+                'doc_locked_no_duplicate': 'Ce document est verrouill\u00e9. La copie est d\u00e9sactiv\u00e9e.',
+                'doc_locked_no_pin': 'Ce document est verrouill\u00e9. L\u0027\u00e9pinglage est d\u00e9sactiv\u00e9.',
+                'doc_locked_no_delete': 'Ce document est verrouill\u00e9. La suppression est d\u00e9sactiv\u00e9e.',
+                'doc_locked_no_history': 'Ce document est verrouill\u00e9. L\u0027historique des versions est d\u00e9sactiv\u00e9.',
+                'lock_prevent_viewing': 'Emp\u00eacher la Visualisation',
+                'lock_prevent_viewing_desc': 'Floute le contenu et d\u00e9sactive l\u0027aper\u00e7u, le mode lecture et la comparaison tant que le document est verrouill\u00e9.',
+                'doc_locked_no_preview': 'Ce document est verrouill\u00e9. L\u0027aper\u00e7u est d\u00e9sactiv\u00e9.',
+                'doc_locked_no_reading_mode': 'Ce document est verrouill\u00e9. Le mode lecture est d\u00e9sactiv\u00e9.',
+                'doc_locked_no_compare': 'Ce document est verrouill\u00e9. La comparaison est d\u00e9sactiv\u00e9e.',
+                'doc_locked_prevent_viewing_msg': 'Ce document est verrouill\u00e9. D\u00e9verrouillez-le pour voir le contenu.',
                 'sharing_disabled_title': 'Le partage est d\u00e9sactiv\u00e9',
                 'sharing_disabled_desc': 'Le partage est d\u00e9sactiv\u00e9 car ce document est verrouill\u00e9. D\u00e9verrouillez-le pour activer le partage.',
                 'locked_danger_zone_title': 'Documents verrouill\u00e9s d\u00e9tect\u00e9s',
@@ -11384,6 +11529,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Dieses Dokument ist gesperrt. Kopieren ist deaktiviert.',
                 'doc_locked_no_print': 'Dieses Dokument ist gesperrt. Drucken ist deaktiviert.',
                 'doc_locked_rename': 'Ein gesperrtes Dokument kann nicht umbenannt werden.',
+                'doc_locked_no_download': 'Dieses Dokument ist gesperrt. Herunterladen ist deaktiviert.',
+                'doc_locked_no_duplicate': 'Dieses Dokument ist gesperrt. Duplizieren ist deaktiviert.',
+                'doc_locked_no_pin': 'Dieses Dokument ist gesperrt. Anheften ist deaktiviert.',
+                'doc_locked_no_delete': 'Dieses Dokument ist gesperrt. Löschen ist deaktiviert.',
+                'doc_locked_no_history': 'Dieses Dokument ist gesperrt. Versionsverlauf ist deaktiviert.',
+                'lock_prevent_viewing': 'Anzeige verhindern',
+                'lock_prevent_viewing_desc': 'Inhalt unscharf darstellen und Vorschau, Lesemodus sowie Vergleich deaktivieren, solange gesperrt.',
+                'doc_locked_no_preview': 'Dieses Dokument ist gesperrt. Vorschau ist deaktiviert.',
+                'doc_locked_no_reading_mode': 'Dieses Dokument ist gesperrt. Lesemodus ist deaktiviert.',
+                'doc_locked_no_compare': 'Dieses Dokument ist gesperrt. Vergleich ist deaktiviert.',
+                'doc_locked_prevent_viewing_msg': 'Dieses Dokument ist gesperrt. Entsperren, um den Inhalt anzuzeigen.',
                 'sharing_disabled_title': 'Teilen ist deaktiviert',
                 'sharing_disabled_desc': 'Das Teilen ist deaktiviert, da dieses Dokument gesperrt ist. Entsperren Sie es, um das Teilen zu aktivieren.',
                 'locked_danger_zone_title': 'Gesperrte Dokumente gefunden',
@@ -11813,6 +11969,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': '此文档已锁定，复制功能已禁用。',
                 'doc_locked_no_print': '此文档已锁定，打印功能已禁用。',
                 'doc_locked_rename': '无法重命名已锁定的文档。',
+                'doc_locked_no_download': '此文档已锁定，下载功能已禁用。',
+                'doc_locked_no_duplicate': '此文档已锁定，复制文档功能已禁用。',
+                'doc_locked_no_pin': '此文档已锁定，固定功能已禁用。',
+                'doc_locked_no_delete': '此文档已锁定，删除功能已禁用。',
+                'doc_locked_no_history': '此文档已锁定，版本历史功能已禁用。',
+                'lock_prevent_viewing': '禁止查看',
+                'lock_prevent_viewing_desc': '锁定时模糊文档内容并禁用预览、阅读模式和比较功能。',
+                'doc_locked_no_preview': '此文档已锁定，预览功能已禁用。',
+                'doc_locked_no_reading_mode': '此文档已锁定，阅读模式已禁用。',
+                'doc_locked_no_compare': '此文档已锁定，比较功能已禁用。',
+                'doc_locked_prevent_viewing_msg': '此文档已锁定。解锁以查看内容。',
                 'sharing_disabled_title': '分享已禁用',
                 'sharing_disabled_desc': '由于该文档已锁定，分享功能已禁用。解锁文档以启用分享。',
                 'locked_danger_zone_title': '检测到锁定文档',
@@ -12242,6 +12409,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'このドキュメントはロックされています。コピーは無効です。',
                 'doc_locked_no_print': 'このドキュメントはロックされています。印刷は無効です。',
                 'doc_locked_rename': 'ロックされたドキュメントの名前は変更できません。',
+                'doc_locked_no_download': 'このドキュメントはロックされています。ダウンロードは無効です。',
+                'doc_locked_no_duplicate': 'このドキュメントはロックされています。複製は無効です。',
+                'doc_locked_no_pin': 'このドキュメントはロックされています。ピン留めは無効です。',
+                'doc_locked_no_delete': 'このドキュメントはロックされています。削除は無効です。',
+                'doc_locked_no_history': 'このドキュメントはロックされています。バージョン履歴は無効です。',
+                'lock_prevent_viewing': '閲覧を禁止',
+                'lock_prevent_viewing_desc': 'ロック中はコンテンツをぼかし、プレビュー、閲覧モードおよび比較を無効にします。',
+                'doc_locked_no_preview': 'このドキュメントはロックされています。プレビューは無効です。',
+                'doc_locked_no_reading_mode': 'このドキュメントはロックされています。閲覧モードは無効です。',
+                'doc_locked_no_compare': 'このドキュメントはロックされています。比較は無効です。',
+                'doc_locked_prevent_viewing_msg': 'このドキュメントはロックされています。コンテンツを表示するにはロックを解除してください。',
                 'sharing_disabled_title': '共有は無効です',
                 'sharing_disabled_desc': 'このドキュメントがロックされているため、共有は無効です。共有を有効にするにはロックを解除してください。',
                 'locked_danger_zone_title': 'ロックされたドキュメントが検出されました',
@@ -12671,6 +12849,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'هذا المستند مقفل. النسخ معطّل.',
                 'doc_locked_no_print': 'هذا المستند مقفل. الطباعة معطّلة.',
                 'doc_locked_rename': 'لا يمكن إعادة تسمية مستند مقفل.',
+                'doc_locked_no_download': 'هذا المستند مقفل. التنزيل معطّل.',
+                'doc_locked_no_duplicate': 'هذا المستند مقفل. النسخ المتماثل معطّل.',
+                'doc_locked_no_pin': 'هذا المستند مقفل. التثبيت معطّل.',
+                'doc_locked_no_delete': 'هذا المستند مقفل. الحذف معطّل.',
+                'doc_locked_no_history': 'هذا المستند مقفل. سجل الإصدارات معطّل.',
+                'lock_prevent_viewing': 'منع العرض',
+                'lock_prevent_viewing_desc': 'تمويه محتوى المستند وتعطيل المعاينة ووضع القراءة والمقارنة أثناء القفل.',
+                'doc_locked_no_preview': 'هذا المستند مقفل. المعاينة معطّلة.',
+                'doc_locked_no_reading_mode': 'هذا المستند مقفل. وضع القراءة معطّل.',
+                'doc_locked_no_compare': 'هذا المستند مقفل. المقارنة معطّلة.',
+                'doc_locked_prevent_viewing_msg': 'هذا المستند مقفل. أفتح القفل لعرض المحتوى.',
                 'sharing_disabled_title': 'المشاركة معطّلة',
                 'sharing_disabled_desc': 'المشاركة معطّلة لأن هذا المستند مقفل. ألغِ القفل لتفعيل المشاركة.',
                 'locked_danger_zone_title': 'تم اكتشاف مستندات مقفلة',
@@ -12942,6 +13131,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Este documento está bloqueado. A cópia está desativada.',
                 'doc_locked_no_print': 'Este documento está bloqueado. A impressão está desativada.',
                 'doc_locked_rename': 'Não é possível renomear um documento bloqueado.',
+                'doc_locked_no_download': 'Este documento está bloqueado. O download está desativado.',
+                'doc_locked_no_duplicate': 'Este documento está bloqueado. A duplicação está desativada.',
+                'doc_locked_no_pin': 'Este documento está bloqueado. Fixar está desativado.',
+                'doc_locked_no_delete': 'Este documento está bloqueado. A exclusão está desativada.',
+                'doc_locked_no_history': 'Este documento está bloqueado. O histórico de versões está desativado.',
+                'lock_prevent_viewing': 'Impedir Visualização',
+                'lock_prevent_viewing_desc': 'Desfoca o conteúdo e desativa a pré-visualização, o modo leitura e a comparação enquanto bloqueado.',
+                'doc_locked_no_preview': 'Este documento está bloqueado. A pré-visualização está desativada.',
+                'doc_locked_no_reading_mode': 'Este documento está bloqueado. O modo leitura está desativado.',
+                'doc_locked_no_compare': 'Este documento está bloqueado. A comparação está desativada.',
+                'doc_locked_prevent_viewing_msg': 'Este documento está bloqueado. Desbloqueie-o para ver o conteúdo.',
                 'sharing_disabled_title': 'Compartilhamento desativado',
                 'sharing_disabled_desc': 'O compartilhamento está desativado porque este documento está bloqueado. Desbloqueie-o para ativar o compartilhamento.',
                 'locked_danger_zone_title': 'Documentos bloqueados detectados',
@@ -13150,6 +13350,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Questo documento è bloccato. La copia è disabilitata.',
                 'doc_locked_no_print': 'Questo documento è bloccato. La stampa è disabilitata.',
                 'doc_locked_rename': 'Impossibile rinominare un documento bloccato.',
+                'doc_locked_no_download': 'Questo documento è bloccato. Il download è disabilitato.',
+                'doc_locked_no_duplicate': 'Questo documento è bloccato. La duplicazione è disabilitata.',
+                'doc_locked_no_pin': 'Questo documento è bloccato. L\'aggiunta ai preferiti è disabilitata.',
+                'doc_locked_no_delete': 'Questo documento è bloccato. L\'eliminazione è disabilitata.',
+                'doc_locked_no_history': 'Questo documento è bloccato. La cronologia versioni è disabilitata.',
+                'lock_prevent_viewing': 'Impedisci Visualizzazione',
+                'lock_prevent_viewing_desc': 'Sfuma il contenuto e disabilita anteprima, modalità lettura e confronto mentre bloccato.',
+                'doc_locked_no_preview': 'Questo documento è bloccato. L\'anteprima è disabilitata.',
+                'doc_locked_no_reading_mode': 'Questo documento è bloccato. La modalità lettura è disabilitata.',
+                'doc_locked_no_compare': 'Questo documento è bloccato. Il confronto è disabilitato.',
+                'doc_locked_prevent_viewing_msg': 'Questo documento è bloccato. Sbloccalo per visualizzare il contenuto.',
                 'sharing_disabled_title': 'Condivisione disabilitata',
                 'sharing_disabled_desc': 'La condivisione è disabilitata perché questo documento è bloccato. Sbloccalo per abilitare la condivisione.',
                 'locked_danger_zone_title': 'Documenti bloccati rilevati',
@@ -13281,6 +13492,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': '이 문서는 잠금되었습니다. 복사가 비활성화되었습니다.',
                 'doc_locked_no_print': '이 문서는 잠금되었습니다. 인쇄가 비활성화되었습니다.',
                 'doc_locked_rename': '잠긴 문서의 이름을 변경할 수 없습니다.',
+                'doc_locked_no_download': '이 문서는 잠금되었습니다. 다운로드가 비활성화되었습니다.',
+                'doc_locked_no_duplicate': '이 문서는 잠금되었습니다. 복제가 비활성화되었습니다.',
+                'doc_locked_no_pin': '이 문서는 잠금되었습니다. 고정이 비활성화되었습니다.',
+                'doc_locked_no_delete': '이 문서는 잠금되었습니다. 삭제가 비활성화되었습니다.',
+                'doc_locked_no_history': '이 문서는 잠금되었습니다. 버전 기록이 비활성화되었습니다.',
+                'lock_prevent_viewing': '보기 차단',
+                'lock_prevent_viewing_desc': '잠금 중 문서 내용을 흐리게 하고 미리 보기, 읽기 모드 및 비교를 비활성화합니다.',
+                'doc_locked_no_preview': '이 문서는 잠금되었습니다. 미리 보기가 비활성화되었습니다.',
+                'doc_locked_no_reading_mode': '이 문서는 잠금되었습니다. 읽기 모드가 비활성화되었습니다.',
+                'doc_locked_no_compare': '이 문서는 잠금되었습니다. 비교가 비활성화되었습니다.',
+                'doc_locked_prevent_viewing_msg': '이 문서는 잠금되었습니다. 내용을 보려면 잠금을 해제하세요.',
                 'sharing_disabled_title': '공유 비활성화됨',
                 'sharing_disabled_desc': '이 문서가 잠금되었으므로 공유가 비활성화되었습니다. 공유를 활성화하려면 잠금을 해제하세요.',
                 'locked_danger_zone_title': '잠금 문서 감지됨',
@@ -13398,6 +13620,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'यह दस्तावेज़ लॉक है। कॉपी अक्षम है।',
                 'doc_locked_no_print': 'यह दस्तावेज़ लॉक है। प्रिंटिंग अक्षम है।',
                 'doc_locked_rename': 'लॉक किए गए दस्तावेज़ का नाम नहीं बदला जा सकता।',
+                'doc_locked_no_download': 'यह दस्तावेज़ लॉक है। डाउनलोड अक्षम है।',
+                'doc_locked_no_duplicate': 'यह दस्तावेज़ लॉक है। डुप्लीकेट बनाना अक्षम है।',
+                'doc_locked_no_pin': 'यह दस्तावेज़ लॉक है। पिन करना अक्षम है।',
+                'doc_locked_no_delete': 'यह दस्तावेज़ लॉक है। हटाना अक्षम है।',
+                'doc_locked_no_history': 'यह दस्तावेज़ लॉक है। संस्करण इतिहास अक्षम है।',
+                'lock_prevent_viewing': 'देखना अवरोधित करें',
+                'lock_prevent_viewing_desc': 'लॉक रहने पर दस्तावेज़ सामग्री धुंधली करें और पूर्वावलोकन, पठन मोड व तुलना अक्षम करें।',
+                'doc_locked_no_preview': 'यह दस्तावेज़ लॉक है। पूर्वावलोकन अक्षम है।',
+                'doc_locked_no_reading_mode': 'यह दस्तावेज़ लॉक है। पठन मोड अक्षम है।',
+                'doc_locked_no_compare': 'यह दस्तावेज़ लॉक है। तुलना अक्षम है।',
+                'doc_locked_prevent_viewing_msg': 'यह दस्तावेज़ लॉक है। सामग्री देखने के लिए अनलॉक करें।',
                 'sharing_disabled_title': 'शेयरिंग अक्षम है',
                 'sharing_disabled_desc': 'इस दस्तावेज़ के लॉक होने के कारण शेयरिंग अक्षम है। शेयरिंग सक्षम करने के लिए दस्तावेज़ अनलॉक करें।',
                 'locked_danger_zone_title': 'लॉक दस्तावेज़ मिले',
@@ -13624,6 +13857,17 @@ if ('serviceWorker' in navigator) {
                 'doc_locked_no_copy': 'Этот документ заблокирован. Копирование отключено.',
                 'doc_locked_no_print': 'Этот документ заблокирован. Печать отключена.',
                 'doc_locked_rename': 'Невозможно переименовать заблокированный документ.',
+                'doc_locked_no_download': 'Этот документ заблокирован. Загрузка отключена.',
+                'doc_locked_no_duplicate': 'Этот документ заблокирован. Дублирование отключено.',
+                'doc_locked_no_pin': 'Этот документ заблокирован. Закрепление отключено.',
+                'doc_locked_no_delete': 'Этот документ заблокирован. Удаление отключено.',
+                'doc_locked_no_history': 'Этот документ заблокирован. История версий отключена.',
+                'lock_prevent_viewing': 'Запретить просмотр',
+                'lock_prevent_viewing_desc': 'Размывает содержимое и отключает предпросмотр, режим чтения и сравнение пока документ заблокирован.',
+                'doc_locked_no_preview': 'Этот документ заблокирован. Предпросмотр отключён.',
+                'doc_locked_no_reading_mode': 'Этот документ заблокирован. Режим чтения отключён.',
+                'doc_locked_no_compare': 'Этот документ заблокирован. Сравнение отключено.',
+                'doc_locked_prevent_viewing_msg': 'Этот документ заблокирован. Разблокируйте его, чтобы просмотреть содержимое.',
                 'sharing_disabled_title': 'Обмен отключён',
                 'sharing_disabled_desc': 'Обмен отключён, так как документ заблокирован. Разблокируйте его, чтобы включить обмен.',
                 'locked_danger_zone_title': 'Обнаружены заблокированные документы',
