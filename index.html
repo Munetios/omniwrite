@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
+        // Redirect unsupported browsers (IE, old Edge, very old browsers)
+        (function() {
+            var ua = window.navigator.userAgent;
+            var isIE = /MSIE |Trident\//.test(ua);
+            var isOldEdge = /Edge\/[0-9]{1,2}\./.test(ua); // Legacy Edge
+            var isOldSafari = /Version\/(\d+)\.\d+.*Safari/.test(ua) && parseInt(RegExp.$1, 10) < 13;
+            var isOldFirefox = /Firefox\/(\d+)/.test(ua) && parseInt(RegExp.$1, 10) < 70;
+            var isOldChrome = /Chrome\/(\d+)/.test(ua) && parseInt(RegExp.$1, 10) < 70;
+            // Add more checks as needed for your requirements
+            if (isIE || isOldEdge || isOldSafari || isOldFirefox || isOldChrome) {
+                window.location.replace('unsupported-browser.html');
+            }
+        })();
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Munetios OmniWrite</title>
@@ -2971,7 +2986,25 @@ if ('serviceWorker' in navigator) {
 
     // Save all folders to IndexedDB (encrypted)
     async function saveFolders() {
-        return new Promise(async (resolve, reject) => {
+        // First, encrypt all folder data before opening the transaction
+        const encryptedFolders = [];
+        try {
+            for (const folder of folders) {
+                const encName = await encryptData(folder.name);
+                const encDocIds = await encryptData(JSON.stringify(folder.documentIds || []));
+                encryptedFolders.push({
+                    id: folder.id,
+                    name: encName,
+                    documentIds: encDocIds,
+                    createdAt: folder.createdAt
+                });
+            }
+        } catch (error) {
+            showToast(_t('failed_save_folders'));
+            throw error;
+        }
+
+        return new Promise((resolve, reject) => {
             try {
                 // Check if FOLDER_STORE exists
                 if (!db.objectStoreNames.contains(FOLDER_STORE)) {
@@ -2983,16 +3016,8 @@ if ('serviceWorker' in navigator) {
                 const store = tx.objectStore(FOLDER_STORE);
                 // Clear store
                 store.clear();
-                // Encrypt and store each folder
-                for (const folder of folders) {
-                    const encName = await encryptData(folder.name);
-                    const encDocIds = await encryptData(JSON.stringify(folder.documentIds || []));
-                    const encrypted = {
-                        id: folder.id,
-                        name: encName,
-                        documentIds: encDocIds,
-                        createdAt: folder.createdAt
-                    };
+                // Store each encrypted folder synchronously
+                for (const encrypted of encryptedFolders) {
                     store.put(encrypted);
                 }
                 tx.oncomplete = () => resolve();
@@ -9188,6 +9213,7 @@ if ('serviceWorker' in navigator) {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.11.21 - Added Folders support for Firefox & Safari</li>
                         <li>v1.11.20 - Improved the lock document feature.</li>
                         <li>v1.11.13 - Added Apps, added custom fonts, added lock feature for documents, more language support and more.</li>
                         <li>v1.11.12 - Fixed a bug when creating documents did not work when used a hash</li>
@@ -14871,71 +14897,9 @@ if ('serviceWorker' in navigator) {
         }
     });
    
-    // Check for IndexedDB and Web Crypto API support
-    function detectBrowser() {
-        const userAgent = navigator.userAgent;
-        const isChrome = /Chrome|Chromium|CriOS/.test(userAgent) && !/Edge|Edg/.test(userAgent);
-        const isEdge = /Edge|Edg/.test(userAgent);
-        const isFirefox = /Firefox|FxiOS/.test(userAgent);
-        const isSafari = /Safari/.test(userAgent) && !/Chrome|Chromium|CriOS|Edge|Edg|Firefox/.test(userAgent);
-        const isOpera = /OPR|Opera/.test(userAgent);
-        const isMunetios = /Munetios|MunetiosWebView|MunetiosBrowser/.test(userAgent);
-        
-        return { isChrome, isEdge, isFirefox, isSafari, isOpera, isMunetios };
-    }
+
     
-    const browser = detectBrowser();
-    const isUnsupportedBrowser = (browser.isFirefox || browser.isSafari) && !window.location.hostname.includes('munetios') && !browser.isMunetios;
-
-    // Folders are only supported on Chromium-based and Munetios browsers
-    const isFolderSupported = browser.isChrome || browser.isEdge || browser.isOpera || browser.isMunetios;
-    if (!isFolderSupported) {
-        const foldersSection = document.getElementById('foldersSection');
-        if (foldersSection) foldersSection.style.display = 'none';
-        const createFolderBtn = document.getElementById('createNewFolderBtn');
-        if (createFolderBtn) createFolderBtn.style.display = 'none';
-    }
     
-    if (!window.indexedDB || !window.crypto || !window.crypto.subtle || isUnsupportedBrowser) {
-        // Create unsupported browser modal
-        const unsupportedModal = document.createElement('div');
-        unsupportedModal.className = 'modal';
-        unsupportedModal.innerHTML = `
-            <div class="modal-content" style="position:relative;max-width:500px;">
-                <h2>Unsupported Browser</h2>
-                <p>Munetios OmniWrite was designed for Chromium-based browsers (Chrome, Edge, etc.).</p>
-                <p>Firefox and Safari are known to have issues with folders, documents, and other features, which may cause instability in OmniWrite.</p>
-                <p>Please update your browser or switch to a modern Chromium-based browser like Chrome or Edge for the best experience.</p>
-                <p>Or, if you're feeling adventurous, you can try OmniWrite anyway by clicking the "Try Anyway" button.</p>
-                <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
-                    <button id="closeUnsupportedModal">Try Anyway</button>
-                    <button id="downloadChromeBtn">Download Chrome</button>
-                    <button id="downloadEdgeBtn">Download Edge</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(unsupportedModal);
-
-        // Close modal button
-        unsupportedModal.querySelector('#closeUnsupportedModal').onclick = () => {
-            unsupportedModal.remove();
-        };
-
-        // Download Chrome button
-        unsupportedModal.querySelector('#downloadChromeBtn').onclick = () => {
-            window.open('https://www.google.com/chrome/', '_top');
-        };
-
-        // Download Edge button
-        unsupportedModal.querySelector('#downloadEdgeBtn').onclick = () => {
-            window.open('https://www.microsoft.com/en-us/edge', '_top');
-        };
-
-        // Prevent further script execution if truly unsupported
-        if (!window.indexedDB || !window.crypto || !window.crypto.subtle) {
-            throw new Error('Unsupported browser: Missing required APIs');
-        }
-    }
    
     </script>
 </body>
