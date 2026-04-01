@@ -104,7 +104,7 @@ upgrade-insecure-requests;
               font-feature-settings: 'ss01' 1, 'liga' 0 !important; 
         }
         html, button, input, select, textarea {
-            font-family: 'Google Sans Flex', sans-serif;
+            font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif;
             font-feature-settings: 'ss01' 1, 'liga' 0;
             box-sizing: border-box;
         }
@@ -2328,12 +2328,275 @@ upgrade-insecure-requests;
                         right: 50px;
                     }
                 }
+
+        /* ===== Custom Tooltip System ===== */
+        .omni-custom-tooltip {
+            position: fixed;
+            background: rgba(18, 12, 48, 0.30);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #fff;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 12.5px;
+            font-family: inherit;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            z-index: 999999;
+            transform: translateY(4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            max-width: 240px;
+        }
+        .omni-custom-tooltip.omni-tip-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        body.omni-light-mode .omni-custom-tooltip {
+            background: rgba(255,255,255,0.97);
+            color: #1a1a2e;
+            border-color: rgba(0,0,0,0.12);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+
+        /* ===== Emoji Picker Panel ===== */
+        #emojiPickerPanel {
+            position: fixed;
+            top: 64px;
+            right: 16px;
+            width: 344px;
+            max-height: 448px;
+            display: none;
+            flex-direction: column;
+            background: rgba(18, 12, 48, 0.205);
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 20px;
+            box-shadow: 0 8px 36px rgba(0,0,0,0.5);
+            z-index: 99992;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+        body.omni-light-mode #emojiPickerPanel {
+            background: rgba(248,248,255,0.98);
+            border-color: rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        #emojiPickerPanel.ep-open { display: flex; }
+        .ep-search-row { padding: 10px 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        body.omni-light-mode .ep-search-row { border-bottom-color: rgba(0,0,0,0.07); }
+        .ep-search-input {
+            width: 100%;
+            padding: 7px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.09);
+            color: inherit;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .ep-search-input:focus { border-color: rgba(102,126,234,0.6); }
+        body.omni-light-mode .ep-search-input { background: rgba(0,0,0,0.05); color: #1a1a2e; border-color: rgba(0,0,0,0.12); }
+        .ep-cats {
+            display: flex; gap: 2px; padding: 5px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .ep-cats::-webkit-scrollbar { display: none; }
+        .ep-cat-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 19px; padding: 4px 6px; border-radius: 8px;
+            transition: background 0.15s; color: inherit; flex-shrink: 0;
+        }
+        .ep-cat-btn:hover, .ep-cat-btn.ep-active { background: rgba(102,126,234,0.3); }
+        .ep-grid-wrap {
+            flex: 1; overflow-y: auto; padding: 6px 8px 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+        .ep-section-label {
+            font-size: 11px; opacity: 0.5; padding: 6px 4px 3px;
+            text-transform: uppercase; letter-spacing: 0.07em;
+        }
+        .ep-grid { display: flex; flex-wrap: wrap; gap: 1px; }
+        .ep-emoji-btn {
+            width: 38px; height: 38px; font-size: 22px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; cursor: pointer;
+            transition: background 0.1s, transform 0.1s;
+            user-select: none; border: none; background: none; color: inherit;
+        }
+        .ep-emoji-btn:hover { background: rgba(102,126,234,0.28); transform: scale(1.2); }
+
+        /* ===== Virtual Keyboard Panel ===== */
+        #virtualKeyboardPanel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 780px;
+            max-width: calc(100vw - 20px);
+            background: rgba(18, 12, 48, 0.205);
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 22px;
+            box-shadow: 0 12px 52px rgba(0,0,0,0.6);
+            z-index: 99992;
+            display: none;
+            flex-direction: column;
+            user-select: none;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+        body.omni-light-mode #virtualKeyboardPanel {
+            background: rgba(238,238,252,0.98);
+            border-color: rgba(0,0,0,0.1);
+            box-shadow: 0 12px 52px rgba(0,0,0,0.2);
+        }
+        #virtualKeyboardPanel.vk-open { display: flex; }
+        .vk-titlebar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 16px 7px; cursor: grab;
+            border-bottom: 1px solid rgba(255,255,255,0.08); touch-action: none;
+        }
+        body.omni-light-mode .vk-titlebar { border-bottom-color: rgba(0,0,0,0.07); }
+        .vk-titlebar:active { cursor: grabbing; }
+        .vk-title {
+            font-size: 12px; font-weight: 700; opacity: 0.55;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .vk-title icon { font-size: 15px; }
+        .vk-close-btn {
+            width: 27px; height: 27px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: none; color: inherit;
+            cursor: pointer; font-size: 16px; display: flex;
+            align-items: center; justify-content: center;
+            transition: background 0.15s; font-family: inherit;
+        }
+        .vk-close-btn:hover { background: rgba(231,76,60,0.5); }
+        .vk-rows { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 5px; }
+        .vk-row { display: flex; gap: 4px; justify-content: center; }
+        .vk-key {
+            min-width: 46px; height: 46px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.09);
+            border: 1px solid rgba(255,255,255,0.13);
+            color: inherit; font-size: 14px; font-family: inherit;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; flex-direction: column;
+            transition: background 0.1s, transform 0.1s, box-shadow 0.1s;
+            padding: 0 6px; position: relative; flex-shrink: 0;
+        }
+        body.omni-light-mode .vk-key {
+            background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.13);
+            color: #1a1a2e; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .vk-key:hover {
+            background: rgba(102,126,234,0.3);
+            border-color: rgba(102,126,234,0.5);
+            box-shadow: 0 3px 12px rgba(102,126,234,0.2);
+        }
+        .vk-key:active, .vk-key.vk-press-fx {
+            background: rgba(102,126,234,0.55) !important;
+            transform: scale(0.9); box-shadow: none !important;
+        }
+        .vk-key.vk-fn  { min-width: 68px; background: rgba(255,255,255,0.05); font-size: 12px; }
+        .vk-key.vk-tab { min-width: 76px; }
+        .vk-key.vk-caps{ min-width: 88px; }
+        .vk-key.vk-enter{ min-width: 98px; background: rgba(102,126,234,0.2); font-size: 12px; }
+        .vk-key.vk-shift{ min-width: 112px; }
+        .vk-key.vk-shift2{ min-width: 132px; }
+        .vk-key.vk-space{ flex: 1; max-width: 320px; min-width: 180px; background: rgba(255,255,255,0.06); }
+        .vk-key.vk-active-mod {
+            background: rgba(102,126,234,0.45) !important;
+            border-color: rgba(102,126,234,0.7) !important;
+        }
+        .vk-key .vk-main { font-size: 15px; line-height: 1; }
+        .vk-key .vk-sub  { font-size: 9px;  opacity: 0.45; line-height: 1; margin-top: 2px; }
+        .vk-mode-tabs {
+            display: flex; gap: 5px; padding: 8px 14px 11px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        body.omni-light-mode .vk-mode-tabs { border-top-color: rgba(0,0,0,0.07); }
+        .vk-mode-tab {
+            padding: 5px 14px; border-radius: 10px; font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.06); color: inherit;
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .vk-mode-tab:hover { background: rgba(102,126,234,0.25); }
+        .vk-mode-tab.vk-mode-active {
+            background: rgba(102,126,234,0.42); border-color: rgba(102,126,234,0.65);
+        }
+        #virtualKeyboardBtn.vk-typing-glow {
+            filter: drop-shadow(0 0 7px rgba(102,126,234,0.95));
+        }
+
+        /* ===== Emoji / Keyboard toolbar-end pill ===== */
+        .toolbar-outer {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .toolbar-outer .toolbar {
+            flex: 1;
+            min-width: 0;
+        }
+        #omniPageFab {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 50px;
+            padding: 3px 7px;
+            margin-left: 6px;
+            margin-right: 4px;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+        body.omni-light-mode #omniPageFab {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .omni-fab-icon {
+            display: flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%;
+            cursor: pointer; font-size: 19px;
+            transition: background 0.15s, transform 0.12s;
+            font-family: 'Material Symbols Rounded', sans-serif;
+            color: rgba(255,255,255,0.55);
+        }
+        body.omni-light-mode .omni-fab-icon { color: rgba(30,20,70,0.55); }
+        .omni-fab-icon:hover {
+            background: rgba(102,126,234,0.28);
+            color: rgba(255,255,255,0.9);
+            transform: scale(1.10);
+        }
+        body.omni-light-mode .omni-fab-icon:hover { color: #1a1a3e; }
+        .omni-fab-icon.omni-fab-active {
+            background: rgba(102,126,234,0.38);
+            color: #fff;
+        }
+        .omni-fab-divider {
+            width: 1px; height: 18px;
+            background: rgba(255,255,255,0.12);
+            margin: 0 1px;
+        }
+        body.omni-light-mode .omni-fab-divider { background: rgba(0,0,0,0.10); }
     </style>
 </head>
 <body>
     <noscript>
         <p>Please enable JavaScript to use OmniWrite.</p>
     </noscript>
+
     <div class="app" id="app">
         <omniwrite-sidebar class="sidebar__container">
             <div class="sidebar liquid-glass" id="sidebar">
@@ -2555,15 +2818,16 @@ upgrade-insecure-requests;
                             </div>
                 </div>
                 <div class="navbar__right liquid-glass" style="padding: 11px 14px; display: flex; align-items: center; gap: 15px;">
-                    <icon id="versionHistoryBtn">history</icon>
-                    <icon id="previewBtn" >visibility</icon>
+                    <icon id="versionHistoryBtn" title="Version History">history</icon>
+                    <icon id="previewBtn" title="Preview">visibility</icon>
                     <icon id="readingModeBtn" title="Reading Mode">auto_stories</icon>
                     <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
-                    <icon id="shareDocumentBtn">share</icon>
-                    <icon id="moreEditorBtn">more_vert</icon>
+                    <icon id="shareDocumentBtn" title="Share">share</icon>
+                    <icon id="moreEditorBtn" title="More Options">more_vert</icon>
                 </div>
             </div>
             <div class="editor-content-editor">
+                <div class="toolbar-outer">
                 <div class="toolbar liquid-glass">
                     <div class="toolbar-item" id="findInDocumentBtn">
                         <icon>search</icon>
@@ -2713,7 +2977,13 @@ upgrade-insecure-requests;
                     <div class="toolbar-item" id="lineSpacingBtn" title="Line Spacing">
                         <icon>format_line_spacing</icon>
                     </div>
+                </div><!-- end .toolbar -->
+                <div id="omniPageFab">
+                    <div class="omni-fab-icon" id="emojiPickerBtn" title="Insert Emoji" role="button" tabindex="0" aria-label="Insert Emoji">sentiment_satisfied</div>
+                    <div class="omni-fab-divider"></div>
+                    <div class="omni-fab-icon" id="virtualKeyboardBtn" title="Virtual Keyboard" role="button" tabindex="0" aria-label="Virtual Keyboard">keyboard</div>
                 </div>
+                </div><!-- end .toolbar-outer -->
                 <div class="editor-content-area-container">
                 <div class="editor-pages-column" id="editorPagesColumn">
                     <div class="document-page-shell">
@@ -12568,6 +12838,26 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Sky',
                 'accent_color_rose': 'Rose',
                 'sort_by': 'Sort By',
+                // --- Emoji picker / virtual keyboard / tooltip keys ---
+                'find_in_document': 'Find in Document',
+                'toggle_sidebar': 'Toggle Sidebar',
+                'more_options': 'More Options',
+                'insert_emoji': 'Insert Emoji',
+                'virtual_keyboard': 'Virtual Keyboard',
+                'emoji_search_placeholder': 'Search emoji…',
+                'checkbox_list': 'Checkbox List',
+                'inline_code': 'Inline Code',
+                'insert_callout': 'Insert Callout',
+                'insert_chart': 'Insert Chart',
+                'highlight': 'Highlight',
+                'uppercase': 'Uppercase',
+                'lowercase': 'Lowercase',
+                'insert_columns': 'Insert Two Columns',
+                'split_screen': 'Split Screen',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Symbols',
+                'vk_mode_math': 'Math',
+                'create_new': 'New',
             },
             es: {
                 'Welcome to Munetios OmniWrite': 'Bienvenido a Munetios OmniWrite',
@@ -13039,6 +13329,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Cielo',
                 'accent_color_rose': 'Rosa',
                 'sort_by': 'Ordenar por',
+                'find_in_document': 'Buscar en documento',
+                'toggle_sidebar': 'Alternar barra lateral',
+                'more_options': 'Más opciones',
+                'insert_emoji': 'Insertar emoji',
+                'virtual_keyboard': 'Teclado virtual',
+                'emoji_search_placeholder': 'Buscar emoji…',
+                'checkbox_list': 'Lista de casillas',
+                'inline_code': 'Código en línea',
+                'insert_callout': 'Insertar nota destacada',
+                'insert_chart': 'Insertar gráfico',
+                'highlight': 'Resaltar',
+                'uppercase': 'Mayúsculas',
+                'lowercase': 'Minúsculas',
+                'insert_columns': 'Insertar dos columnas',
+                'split_screen': 'Pantalla dividida',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Símbolos',
+                'vk_mode_math': 'Matemáticas',
+                'create_new': 'Nuevo',
             },
             fr: {
                 'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
@@ -13527,6 +13836,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Ciel',
                 'accent_color_rose': 'Rose',
                 'sort_by': 'Trier par',
+                'find_in_document': 'Rechercher dans le document',
+                'toggle_sidebar': 'Afficher/masquer le panneau',
+                'more_options': 'Autres options',
+                'insert_emoji': 'Insérer un émoji',
+                'virtual_keyboard': 'Clavier virtuel',
+                'emoji_search_placeholder': 'Rechercher un émoji…',
+                'checkbox_list': 'Liste à cocher',
+                'inline_code': 'Code en ligne',
+                'insert_callout': 'Insérer une note',
+                'insert_chart': 'Insérer un graphique',
+                'highlight': 'Surligner',
+                'uppercase': 'Majuscules',
+                'lowercase': 'Minuscules',
+                'insert_columns': 'Insérer deux colonnes',
+                'split_screen': 'Écran partagé',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Symboles',
+                'vk_mode_math': 'Maths',
+                'create_new': 'Nouveau',
             },
             de: {
                 'Welcome to Munetios OmniWrite': 'Willkommen bei Munetios OmniWrite',
@@ -14015,6 +14343,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Himmel',
                 'accent_color_rose': 'Rosa',
                 'sort_by': 'Sortieren nach',
+                'find_in_document': 'Im Dokument suchen',
+                'toggle_sidebar': 'Seitenleiste ein/ausblenden',
+                'more_options': 'Weitere Optionen',
+                'insert_emoji': 'Emoji einfügen',
+                'virtual_keyboard': 'Virtuelle Tastatur',
+                'emoji_search_placeholder': 'Emoji suchen…',
+                'checkbox_list': 'Checkliste',
+                'inline_code': 'Inline-Code',
+                'insert_callout': 'Hinweis einfügen',
+                'insert_chart': 'Diagramm einfügen',
+                'highlight': 'Hervorheben',
+                'uppercase': 'Großbuchstaben',
+                'lowercase': 'Kleinbuchstaben',
+                'insert_columns': 'Zwei Spalten einfügen',
+                'split_screen': 'Geteilter Bildschirm',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Sonderzeichen',
+                'vk_mode_math': 'Mathematik',
+                'create_new': 'Neu',
             },
             zh: {
                 'Welcome to Munetios OmniWrite': '欢迎使用 Munetios OmniWrite',
@@ -14503,6 +14850,25 @@ Q4: 22</textarea>
                 'accent_color_sky': '天空',
                 'accent_color_rose': '玫瑰',
                 'sort_by': '排序方式',
+                'find_in_document': '在文档中查找',
+                'toggle_sidebar': '切换侧边栏',
+                'more_options': '更多选项',
+                'insert_emoji': '插入表情符号',
+                'virtual_keyboard': '虚拟键盘',
+                'emoji_search_placeholder': '搜索表情符号…',
+                'checkbox_list': '复选框列表',
+                'inline_code': '内联代码',
+                'insert_callout': '插入提示框',
+                'insert_chart': '插入图表',
+                'highlight': '高亮',
+                'uppercase': '大写',
+                'lowercase': '小写',
+                'insert_columns': '插入两列',
+                'split_screen': '分屏',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': '符号',
+                'vk_mode_math': '数学',
+                'create_new': '新建',
             },
             ja: {
                 'Welcome to Munetios OmniWrite': 'Munetios OmniWrite へようこそ',
@@ -14991,6 +15357,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'スカイ',
                 'accent_color_rose': 'ローズ',
                 'sort_by': '並べ替え',
+                'find_in_document': 'ドキュメント内を検索',
+                'toggle_sidebar': 'サイドバーの表示切替',
+                'more_options': 'その他のオプション',
+                'insert_emoji': '絵文字を挿入',
+                'virtual_keyboard': '仓想キーボード',
+                'emoji_search_placeholder': '絵文字を検索…',
+                'checkbox_list': 'チェックリスト',
+                'inline_code': 'インラインコード',
+                'insert_callout': 'コールアウトを挿入',
+                'insert_chart': 'グラフを挿入',
+                'highlight': 'ハイライト',
+                'uppercase': '大文字',
+                'lowercase': '小文字',
+                'insert_columns': '2段3組を挿入',
+                'split_screen': '画面分割',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': '記号',
+                'vk_mode_math': '数学',
+                'create_new': '新規',
             },
             ar: {
                 'Welcome to Munetios OmniWrite': 'مرحباً بك في Munetios OmniWrite',
@@ -15479,6 +15864,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'سماوي',
                 'accent_color_rose': 'وردي',
                 'sort_by': 'ترتيب حسب',
+                'find_in_document': 'البحث في المستند',
+                'toggle_sidebar': 'تبديل الشريط الجانبي',
+                'more_options': 'المزيد من الخيارات',
+                'insert_emoji': 'إدراج رمز تعبيري',
+                'virtual_keyboard': 'لوحة مفاتيح افتراضية',
+                'emoji_search_placeholder': 'البحث عن رموز تعبيرية…',
+                'checkbox_list': 'قائمة مربعات الاختيار',
+                'inline_code': 'كود مضمّن',
+                'insert_callout': 'إدراج ملاحظة',
+                'insert_chart': 'إدراج مخطط',
+                'highlight': 'تمييز',
+                'uppercase': 'أحرف كبيرة',
+                'lowercase': 'أحرف صغيرة',
+                'insert_columns': 'إدراج عمودين',
+                'split_screen': 'تقسيم الشاشة',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'رموز',
+                'vk_mode_math': 'رياضيات',
+                'create_new': 'جديد',
             },
             pt: {
                 'Welcome to Munetios OmniWrite': 'Bem-vindo ao Munetios OmniWrite',
@@ -15801,6 +16205,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Céu',
                 'accent_color_rose': 'Rosa',
                 'sort_by': 'Ordenar por',
+                'find_in_document': 'Localizar no documento',
+                'toggle_sidebar': 'Alternar painel lateral',
+                'more_options': 'Mais opções',
+                'insert_emoji': 'Inserir emoji',
+                'virtual_keyboard': 'Teclado virtual',
+                'emoji_search_placeholder': 'Pesquisar emoji…',
+                'checkbox_list': 'Lista de verificação',
+                'inline_code': 'Código em linha',
+                'insert_callout': 'Inserir destaque',
+                'insert_chart': 'Inserir gráfico',
+                'highlight': 'Realçar',
+                'uppercase': 'Maiúsculas',
+                'lowercase': 'Minúsculas',
+                'insert_columns': 'Inserir duas colunas',
+                'split_screen': 'Tela dividida',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Símbolos',
+                'vk_mode_math': 'Matemática',
+                'create_new': 'Novo',
             },
             it: {
                 'Welcome to Munetios OmniWrite': 'Benvenuto in Munetios OmniWrite',
@@ -16069,6 +16492,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Cielo',
                 'accent_color_rose': 'Rosa',
                 'sort_by': 'Ordina per',
+                'find_in_document': 'Trova nel documento',
+                'toggle_sidebar': 'Mostra/nascondi pannello',
+                'more_options': 'Altre opzioni',
+                'insert_emoji': 'Inserisci emoji',
+                'virtual_keyboard': 'Tastiera virtuale',
+                'emoji_search_placeholder': 'Cerca emoji…',
+                'checkbox_list': 'Elenco caselle',
+                'inline_code': 'Codice in linea',
+                'insert_callout': 'Inserisci nota',
+                'insert_chart': 'Inserisci grafico',
+                'highlight': 'Evidenzia',
+                'uppercase': 'Maiuscolo',
+                'lowercase': 'Minuscolo',
+                'insert_columns': 'Inserisci due colonne',
+                'split_screen': 'Schermo diviso',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Simboli',
+                'vk_mode_math': 'Matematica',
+                'create_new': 'Nuovo',
             },
             ko: {
                 'Welcome to Munetios OmniWrite': 'Munetios OmniWrite에 오신 것을 환영합니다',
@@ -16260,6 +16702,25 @@ Q4: 22</textarea>
                 'accent_color_sky': '스카이',
                 'accent_color_rose': '로즈',
                 'sort_by': '정렬 기준',
+                'find_in_document': '문서에서 찾기',
+                'toggle_sidebar': '사이드바 전환',
+                'more_options': '더보기',
+                'insert_emoji': '이모티콘 삽입',
+                'virtual_keyboard': '가상 키보드',
+                'emoji_search_placeholder': '이모티콘 검색…',
+                'checkbox_list': '체크박스 목록',
+                'inline_code': '인라인 코드',
+                'insert_callout': '설명 상자 삽입',
+                'insert_chart': '차트 삽입',
+                'highlight': '강조 표시',
+                'uppercase': '대문자',
+                'lowercase': '소문자',
+                'insert_columns': '두 열 삽입',
+                'split_screen': '화면 분할',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': '기호',
+                'vk_mode_math': '수학',
+                'create_new': '새로 만들기',
             },
             hi: {
                 'Welcome to Munetios OmniWrite': 'Munetios OmniWrite में आपका स्वागत है',
@@ -16437,6 +16898,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'आसमान',
                 'accent_color_rose': 'रोज़',
                 'sort_by': 'क्रमबद्ध करें',
+                'find_in_document': 'दस्तावेज़ में खोजें',
+                'toggle_sidebar': 'साइडबार टॉगल करें',
+                'more_options': 'अधिक विकल्प',
+                'insert_emoji': 'इमोजी डालें',
+                'virtual_keyboard': 'वर्चुअल कीबोर्ड',
+                'emoji_search_placeholder': 'इमोजी खोजें…',
+                'checkbox_list': 'चेकबॉक्स सूची',
+                'inline_code': 'इनलाइन कोड',
+                'insert_callout': 'कॉलआउट डालें',
+                'insert_chart': 'चार्ट डालें',
+                'highlight': 'हाइलाइट',
+                'uppercase': 'बड़े अक्षर',
+                'lowercase': 'छोटे अक्षर',
+                'insert_columns': 'दो कॉलम डालें',
+                'split_screen': 'स्क्रीन विभाजित करें',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'चिह्न',
+                'vk_mode_math': 'गणित',
+                'create_new': 'नया',
             },
             ru: {
                 'Welcome to Munetios OmniWrite': 'Добро пожаловать в Munetios OmniWrite',
@@ -16722,6 +17202,25 @@ Q4: 22</textarea>
                 'accent_color_sky': 'Небо',
                 'accent_color_rose': 'Роза',
                 'sort_by': 'Сортировать по',
+                'find_in_document': 'Найти в документе',
+                'toggle_sidebar': 'Переключить боковую панель',
+                'more_options': 'Ещё параметры',
+                'insert_emoji': 'Вставить эмодзи',
+                'virtual_keyboard': 'Виртуальная клавиатура',
+                'emoji_search_placeholder': 'Искать эмодзи…',
+                'checkbox_list': 'Список флажков',
+                'inline_code': 'Встроенный код',
+                'insert_callout': 'Вставить выноску',
+                'insert_chart': 'Вставить диаграмму',
+                'highlight': 'Выделить',
+                'uppercase': 'Верхний регистр',
+                'lowercase': 'Нижний регистр',
+                'insert_columns': 'Вставить две колонки',
+                'split_screen': 'Разделить экран',
+                'vk_mode_qwerty': 'QWERTY',
+                'vk_mode_symbols': 'Символы',
+                'vk_mode_math': 'Математика',
+                'create_new': 'Создать',
             },
         };
 
@@ -16735,6 +17234,61 @@ Q4: 22</textarea>
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key]) el.placeholder = dict[key];
             });
+            // --- Translate tooltips (data-tooltip) and virtual keyboard UI ---
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const __k = el.getAttribute('data-i18n-title');
+                const __v = dict[__k]; if (__v) el.setAttribute('data-tooltip', __v);
+            });
+            const __ttMap = {
+                'findInDocumentBtn':'find_in_document','boldBtn':'Bold','italicBtn':'Italic',
+                'underlineBtn':'Underline','strikethroughBtn':'strikethrough',
+                'fontFamilyBtn':'Font Family','fontSizeBtn':'Font Size',
+                'bulletListBtn':'Bullet List','numberedListBtn':'Numbered List',
+                'checkboxListBtn':'checkbox_list','alignLeftBtn':'Align Left',
+                'alignCenterBtn':'Align Center','alignRightBtn':'Align Right',
+                'alignJustifyBtn':'justify','undoBtn':'Undo','redoBtn':'Redo',
+                'insertHrBtn':'insert_hr','insertLinkBtn':'insert_link',
+                'insertImageBtn':'Insert Image','insertVideoBtn':'Insert Video',
+                'insertMusicBtn':'Insert Music','insertQuoteBtn':'Insert Quote',
+                'insertCodeBlockBtn':'Insert Code Block',
+                'insertInlineCodeBtn':'inline_code','insertCalloutBtn':'insert_callout',
+                'insertTableBtn':'Insert Table','insertChartBtn':'insert_chart',
+                'insertTableOfContentsBtn':'Table of Contents',
+                'insertPageBreakBtn':'page_break','clearFormattingBtn':'Clear Formatting',
+                'heading1Btn':'Heading 1','heading2Btn':'Heading 2',
+                'heading3Btn':'Heading 3','heading4Btn':'heading_4',
+                'superscriptBtn':'superscript','subscriptBtn':'subscript',
+                'highlightBtn':'highlight','textColorBtn':'Text Color',
+                'bgColorBtn':'bg_color','paragraphBtn':'normal_text',
+                'uppercaseBtn':'uppercase','lowercaseBtn':'lowercase',
+                'insertColumnsBtn':'insert_columns',
+                'indentIncreaseBtn':'indent_increase','indentDecreaseBtn':'indent_decrease',
+                'lineSpacingBtn':'line_spacing','versionHistoryBtn':'Version History',
+                'previewBtn':'Preview','readingModeBtn':'reading_mode',
+                'splitScreenBtn':'split_screen','shareDocumentBtn':'Share',
+                'moreEditorBtn':'more_options','emojiPickerBtn':'insert_emoji',
+                'virtualKeyboardBtn':'virtual_keyboard',
+                'moreImagesBtn':'more_options','createBtn':'create_new'
+            };
+            Object.entries(__ttMap).forEach(([__id, __k]) => {
+                const __el = document.getElementById(__id); if (!__el) return;
+                const __v = dict[__k]; if (__v) __el.setAttribute('data-tooltip', __v);
+            });
+            const __sv = dict['toggle_sidebar'];
+            if (__sv) document.querySelectorAll('#toggleSidebar').forEach(el => el.setAttribute('data-tooltip', __sv));
+            ['settings','help','apps'].forEach(__k => {
+                const __v = dict[__k];
+                if (__v) document.querySelectorAll('.' + __k + '-item.sidebarnav__item').forEach(el => el.setAttribute('data-tooltip', __v));
+            });
+            const __eps = document.getElementById('epSearchInput');
+            if (__eps) { const __v = dict['emoji_search_placeholder']; if (__v) __eps.placeholder = __v; }
+            const __vkp = document.getElementById('virtualKeyboardPanel');
+            if (__vkp) {
+                const __vkt = __vkp.querySelector('.vk-title');
+                if (__vkt) { const __v = dict['virtual_keyboard']; if (__v) __vkt.innerHTML = '<icon>keyboard</icon> ' + __v; }
+                const __mk = ['vk_mode_qwerty','vk_mode_symbols','vk_mode_math'];
+                __vkp.querySelectorAll('.vk-mode-tab').forEach((t, i) => { const __v = dict[__mk[i]]; if (__v) t.textContent = __v; });
+            }
             document.querySelectorAll('.sidebarnav__item .menu-text').forEach(el => {
                 if (dict[el.textContent]) el.textContent = dict[el.textContent];
             });
@@ -17896,10 +18450,529 @@ Q4: 22</textarea>
             window.location.href = '/out-of-memory.html';
         }
     });
-   
 
-    
-    
+    // ============================================================
+    // ===== CUSTOM TOOLTIP SYSTEM ================================
+    // ============================================================
+    (function initOmniTooltips() {
+        const tip = document.createElement('div');
+        tip.className = 'omni-custom-tooltip';
+        document.body.appendChild(tip);
+        let hideTimer = null;
+
+        function showTip(el, text, e) {
+            clearTimeout(hideTimer);
+            tip.textContent = text;
+            tip.classList.remove('omni-tip-visible');
+            // Position above the element
+            const rect = el.getBoundingClientRect();
+            let left = rect.left + rect.width / 2;
+            let top  = rect.top - 10;
+            tip.style.left = '0px'; tip.style.top = '0px';
+            tip.style.visibility = 'hidden'; tip.style.display = 'block';
+            const tw = tip.offsetWidth, th = tip.offsetHeight;
+            tip.style.visibility = '';
+            left = Math.max(8, Math.min(left - tw / 2, window.innerWidth - tw - 8));
+            top  = top - th;
+            if (top < 6) top = rect.bottom + 8;
+            tip.style.left = left + 'px';
+            tip.style.top  = top  + 'px';
+            requestAnimationFrame(() => tip.classList.add('omni-tip-visible'));
+        }
+
+        function hideTip() {
+            tip.classList.remove('omni-tip-visible');
+            hideTimer = setTimeout(() => { tip.style.display = 'none'; }, 160);
+        }
+
+        // Intercept title attributes — strip them to prevent double tooltips
+        function attachTooltip(el) {
+            if (el._omniTipAttached) return;
+            el._omniTipAttached = true;
+            const text = el.getAttribute('data-tooltip') || el.getAttribute('title') || '';
+            if (!text) return;
+            if (el.getAttribute('title')) {
+                el.setAttribute('data-tooltip', text);
+                el.removeAttribute('title');
+            }
+            el.addEventListener('mouseenter', () => showTip(el, text));
+            el.addEventListener('mouseleave', hideTip);
+            el.addEventListener('mousedown',  hideTip);
+        }
+
+        function scanForTooltips(root) {
+            root.querySelectorAll('[title], [data-tooltip]').forEach(attachTooltip);
+        }
+        scanForTooltips(document);
+
+        // Watch for new elements
+        const tipObserver = new MutationObserver(muts => {
+            muts.forEach(m => m.addedNodes.forEach(n => {
+                if (n.nodeType === 1) {
+                    if (n.getAttribute && (n.getAttribute('title') || n.getAttribute('data-tooltip'))) attachTooltip(n);
+                    scanForTooltips(n);
+                }
+            }));
+        });
+        tipObserver.observe(document.body, { childList: true, subtree: true });
+    })();
+
+    // ============================================================
+    // ===== EMOJI PICKER =========================================
+    // ============================================================
+    (function initEmojiPicker() {
+        const EMOJI_CATS = [
+            { icon: '😀', label: 'Smileys & Emotion', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🫣','🤭','🫡','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','💫','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖'] },
+            { icon: '👋', label: 'People & Body',      emojis: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦵','🦶','👂','👃','👀','👅','👄','💋','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','🕵️','💂','🥷','👷','🫅','🤴','👸','👳','👲','🧕','🫄','🤰','🤱','👼','🎅','🤶','🧑‍🎄','🦸','🦹','🧙','🧚','🧛','🧜','🧝','🧞','🧟','🧌','💆','💇','🚶','🧍','🧎','🏃','💃','🕺','🕴️','👯','🧖','🧗','🏇','🏂','🏋️','🤼','🤸','🤺','⛹️','🤾','🏌️','🏄','🚣','🧘','🛀','🛌','👫','👬','👭','💑','💏','👪'] },
+            { icon: '🐱', label: 'Animals & Nature',   emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪲','🦟','🦗','🪳','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🦭','🐊','🐅','🐆','🦓','🦍','🦧','🦣','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔','🐾','🌸','🌺','🌻','🌹','🌷','💐','🌼','🌿','🍀','🍁','🍂','🍃','🌾','🌵','🌴','🌲','🌳','🌱','🌾','🍄','🐚','🪨','🪵','🌊','💧','🌬️','🌈','⭐','🌟','✨','⚡','🔥','🌙','☀️','⛅','❄️','🌪️','🌍','🌎','🌏'] },
+            { icon: '🍔', label: 'Food & Drink',       emojis: ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🧄','🧅','🥔','🍠','🥐','🥖','🍞','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌮','🌯','🫔','🥙','🧆','🌭','🍔','🍟','🍕','🫓','🥨','🥯','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🧃','🥤','🧋','☕','🍵','🫖','🍺','🍻','🥂','🍷','🍾','🍹','🍸','🥃','🧉','🧊','🫙','🍽️','🥄','🍴','🫕','🥢','🫗'] },
+            { icon: '✈️', label: 'Travel & Places',    emojis: ['🚗','🚕','🚙','🚌','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🚲','🛴','⛽','🚧','🚦','🚥','⚓','🛟','⛵','🛶','🚤','🛥️','🛳️','⛴️','🚢','✈️','🛩️','🛫','🛬','💺','🚁','🚀','🛸','🏕️','🏖️','🏜️','🏝️','🏞️','🌅','🌄','🌠','🏙️','🌃','🌆','🌇','🌉','🌌','🗼','🗽','🏰','🏯','🏟️','🗿','🗺️','🧭','🏔️','⛰️','🌋','🏕️','🏗️','🏘️','🏚️','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','💒','⛪','🕌','🕍','🛕','⛩️','🕋','⛲','🎡','🎢','🎠','🎪','🗼'] },
+            { icon: '⚽', label: 'Activities',          emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🥍','🏑','🏏','🪃','🎯','🥊','🥋','⛳','🪁','🏹','🎣','🤿','🎽','🛹','🛝','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤸','🏄','🧗','🚴','🏇','🤺','⛹️','🤾','🏇','🏌️','🏊','🚣','🧘','🤼','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🤹','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪕','🎸','🎻','🎲','♟️','🎮','🎰','🧩','🪅','🪆'] },
+            { icon: '💡', label: 'Objects',             emojis: ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','💽','💾','💿','📀','📷','📸','📹','🎥','📞','☎️','📺','📻','🕰️','⏰','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🔒','🔓','🔏','🔐','🔑','🗝️','🔨','⛏️','⚒️','🛠️','⚔️','🛡️','🔧','🔩','⚙️','🔗','🧲','🪜','🧰','🧹','🧺','🧻','🧼','🫧','🪥','🧽','🧯','🛒','🚪','🪞','🪟','🛏️','🛋️','🚽','🚿','🛁','📦','📫','📬','📭','📮','📜','📃','📄','📑','📊','📈','📉','📋','📌','📍','📎','📏','📐','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','🔍','🔎','🔬','🔭','📡','🩺','💊','🩹','🩼','🩻','🩸','🧬','🔬','🧪','🧫','🧲','🪄','🔮','🪬','🧿','🎐','🪩','🪆','🎁','🎀','🎊','🎉','🎎','🎏','🎑','🎍','🧧','🎋','🎄','🎆','🎇'] },
+            { icon: '💯', label: 'Symbols',             emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','♻️','✅','☑️','✔️','❎','🔰','⚜️','🔱','📛','🔲','🔳','⬛','⬜','🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔲','🔳','▶️','◀️','🔼','🔽','⏩','⏪','⏫','⏬','⏸️','⏯️','⏭️','⏮️','⏺️','⏏️','🎦','🔇','🔈','🔉','🔊','📢','📣','🔔','🔕','🎵','🎶','📳','📴','📵','📶','📳','🈹','🅰️','🅱️','🆎','🆑'] },
+        ];
+
+        // Build the panel HTML
+        const panel = document.createElement('div');
+        panel.id = 'emojiPickerPanel';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Emoji Picker');
+        panel.innerHTML = `
+            <div class="ep-search-row">
+                <input class="ep-search-input" type="text" placeholder="Search emoji…" id="epSearchInput" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="ep-cats" id="epCats"></div>
+            <div class="ep-grid-wrap" id="epGridWrap"></div>
+        `;
+        document.body.appendChild(panel);
+
+        let currentCat = 0;
+        let searchMode = false;
+        let _epLastFocus = null;
+
+        const catsEl   = panel.querySelector('#epCats');
+        const gridWrap = panel.querySelector('#epGridWrap');
+        const searchEl = panel.querySelector('#epSearchInput');
+
+        // Build category tabs
+        EMOJI_CATS.forEach((cat, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'ep-cat-btn' + (i === 0 ? ' ep-active' : '');
+            btn.textContent = cat.icon;
+            btn.setAttribute('data-tooltip', cat.label);
+            btn.addEventListener('click', () => {
+                searchEl.value = '';
+                searchMode = false;
+                currentCat = i;
+                catsEl.querySelectorAll('.ep-cat-btn').forEach((b,j) => b.classList.toggle('ep-active', j === i));
+                renderGrid();
+            });
+            catsEl.appendChild(btn);
+        });
+
+        function renderGrid(filter) {
+            gridWrap.innerHTML = '';
+            if (filter) {
+                const filt = filter.toLowerCase();
+                const matches = [];
+                EMOJI_CATS.forEach(cat => cat.emojis.forEach(em => {
+                    const name = em.codePointAt(0).toString(16);
+                    if (em.includes(filt) || cat.label.toLowerCase().includes(filt)) matches.push(em);
+                }));
+                if (!matches.length) { gridWrap.innerHTML = '<div style="padding:16px;opacity:0.5;text-align:center;">No results</div>'; return; }
+                const grid = document.createElement('div'); grid.className = 'ep-grid';
+                matches.forEach(em => grid.appendChild(makeEmojiBtn(em)));
+                gridWrap.appendChild(grid);
+                return;
+            }
+            const cat = EMOJI_CATS[currentCat];
+            const label = document.createElement('div'); label.className = 'ep-section-label'; label.textContent = cat.label;
+            const grid = document.createElement('div'); grid.className = 'ep-grid';
+            cat.emojis.forEach(em => grid.appendChild(makeEmojiBtn(em)));
+            gridWrap.appendChild(label);
+            gridWrap.appendChild(grid);
+        }
+
+        function makeEmojiBtn(em) {
+            const btn = document.createElement('button');
+            btn.className = 'ep-emoji-btn';
+            btn.textContent = em;
+            btn.setAttribute('type', 'button');
+            btn.addEventListener('click', () => insertEmoji(em));
+            return btn;
+        }
+
+        function insertEmoji(em) {
+            // Restore focus to editor and insert emoji at caret
+            const target = _epLastFocus;
+            if (target && (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+                target.focus();
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount) {
+                    const range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    const node = document.createTextNode(em);
+                    range.insertNode(node);
+                    range.setStartAfter(node);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    // Fallback for input/textarea
+                    if (target.setRangeText) {
+                        const s = target.selectionStart || 0;
+                        target.setRangeText(em, s, target.selectionEnd || s, 'end');
+                        target.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            }
+        }
+
+        searchEl.addEventListener('input', () => {
+            const val = searchEl.value.trim();
+            searchMode = !!val;
+            renderGrid(val || null);
+        });
+
+        renderGrid();
+
+        // Open/close toggle
+        const emojiBtn = document.getElementById('emojiPickerBtn');
+        if (emojiBtn) {
+            emojiBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const open = panel.classList.toggle('ep-open');
+                emojiBtn.classList.toggle('omni-fab-active', open);
+                if (open) {
+                    // Compute position relative to button
+                    const rect = emojiBtn.getBoundingClientRect();
+                    panel.style.top  = (rect.bottom + 8) + 'px';
+                    panel.style.right = (window.innerWidth - rect.right) + 'px';
+                    panel.style.left = 'auto';
+                    searchEl.focus();
+                }
+            });
+        }
+
+        // Track last focused editable element (before panel click steals focus)
+        document.addEventListener('focusin', function(e) {
+            const t = e.target;
+            if (t && t !== searchEl && (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+                _epLastFocus = t;
+            }
+        }, true);
+
+        // Close on outside click
+        document.addEventListener('mousedown', function(e) {
+            if (panel.classList.contains('ep-open') && !panel.contains(e.target) && e.target !== emojiBtn) {
+                panel.classList.remove('ep-open');
+                if (emojiBtn) emojiBtn.classList.remove('omni-fab-active');
+            }
+        });
+    })();
+
+    // ============================================================
+    // ===== VIRTUAL KEYBOARD =====================================
+    // ============================================================
+    (function initVirtualKeyboard() {
+        // Keyboard layout definitions
+        const LAYOUTS = {
+            qwerty: {
+                label: 'QWERTY',
+                rows: [
+                    // [label, value, shiftLabel, shiftValue, extraClass]
+                    [['`','`','~','~'],['1','1','!','!'],['2','2','@','@'],['3','3','#','#'],['4','4','$','$'],['5','5','%','%'],['6','6','^','^'],['7','7','&','&'],['8','8','*','*'],['9','9','(','('],['0','0',')',')'],['-','-','_','_'],['=','=','+','+'],['⌫','BACKSPACE','⌫','BACKSPACE','vk-fn']],
+                    [['Tab','TAB','Tab','TAB','vk-tab'],['q','q','Q','Q'],['w','w','W','W'],['e','e','E','E'],['r','r','R','R'],['t','t','T','T'],['y','y','Y','Y'],['u','u','U','U'],['i','i','I','I'],['o','o','O','O'],['p','p','P','P'],['[','[','{','{'],[']',']','}','}'],['\\','\\','|','|']],
+                    [['⇪ Caps','CAPS','⇪ Caps','CAPS','vk-caps'],['a','a','A','A'],['s','s','S','S'],['d','d','D','D'],['f','f','F','F'],['g','g','G','G'],['h','h','H','H'],['j','j','J','J'],['k','k','K','K'],['l','l','L','L'],[';',';',':',':'],[`'`,"'",'"','"'],['↵ Enter','ENTER','↵ Enter','ENTER','vk-enter']],
+                    [['⇧ Shift','SHIFT','⇧ Shift','SHIFT','vk-shift'],['z','z','Z','Z'],['x','x','X','X'],['c','c','C','C'],['v','v','V','V'],['b','b','B','B'],['n','n','N','N'],['m','m','M','M'],[',',',','<','<'],['.','.','>','>'],['/','/','?','?'],['⇧ Shift','SHIFT','⇧ Shift','SHIFT','vk-shift2']],
+                    [['Ctrl','CTRL','Ctrl','CTRL','vk-fn'],['Alt','ALT','Alt','ALT','vk-fn'],['','SPACE','','SPACE','vk-space'],['Alt','ALT','Alt','ALT','vk-fn'],['←','ARROWLEFT','←','ARROWLEFT'],['→','ARROWRIGHT','→','ARROWRIGHT'],['↑','ARROWUP','↑','ARROWUP'],['↓','ARROWDOWN','↓','ARROWDOWN'],['Ctrl','CTRL','Ctrl','CTRL','vk-fn']],
+                ]
+            },
+            symbols: {
+                label: '!#1',
+                rows: [
+                    [['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['0','0'],['⌫','BACKSPACE','⌫','BACKSPACE','vk-fn']],
+                    [['!','!'],['@','@'],['#','#'],['$','$'],['%','%'],['&','&'],['*','*'],['(','('],[')',')'],['−','−'],['=','=']],
+                    [['[','['],  [']',']'],  ['{','{'],  ['}','}'],  ['|','|'],  ['\\','\\'],  [';',';'],  [':',':'],  ['"','"'],  ["'","'"],  ['↵','ENTER','↵','ENTER','vk-enter']],
+                    [['<','<'],  ['>','>'],  ['^','^'],  ['~','~'],  ['`','`'],  ['+','+'],  ['-','-'],  ['_','_'],  ['?','?'],  ['/','/'],[',',','],['.','.']],
+                    [['','SPACE','','SPACE','vk-space'],['←','ARROWLEFT'],['→','ARROWRIGHT'],['⌫','BACKSPACE','⌫','BACKSPACE','vk-fn']],
+                ]
+            },
+            math: {
+                label: '∑ Math',
+                rows: [
+                    [['±','±'],['×','×'],['÷','÷'],['√','√'],['∑','∑'],['∫','∫'],['∂','∂'],['∞','∞'],['≠','≠'],['≈','≈'],['≤','≤'],['≥','≥'],['⌫','BACKSPACE','⌫','BACKSPACE','vk-fn']],
+                    [['π','π'],['φ','φ'],['θ','θ'],['λ','λ'],['μ','μ'],['σ','σ'],['α','α'],['β','β'],['γ','γ'],['δ','δ'],['ε','ε'],['ζ','ζ']],
+                    [['η','η'],['ξ','ξ'],['ρ','ρ'],['τ','τ'],['υ','υ'],['χ','χ'],['ψ','ψ'],['ω','ω'],['Δ','Δ'],['Π','Π'],['Σ','Σ'],['Ω','Ω'],['↵','ENTER','↵','ENTER','vk-enter']],
+                    [['⁰','⁰'],['¹','¹'],['²','²'],['³','³'],['⁴','⁴'],['⁵','⁵'],['⁶','⁶'],['⁷','⁷'],['⁸','⁸'],['⁹','⁹'],['°','°'],['‰','‰']],
+                    [['','SPACE','','SPACE','vk-space'],['←','ARROWLEFT'],['→','ARROWRIGHT'],['⌫','BACKSPACE','⌫','BACKSPACE','vk-fn']],
+                ]
+            }
+        };
+
+        let shiftActive = false;
+        let capsActive  = false;
+        let ctrlActive  = false;
+        let altActive   = false;
+        let currentMode = 'qwerty';
+        let _vkLastFocus = null;
+
+        // Build panel
+        const panel = document.createElement('div');
+        panel.id = 'virtualKeyboardPanel';
+        panel.setAttribute('role', 'complementary');
+        panel.setAttribute('aria-label', 'Virtual Keyboard');
+        panel.innerHTML = `
+            <div class="vk-titlebar" id="vkTitlebar">
+                <div class="vk-title"><icon>keyboard</icon> Virtual Keyboard</div>
+                <button class="vk-close-btn" id="vkCloseBtn" title="Close">✕</button>
+            </div>
+            <div class="vk-rows" id="vkRows"></div>
+            <div class="vk-mode-tabs" id="vkModeTabs"></div>
+        `;
+        document.body.appendChild(panel);
+
+        const rowsEl    = panel.querySelector('#vkRows');
+        const modeTabsEl= panel.querySelector('#vkModeTabs');
+
+        // Build mode tabs
+        Object.keys(LAYOUTS).forEach(key => {
+            const tab = document.createElement('button');
+            tab.className = 'vk-mode-tab' + (key === currentMode ? ' vk-mode-active' : '');
+            tab.textContent = LAYOUTS[key].label;
+            tab.addEventListener('click', () => {
+                currentMode = key;
+                modeTabsEl.querySelectorAll('.vk-mode-tab').forEach((t, i) => t.classList.toggle('vk-mode-active', Object.keys(LAYOUTS)[i] === key));
+                renderKeyboard();
+            });
+            modeTabsEl.appendChild(tab);
+        });
+
+        function renderKeyboard() {
+            rowsEl.innerHTML = '';
+            const layout = LAYOUTS[currentMode];
+            layout.rows.forEach(row => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'vk-row';
+                row.forEach(keyDef => {
+                    const [normalLabel, normalVal, shiftLabel, shiftVal, extraClass] = keyDef;
+                    const keyEl = document.createElement('button');
+                    keyEl.className = 'vk-key' + (extraClass ? ' ' + extraClass : '');
+                    keyEl.setAttribute('type', 'button');
+                    // Active mod states
+                    if (normalVal === 'SHIFT' && shiftActive) keyEl.classList.add('vk-active-mod');
+                    if (normalVal === 'CAPS'  && capsActive)  keyEl.classList.add('vk-active-mod');
+                    if (normalVal === 'CTRL'  && ctrlActive)  keyEl.classList.add('vk-active-mod');
+                    if (normalVal === 'ALT'   && altActive)   keyEl.classList.add('vk-active-mod');
+
+                    const useShift = shiftActive || capsActive;
+                    const displayLabel = (useShift && shiftLabel) ? shiftLabel : normalLabel;
+                    const keyValue     = (useShift && shiftVal)   ? shiftVal   : normalVal;
+
+                    // For keys with sub label (shift char shown small above)
+                    if (shiftLabel && shiftLabel !== normalLabel && normalVal !== 'SHIFT' && normalVal !== 'CAPS' && normalVal !== 'CTRL' && normalVal !== 'ALT' && normalVal !== 'BACKSPACE' && normalVal !== 'ENTER' && normalVal !== 'TAB' && normalVal !== 'SPACE') {
+                        keyEl.innerHTML = `<span class="vk-main">${normalLabel}</span><span class="vk-sub">${shiftLabel}</span>`;
+                    } else {
+                        keyEl.innerHTML = `<span class="vk-main">${displayLabel}</span>`;
+                    }
+
+                    keyEl.addEventListener('mousedown', function(e) {
+                        e.preventDefault(); // Don't steal focus
+                        keyEl.classList.add('vk-press-fx');
+                        setTimeout(() => keyEl.classList.remove('vk-press-fx'), 120);
+                        handleKeyPress(normalVal, shiftVal, e);
+                    });
+                    rowEl.appendChild(keyEl);
+                });
+                rowsEl.appendChild(rowEl);
+            });
+        }
+
+        function handleKeyPress(normalVal, shiftVal, e) {
+            const useShift = shiftActive || capsActive;
+            const val = (useShift && shiftVal) ? shiftVal : normalVal;
+
+            if (val === 'SHIFT') {
+                shiftActive = !shiftActive;
+                renderKeyboard(); return;
+            }
+            if (val === 'CAPS') {
+                capsActive = !capsActive;
+                if (capsActive) shiftActive = false;
+                renderKeyboard(); return;
+            }
+            if (val === 'CTRL') { ctrlActive = !ctrlActive; renderKeyboard(); return; }
+            if (val === 'ALT')  { altActive  = !altActive;  renderKeyboard(); return; }
+
+            // Insert into focused element
+            const target = _vkLastFocus;
+            if (!target) return;
+            target.focus();
+
+            if (val === 'BACKSPACE') {
+                const sel = window.getSelection();
+                if (target.isContentEditable && sel && sel.rangeCount) {
+                    const range = sel.getRangeAt(0);
+                    if (range.collapsed) {
+                        // Extend selection backward 1 char
+                        const cloned = range.cloneRange();
+                        cloned.setStart(range.startContainer, Math.max(0, range.startOffset - 1));
+                        cloned.deleteContents();
+                    } else { range.deleteContents(); }
+                } else if (target.setRangeText) {
+                    const s = target.selectionStart;
+                    if (s > 0) { target.setRangeText('', s - 1, s, 'end'); }
+                }
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                if (shiftActive) { shiftActive = false; renderKeyboard(); }
+                return;
+            }
+            if (val === 'ENTER') {
+                if (target.isContentEditable) {
+                    document.execCommand('insertParagraph');
+                } else if (target.tagName === 'TEXTAREA') {
+                    insertTextAtCaret(target, '\n');
+                }
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                if (shiftActive) { shiftActive = false; renderKeyboard(); }
+                return;
+            }
+            if (val === 'TAB') {
+                insertTextInTarget(target, '\t');
+                if (shiftActive) { shiftActive = false; renderKeyboard(); }
+                return;
+            }
+            if (val === 'SPACE') {
+                insertTextInTarget(target, ' ');
+                if (shiftActive) { shiftActive = false; renderKeyboard(); }
+                return;
+            }
+            if (val === 'ARROWLEFT' || val === 'ARROWRIGHT' || val === 'ARROWUP' || val === 'ARROWDOWN') {
+                const keyMap = { ARROWLEFT: 'ArrowLeft', ARROWRIGHT: 'ArrowRight', ARROWUP: 'ArrowUp', ARROWDOWN: 'ArrowDown' };
+                target.dispatchEvent(new KeyboardEvent('keydown', { key: keyMap[val], bubbles: true, cancelable: true }));
+                return;
+            }
+            // Regular character
+            if (val && val.length <= 4) {
+                insertTextInTarget(target, val);
+                // Auto-deactivate shift (not caps)
+                if (shiftActive) { shiftActive = false; renderKeyboard(); }
+            }
+        }
+
+        function insertTextInTarget(target, text) {
+            if (target.isContentEditable) {
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount) {
+                    const range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    const node = document.createTextNode(text);
+                    range.insertNode(node);
+                    range.setStartAfter(node);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            } else if (target.setRangeText) {
+                const s = target.selectionStart || 0, e2 = target.selectionEnd || s;
+                target.setRangeText(text, s, e2, 'end');
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        renderKeyboard();
+
+        // Track last focused editable
+        document.addEventListener('focusin', function(e) {
+            const t = e.target;
+            if (t && t !== document.getElementById('epSearchInput') && !panel.contains(t) &&
+                (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+                _vkLastFocus = t;
+            }
+        }, true);
+
+        // Also track typing active glow on keyboard btn
+        const vkBtn = document.getElementById('virtualKeyboardBtn');
+        document.addEventListener('focusin',  () => { if (vkBtn) vkBtn.classList.add('vk-typing-glow'); });
+        document.addEventListener('focusout', (e) => {
+            if (!e.relatedTarget || (!e.relatedTarget.isContentEditable && e.relatedTarget.tagName !== 'INPUT' && e.relatedTarget.tagName !== 'TEXTAREA')) {
+                setTimeout(() => { if (vkBtn) vkBtn.classList.remove('vk-typing-glow'); }, 200);
+            }
+        });
+
+        // Open/close toggle
+        if (vkBtn) {
+            vkBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const open = panel.classList.toggle('vk-open');
+                vkBtn.classList.toggle('omni-fab-active', open);
+                if (open && _vkLastFocus) _vkLastFocus.focus();
+            });
+        }
+
+        panel.querySelector('#vkCloseBtn').addEventListener('click', () => {
+            panel.classList.remove('vk-open');
+            if (vkBtn) vkBtn.classList.remove('omni-fab-active');
+        });
+
+        // --- Draggable titlebar ---
+        const titlebar = panel.querySelector('#vkTitlebar');
+        let dragging = false, dragStartX = 0, dragStartY = 0, panelStartLeft = 0, panelStartTop = 0;
+
+        titlebar.addEventListener('mousedown', function(e) {
+            if (e.target.classList.contains('vk-close-btn')) return;
+            dragging = true;
+            // Convert panel to absolute positioning
+            const rect = panel.getBoundingClientRect();
+            panel.style.left      = rect.left + 'px';
+            panel.style.top       = rect.top  + 'px';
+            panel.style.bottom    = 'auto';
+            panel.style.transform = 'none';
+            dragStartX    = e.clientX;
+            dragStartY    = e.clientY;
+            panelStartLeft = rect.left;
+            panelStartTop  = rect.top;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!dragging) return;
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            let newLeft = panelStartLeft + dx;
+            let newTop  = panelStartTop  + dy;
+            // Clamp to viewport
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - panel.offsetWidth));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - panel.offsetHeight));
+            panel.style.left = newLeft + 'px';
+            panel.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { dragging = false; });
+
+        // Touch drag support
+        titlebar.addEventListener('touchstart', function(e) {
+            if (e.target.classList.contains('vk-close-btn')) return;
+            dragging = true;
+            const rect = panel.getBoundingClientRect();
+            panel.style.left = rect.left + 'px'; panel.style.top = rect.top + 'px';
+            panel.style.bottom = 'auto'; panel.style.transform = 'none';
+            dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
+            panelStartLeft = rect.left; panelStartTop = rect.top;
+        }, { passive: true });
+        document.addEventListener('touchmove', function(e) {
+            if (!dragging) return;
+            const dx = e.touches[0].clientX - dragStartX;
+            const dy = e.touches[0].clientY - dragStartY;
+            let l = Math.max(0, Math.min(panelStartLeft + dx, window.innerWidth  - panel.offsetWidth));
+            let t = Math.max(0, Math.min(panelStartTop  + dy, window.innerHeight - panel.offsetHeight));
+            panel.style.left = l + 'px'; panel.style.top = t + 'px';
+        }, { passive: true });
+        document.addEventListener('touchend', () => { dragging = false; });
+    })();
+
    
     </script>
 </body>
