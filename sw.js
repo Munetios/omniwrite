@@ -1,4 +1,4 @@
-const CACHE_NAME = 'omniwrite-cache-v3';
+const CACHE_NAME = 'omniwrite-cache-v4';
 
 const urlsToCache = [
     '/',
@@ -15,46 +15,41 @@ const urlsToCache = [
     'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght,ROND@6..144,1..1000,90&display=swap'
 ];
 
-// 🟢 Install
+// Install
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
     );
     self.skipWaiting();
 });
 
-// 🟢 Activate
+// Activate
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames =>
-            Promise.all(
-                cacheNames
-                    .filter(name => name !== CACHE_NAME)
-                    .map(name => caches.delete(name))
-            )
+        caches.keys().then(names =>
+            Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
         )
     );
     self.clients.claim();
 });
 
-// 🟢 Fetch (Cache First + Network Update)
+// Fetch
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request).then(cachedResponse => {
+        fetch(event.request)
+            .then(response => {
+                // ✅ Always update cache with latest version
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseClone);
+                });
 
-            const fetchPromise = fetch(event.request)
-                .then(networkResponse => {
-                    // Update cache in background
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, networkResponse.clone());
-                    });
-                    return networkResponse;
-                })
-                .catch(() => cachedResponse); // fallback if offline
-
-            // Return cache immediately if available
-            return cachedResponse || fetchPromise;
-        })
+                return response; // always fresh when online
+            })
+            .catch(() => {
+                // 🔴 Offline fallback
+                return caches.match(event.request)
+                    .then(res => res || caches.match('/index.html'));
+            })
     );
 });
