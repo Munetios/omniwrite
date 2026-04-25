@@ -1,38 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
-        // Redirect unsupported browsers using feature detection (no UA sniffing)
-        (function() {
-            // Check for essential features
-            var missing = false;
-            // ES6 features
-            try {
-            // Arrow function, let/const, class, template literals
-            eval('let x=1; const y=2; (()=>{}); class Z{}; `${x}`;');
-            } catch (e) { missing = true; }
-            // IndexedDB
-            if (!window.indexedDB) missing = true;
-            // Web Crypto
-            if (!window.crypto || !window.crypto.subtle) missing = true;
-            // Promise
-            if (typeof Promise !== 'function') missing = true;
-            // fetch
-            if (typeof window.fetch !== 'function') missing = true;
-            // ContentEditable
-            var div = document.createElement('div');
-            div.contentEditable = 'true';
-            if (div.contentEditable !== 'true') missing = true;
-            // Service Worker
-            if (!('serviceWorker' in navigator)) missing = true;
-            // Optional: CSS variables
-            if (!window.CSS || !CSS.supports('color', 'var(--x)')) missing = true;
-
-            if (missing) {
-            window.location.replace('unsupported-browser.html');
-            }
-        })();
-        </script>
+        
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Munetios OmniWrite</title>
