@@ -2,17 +2,34 @@
 <html lang="en">
 <head>
         <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
-        // Redirect unsupported browsers (IE, old Edge, very old browsers)
+        // Redirect unsupported browsers using feature detection (no UA sniffing)
         (function() {
-            var ua = window.navigator.userAgent;
-            var isIE = /MSIE |Trident\//.test(ua);
-            var isOldEdge = /Edge\/[0-9]{1,2}\./.test(ua); // Legacy Edge
-            var isOldSafari = /Version\/(\d+)\.\d+.*Safari/.test(ua) && parseInt(RegExp.$1, 10) < 13;
-            var isOldFirefox = /Firefox\/(\d+)/.test(ua) && parseInt(RegExp.$1, 10) < 70;
-            var isOldChrome = /Chrome\/(\d+)/.test(ua) && parseInt(RegExp.$1, 10) < 70;
-            // Add more checks as needed for your requirements
-            if (isIE || isOldEdge || isOldSafari || isOldFirefox || isOldChrome) {
-                window.location.replace('unsupported-browser.html');
+            // Check for essential features
+            var missing = false;
+            // ES6 features
+            try {
+            // Arrow function, let/const, class, template literals
+            eval('let x=1; const y=2; (()=>{}); class Z{}; `${x}`;');
+            } catch (e) { missing = true; }
+            // IndexedDB
+            if (!window.indexedDB) missing = true;
+            // Web Crypto
+            if (!window.crypto || !window.crypto.subtle) missing = true;
+            // Promise
+            if (typeof Promise !== 'function') missing = true;
+            // fetch
+            if (typeof window.fetch !== 'function') missing = true;
+            // ContentEditable
+            var div = document.createElement('div');
+            div.contentEditable = 'true';
+            if (div.contentEditable !== 'true') missing = true;
+            // Service Worker
+            if (!('serviceWorker' in navigator)) missing = true;
+            // Optional: CSS variables
+            if (!window.CSS || !CSS.supports('color', 'var(--x)')) missing = true;
+
+            if (missing) {
+            window.location.replace('unsupported-browser.html');
             }
         })();
         </script>
@@ -118,7 +135,15 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="manifest" href="/site.webmanifest">
-
+    <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
+    document.addEventListener("DOMContentLoaded", function() {
+      if (window.top !== window.self) {
+        // Hide everything (html + body)
+        document.documentElement.style.display = "none";  
+        console.warn('Refused to display https://www.munetios.com because it is blocked from iframe embeding')
+      }
+    });
+  </script>
 <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -211,13 +236,148 @@ upgrade-insecure-requests;
             font-feature-settings: "ss01" 1 !important;
         }
         .app {
+            --workspace-rail-width: 76px;
+            --sidebar-width: 300px;
             display: flex;
             height: 100vh;
             box-sizing: border-box;
         }
         .sidebar__container {
-            width: 300px;
+            width: var(--sidebar-width);
+            flex: 0 0 var(--sidebar-width);
             box-sizing: border-box;
+            transition: flex-basis 0.25s ease, width 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+        }
+        .workspaces-sidebar {
+            width: var(--workspace-rail-width);
+            box-sizing: border-box;
+            padding: 1px 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+            transition: width 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+        }
+        body.omni-workspaces-hidden .workspaces-sidebar {
+            display: none;
+        }
+        .workspace-rail {
+            height: 100%;
+            border-radius: 20px !important;
+            padding: 10px 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .workspace-rail::-webkit-scrollbar {
+            display: none;
+        }
+        .workspace-item,
+        .workspace-add-btn,
+        .workspace-settings-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            font-weight: 700;
+        }
+        .workspace-item:hover,
+        .workspace-add-btn:hover,
+        .workspace-settings-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,224,102,0.35);
+        }
+        .workspace-item.active {
+            background: linear-gradient(135deg, rgba(255,224,102,0.26), rgba(143,92,255,0.22));
+            border-color: rgba(255,224,102,0.55);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+        }
+        .workspace-item.active::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            width: 4px;
+            height: 28px;
+            border-radius: 999px;
+            background: var(--omni-accent, #ffe066);
+        }
+        .workspace-initial {
+            font-size: 16px;
+            line-height: 1;
+        }
+        .workspace-rail-spacer {
+            flex: 1;
+        }
+        .mobile-mini-nav {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .mobile-mini-nav-btn {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 16px;
+            justify-content: center;
+            font-size: 0;
+            line-height: 0;
+        }
+        .mobile-mini-nav-btn icon {
+            display: block;
+            font-family: 'Material Symbols Rounded' !important;
+            font-size: 24px !important;
+            font-weight: normal;
+            font-style: normal;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            white-space: nowrap;
+            direction: ltr;
+            font-feature-settings: 'liga' 1 !important;
+            -webkit-font-feature-settings: 'liga' 1 !important;
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+        }
+        .mobile-mini-logo {
+            overflow: hidden;
+            background: rgba(255,255,255,0.08);
+        }
+        .mobile-mini-logo img {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: cover;
+            display: block;
+        }
+        .mobile-mini-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        body.omni-sidebar-collapsed .sidebar__container {
+            display: none;
+            width: 0;
+            flex-basis: 0;
+        }
+        body.omni-sidebar-collapsed .navbar {
+            width: calc(100% - 80px);
         }
         .sidenav {
             height: 100%;
@@ -686,18 +846,20 @@ upgrade-insecure-requests;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
         }
         .main-container {
-            width: calc(100% - 360px);
+            width: auto;
+            flex: 1 1 auto;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
             margin-left: 10px;
-            margin-top: 10px;
+            margin-right: 10px;
+            margin-top: 5px;
             min-width: 0;
             min-height: calc(100vh - 20px);
             overflow-x: hidden;
             overflow-y: auto;
             scrollbar-width: none;
-            transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+            transition: width 0.35s cubic-bezier(0.4,0,0.2,1), margin 0.25s ease;
             container-type: inline-size;
             container-name: main;
         }
@@ -715,8 +877,8 @@ upgrade-insecure-requests;
             align-items: center;
             box-sizing: border-box;
             justify-content: space-between;
-                position: fixed;
-                width: calc(100% - 380px);
+            position: fixed;
+            width: calc(100% - 393px);
             padding: 0 12px;
             top: 10px;
             z-index: 999;
@@ -757,7 +919,6 @@ upgrade-insecure-requests;
             padding: 20px;
             box-sizing: border-box;
             height: calc(100vh - 80px);
-            overflow-y: auto;
         }
         #selectArea .content-area {
             height: auto;
@@ -1141,21 +1302,56 @@ upgrade-insecure-requests;
         button:active {
             transform: translateY(0) scale(0.98);
         }
-        @media (max-width: 1150px) {
+        @media (max-width: 1190px) {
+            .app {
+                --workspace-rail-width: 64px;
+                --sidebar-width: 300px;
+            }
+            .workspaces-sidebar {
+                width: var(--workspace-rail-width);
+                padding: 8px 4px;
+            }
+            .workspace-rail {
+                padding: 8px 4px;
+            }
+            .workspace-rail > #workspacesList,
+            .workspace-rail > #addWorkspaceBtn,
+            .workspace-rail > #manageWorkspacesBtn {
+                display: none !important;
+            }
+            .mobile-mini-nav {
+                display: flex;
+            }
+            body.omni-workspaces-hidden .workspaces-sidebar {
+                display: flex;
+            }
             .sidebar__container {
                left: -600px;
                position: fixed;
+               top: 0;
+               height: 100vh;
+               z-index: 10001;
             }
             .main-container {
-                width: calc(100%);
-                margin-left: 0;
+                width: auto;
+                margin-left: 8px;
+                margin-right: 8px;
             }
             .navbar {
-                width: calc(100% - 80px);
+                       width: calc(100% - 71px);
                 padding: 0 20px;
             }
         }
-        @media (max-width: 560px) {
+        @media (max-width: 420px) {
+            .workspaces-sidebar {
+                display: none !important;
+            }
+            .main-container {
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+        @media (max-width: 420px) {
             /* Right sidebar becomes a horizontal bottom bar */
             :root { --right-sidebar-width: 0px; }
             .right-apps-sidebar {
@@ -1332,6 +1528,69 @@ upgrade-insecure-requests;
             border-left: 1px solid rgba(255, 255, 255, 0.2);
             height: 44px;
             box-shadow: -1px 0 4px rgba(102, 126, 234, 0.1);
+        }
+        .toolbar-customizer-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 14px;
+            max-height: min(52vh, 520px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .toolbar-customizer-row {
+            display: grid;
+            grid-template-columns: 34px 1fr auto auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: grab;
+        }
+        .toolbar-customizer-row:active {
+            cursor: grabbing;
+        }
+        .toolbar-customizer-row.is-dragging {
+            opacity: 0.5;
+            outline: 2px solid var(--omni-accent, #ffe066);
+        }
+        .toolbar-customizer-title {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+        .toolbar-customizer-row button {
+            width: auto;
+            min-width: 36px;
+            padding: 8px 10px;
+            border-radius: 12px;
+        }
+        .toolbar-customizer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .toolbar-customizer-actions button {
+            width: auto;
+        }
+        .font-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+            gap: 10px;
+        }
+        .font-feature-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         #renameMoreOptionsBtn {
             display: none;
@@ -1756,21 +2015,11 @@ upgrade-insecure-requests;
                     min-width: 80px;
                 }
 
-                @container main (max-width: 940px) {
+                @container main (max-width: 2900px) {
                     .reading__mode-panel {
-                        width: calc(100vw - 24px);
-                        min-width: 0;
-                        max-width: calc(100vw - 24px);
-                        right: 12px;
-                        left: auto;
-                        top: 84px;
-                        transform: none;
-                        height: min(68vh, calc(100vh - 112px));
-                        max-height: calc(100vh - 112px);
+               overflow-y: auto
                     }
-                    .editor-content-area-container {
-                        flex-direction: row;
-                    }
+                   
                 }
                 .add-folder-button {
                     cursor: pointer;
@@ -2637,6 +2886,26 @@ upgrade-insecure-requests;
     </noscript>
 
     <div class="app" id="app">
+        <aside class="workspaces-sidebar" id="workspacesSidebar">
+            <div class="workspace-rail liquid-glass">
+                <div class="mobile-mini-nav" id="mobileMiniNav">
+                    <button class="mobile-mini-nav-btn mobile-mini-logo" type="button" data-mini-action="home" aria-label="OmniWrite"><img src="apple-touch-icon.png" alt=""></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="images" aria-label="Images"><icon>image</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="tasks" aria-label="Tasks"><icon>task_alt</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="templates" aria-label="Templates"><icon>browse</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="workspaces" aria-label="OmniWrite Workspaces"><icon>dashboard_customize</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Folders and documents"><icon>folder</icon></button>
+                    <div class="mobile-mini-bottom">
+                        <button class="mobile-mini-nav-btn" type="button" data-mini-action="settings" aria-label="OmniWrite Settings"><icon>settings</icon></button>
+                        <button class="mobile-mini-nav-btn" type="button" data-mini-action="help" aria-label="OmniWrite Help"><icon>help</icon></button>
+                    </div>
+                </div>
+                <div id="workspacesList" style="display:flex;flex-direction:column;gap:10px;align-items:center;width:100%;"></div>
+                <button class="workspace-add-btn" id="addWorkspaceBtn" type="button" title="Add workspace" aria-label="Add workspace"><icon>add</icon></button>
+                <div class="workspace-rail-spacer"></div>
+                <button class="workspace-settings-btn" id="manageWorkspacesBtn" type="button" title="Manage workspaces" aria-label="Manage workspaces"><icon>tune</icon></button>
+            </div>
+        </aside>
         <omniwrite-sidebar class="sidebar__container">
             <div class="sidebar liquid-glass" id="sidebar">
                 <div class="sidenav">
@@ -2731,9 +3000,9 @@ upgrade-insecure-requests;
                                 <h1 id="dashboardWelcomeTitle" data-i18n="welcome_title">Welcome to Munetios OmniWrite</h1>
                                 <p id="dashboardWelcomeSubtitle" data-i18n="welcome_subtitle">Select or create a new document to get started.</p>
                                 <div class="dashboard-actions">
-                                    <button class="dashboard-action-btn" id="dashboardCreateDocBtn"><icon>add</icon> New Document</button>
-                                    <button class="dashboard-action-btn" id="dashboardTemplatesBtn"><icon>browse</icon> Browse Templates</button>
-                                    <button class="dashboard-action-btn" id="dashboardBusinessBtn"><icon>business_center</icon> Business Setup</button>
+                                    <button class="dashboard-action-btn" id="dashboardCreateDocBtn"><icon>add</icon> <span data-i18n="New Document">New Document</span></button>
+                                    <button class="dashboard-action-btn" id="dashboardTemplatesBtn"><icon>browse</icon> <span data-i18n="browse_templates">Browse Templates</span></button>
+                                    <button class="dashboard-action-btn" id="dashboardBusinessBtn"><icon>business_center</icon> <span data-i18n="business_setup">Business Setup</span></button>
                                 </div>
                             </div>
                             <div class="dashboard-grid" id="dashboardStatsGrid">
@@ -2742,7 +3011,7 @@ upgrade-insecure-requests;
                                         <icon>description</icon>
                                         <div>
                                             <div class="dashboard-stat-value" id="dashboardDocumentsCount">0</div>
-                                            <div class="dashboard-stat-label">Documents</div>
+                                            <div class="dashboard-stat-label" data-i18n="documents_section">Documents</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2751,7 +3020,7 @@ upgrade-insecure-requests;
                                         <icon>push_pin</icon>
                                         <div>
                                             <div class="dashboard-stat-value" id="dashboardPinnedCount">0</div>
-                                            <div class="dashboard-stat-label">Pinned</div>
+                                            <div class="dashboard-stat-label" data-i18n="pinned">Pinned</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2760,7 +3029,7 @@ upgrade-insecure-requests;
                                         <icon>image</icon>
                                         <div>
                                             <div class="dashboard-stat-value" id="dashboardImagesCount">0</div>
-                                            <div class="dashboard-stat-label">Images</div>
+                                            <div class="dashboard-stat-label" data-i18n="images">Images</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2769,22 +3038,22 @@ upgrade-insecure-requests;
                                         <icon>folder</icon>
                                         <div>
                                             <div class="dashboard-stat-value" id="dashboardFoldersCount">0</div>
-                                            <div class="dashboard-stat-label">Folders</div>
+                                            <div class="dashboard-stat-label" data-i18n="folders">Folders</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="dashboard-grid">
                                 <div class="dashboard-card">
-                                    <h3>Recent Documents</h3>
+                                    <h3 data-i18n="recent_documents">Recent Documents</h3>
                                     <div class="dashboard-list" id="dashboardRecentDocs"></div>
                                 </div>
                                 <div class="dashboard-card">
-                                    <h3>Workspace Highlights</h3>
+                                    <h3 data-i18n="workspace_highlights">Workspace Highlights</h3>
                                     <div class="dashboard-list" id="dashboardHighlights">
-                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent">Formatting</strong><br><small>Use charts, code blocks, tables, and page layouts in one editor.</small></div></div>
-                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent">Focus</strong><br><small>Switch between balanced, wide, full, or custom writing widths instantly.</small></div></div>
-                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent">Privacy</strong><br><small>End-to-end encrypted local documents with optional locking and recovery flows.</small></div></div>
+                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent" data-i18n="highlight_formatting">Formatting</strong><br><small data-i18n="highlight_formatting_desc">Use charts, code blocks, tables, and page layouts in one editor.</small></div></div>
+                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent" data-i18n="highlight_focus">Focus</strong><br><small data-i18n="highlight_focus_desc">Switch between balanced, wide, full, or custom writing widths instantly.</small></div></div>
+                                        <div class="dashboard-list-item"><div><strong class="dashboard-accent" data-i18n="highlight_privacy">Privacy</strong><br><small data-i18n="highlight_privacy_desc">End-to-end encrypted local documents with optional locking and recovery flows.</small></div></div>
                                     </div>
                                 </div>
                             </div>
@@ -3132,6 +3401,7 @@ upgrade-insecure-requests;
             <div id="voiceOtherActions"></div>
         </div>
                         <div class="dropdown-wrapper liquid-glass" id="fontSizePicker" style="min-width: 80px;">
+                              <div class="dropdown-item" data-size="6"><div class="menu-text" style="font-size:6px;">6 px</div></div>
                         <div class="dropdown-item" data-size="8"><div class="menu-text" style="font-size:8px;">8 px</div></div>
                         <div class="dropdown-item" data-size="10"><div class="menu-text" style="font-size:10px;">10 px</div></div>
                         <div class="dropdown-item" data-size="12"><div class="menu-text" style="font-size:12px;">12 px</div></div>
@@ -3147,6 +3417,9 @@ upgrade-insecure-requests;
                         <div class="dropdown-item" data-size="48"><div class="menu-text" style="font-size:48px;">48 px</div></div>
                         <div class="dropdown-item" data-size="60"><div class="menu-text" style="font-size:60px;">60 px</div></div>
                         <div class="dropdown-item" data-size="72"><div class="menu-text" style="font-size:72px;">72 px</div></div>
+                          <div class="dropdown-item" data-size="85"><div class="menu-text" style="font-size:85px;">85 px</div></div>
+                            <div class="dropdown-item" data-size="96"><div class="menu-text" style="font-size:96px;">96 px</div></div>
+                              <div class="dropdown-item" data-size="120"><div class="menu-text" style="font-size:120px;">120 px</div></div>
                     </div>
 <div class="dropdown-wrapper liquid-glass" id="fontFamilyPicker">
     <div class="dropdown-item" data-font="'Google Sans Flex', sans-serif">
@@ -3511,9 +3784,13 @@ upgrade-insecure-requests;
             <div class="color-dot-swatch" data-color="#FF4081" title="Rose" style="background:#FF4081;"></div>
             <div class="color-dot-swatch" data-color="#9E9E9E" title="Gray" style="background:#9E9E9E;"></div>
         </div>
-        <!-- Custom Color Picker not os defaults no input type color -->
-        <div class="color-swatch-gradient"></div>
-        <div id="colorHexDisplay" style="margin-top: 10px; font-family: monospace; font-size: 14px; text-align: center;">#FFFFFF</div>
+        <div class="advanced-color-area" id="advancedColorArea">
+            <div class="advanced-color-dot" id="advancedColorDot"></div>
+        </div>
+        <div class="advanced-hue-slider" id="advancedHueSlider">
+            <div class="advanced-hue-thumb" id="advancedHueThumb"></div>
+        </div>
+        <div id="colorHexDisplay" style="margin-top: 10px; font-family: 'Google Sans Code', monospace; font-size: 14px; text-align: center;">#FFFFFF</div>
 
     </div>
     <style>
@@ -3533,6 +3810,54 @@ upgrade-insecure-requests;
             display: none;
             flex-direction: column;
             z-index: 1000;
+        }
+        .advanced-color-area {
+            width: 300px;
+            height: 190px;
+            border-radius: 12px;
+            cursor: crosshair;
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(to top, #000 0%, rgba(0,0,0,0) 100%),
+                linear-gradient(to right, #fff 0%, rgba(255,255,255,0) 100%),
+                hsl(var(--picker-hue, 0), 100%, 50%);
+            border: 1px solid rgba(255,255,255,0.18);
+        }
+        .advanced-color-dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.25);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            left: 100%;
+            top: 0;
+        }
+        .advanced-hue-slider {
+            width: 300px;
+            height: 16px;
+            border-radius: 999px;
+            margin-top: 12px;
+            position: relative;
+            cursor: ew-resize;
+            background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+            border: 1px solid rgba(255,255,255,0.18);
+        }
+        .advanced-hue-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid rgba(0,0,0,0.35);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
         }
         .tab {
             flex: 1;
@@ -3640,6 +3965,7 @@ upgrade-insecure-requests;
     // --- IndexedDB + Encryption Setup ---
     let documents = [];
     let folders = [];
+    let workspaces = [];
     const DB_NAME = 'omniwrite-db';
     const DB_VERSION = 3;
     const DOC_STORE = 'documents';
@@ -3654,9 +3980,287 @@ upgrade-insecure-requests;
     let saveTimeout = null;
     let _fontFamilyPickerRef = null; // persistent ref, survives DOM detach
     let _fontToolbarContext = null;
-    const FONT_SIZE_STEPS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72, 96];
+    const FONT_SIZE_STEPS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72, 96, 120];
     let saveStartTime = null;
     let isSaved = true; // Track if document is saved
+    const WORKSPACES_KEY = 'omniwrite-workspaces';
+    const ACTIVE_WORKSPACE_KEY = 'omniwrite-active-workspace';
+    const WORKSPACES_HIDDEN_KEY = 'omniwrite-workspaces-sidebar-hidden';
+    const PERSONAL_WORKSPACE_ID = 'workspace-personal';
+
+    function createWorkspaceId() {
+        return 'workspace-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2, 9));
+    }
+
+    function normalizeWorkspaceName(name) {
+        return (name || '').trim().replace(/\s+/g, ' ') || _t('untitled_workspace');
+    }
+
+    function getWorkspaceInitial(name) {
+        return normalizeWorkspaceName(name).slice(0, 1).toUpperCase();
+    }
+
+    function loadWorkspaces() {
+        try {
+            const stored = JSON.parse(localStorage.getItem(WORKSPACES_KEY) || '[]');
+            workspaces = Array.isArray(stored) ? stored.filter(ws => ws && ws.id && ws.name) : [];
+        } catch(e) {
+            workspaces = [];
+        }
+        if (!workspaces.some(ws => ws.id === PERSONAL_WORKSPACE_ID)) {
+            workspaces.unshift({ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: true });
+        }
+        if (!localStorage.getItem(ACTIVE_WORKSPACE_KEY) || !workspaces.some(ws => ws.id === localStorage.getItem(ACTIVE_WORKSPACE_KEY))) {
+            localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
+        }
+        saveWorkspaces();
+        applyWorkspacesSidebarVisibility();
+    }
+
+    function saveWorkspaces() {
+        try { localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces)); } catch(e) { console.warn('localStorage unavailable:', e); }
+    }
+
+    function getActiveWorkspaceId() {
+        const stored = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
+        return workspaces.some(ws => ws.id === stored) ? stored : PERSONAL_WORKSPACE_ID;
+    }
+
+    function getActiveWorkspace() {
+        return workspaces.find(ws => ws.id === getActiveWorkspaceId()) || workspaces[0] || { id: PERSONAL_WORKSPACE_ID, name: 'Personal' };
+    }
+
+    function assignCurrentWorkspace(record) {
+        if (!record.workspaceId) record.workspaceId = getActiveWorkspaceId();
+        return record;
+    }
+
+    function getWorkspaceDocuments(workspaceId = getActiveWorkspaceId()) {
+        return documents.filter(doc => (doc.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
+    }
+
+    function getWorkspaceFolders(workspaceId = getActiveWorkspaceId()) {
+        return folders.filter(folder => (folder.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
+    }
+
+    function applyWorkspacesSidebarVisibility() {
+        document.body.classList.toggle('omni-workspaces-hidden', localStorage.getItem(WORKSPACES_HIDDEN_KEY) === 'true');
+    }
+
+    function renderWorkspacesSidebar() {
+        const list = document.getElementById('workspacesList');
+        if (!list) return;
+        const activeId = getActiveWorkspaceId();
+        list.innerHTML = workspaces.map(ws => `
+            <button class="workspace-item${ws.id === activeId ? ' active' : ''}" type="button" data-workspace-id="${ws.id}" title="${ws.name}" aria-label="${ws.name}">
+                <span class="workspace-initial">${getWorkspaceInitial(ws.name)}</span>
+            </button>
+        `).join('');
+        list.querySelectorAll('.workspace-item').forEach(btn => {
+            btn.onclick = () => switchWorkspace(btn.dataset.workspaceId);
+        });
+        const header = document.querySelector('.sidebar__header h3');
+        const activeWorkspace = getActiveWorkspace();
+        if (header) header.textContent = activeWorkspace && activeWorkspace.id === PERSONAL_WORKSPACE_ID ? 'OmniWrite' : activeWorkspace.name;
+    }
+
+    function switchWorkspace(workspaceId) {
+        if (!workspaces.some(ws => ws.id === workspaceId)) return;
+        localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspaceId);
+        renderWorkspacesSidebar();
+        renderDocumentsList();
+        renderFoldersList();
+        const currentDocId = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
+        const currentDoc = currentDocId ? documents.find(doc => doc.id === currentDocId) : null;
+        if (currentDoc && (currentDoc.workspaceId || PERSONAL_WORKSPACE_ID) !== workspaceId) {
+            window.location.hash = '';
+            switchPage('selectArea');
+        } else {
+            renderHomeDashboard();
+        }
+    }
+
+    async function createWorkspace(name) {
+        const workspace = {
+            id: createWorkspaceId(),
+            name: normalizeWorkspaceName(name),
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+        workspaces.push(workspace);
+        saveWorkspaces();
+        switchWorkspace(workspace.id);
+        return workspace;
+    }
+
+    function showWorkspaceModal(workspaceId = null) {
+        const workspace = workspaceId ? workspaces.find(ws => ws.id === workspaceId) : null;
+        const isEdit = !!workspace;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:460px;">
+                <span class="modal-content-close" id="closeWorkspaceModal" style="position:absolute;top:14px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                <h2>${isEdit ? _t('edit_workspace') : _t('new_workspace')}</h2>
+                <div style="display:grid;gap:14px;margin-top:18px;">
+                    <label>
+                        <b>${_t('workspace_name')}</b>
+                        <input id="workspaceNameInput" type="text" value="${workspace ? workspace.name.replace(/"/g, '&quot;') : ''}" placeholder="${_t('workspace_name')}" style="margin-top:8px;">
+                    </label>
+                    <button id="saveWorkspaceBtn" style="justify-content:center;">${isEdit ? _t('save_workspace') : _t('create_workspace')}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const input = modal.querySelector('#workspaceNameInput');
+        setTimeout(() => input.focus(), 50);
+        modal.querySelector('#closeWorkspaceModal').onclick = () => modal.remove();
+        modal.addEventListener('mousedown', e => { if (e.target === modal) modal.remove(); });
+        modal.querySelector('#saveWorkspaceBtn').onclick = async () => {
+            const name = normalizeWorkspaceName(input.value);
+            if (!name) {
+                showToast(_t('workspace_name_required'), { type: 'error' });
+                return;
+            }
+            if (isEdit) {
+                workspace.name = name;
+                workspace.updatedAt = Date.now();
+                saveWorkspaces();
+                renderWorkspacesSidebar();
+                renderDocumentsList();
+                renderFoldersList();
+                const managerModal = document.getElementById('workspacesManagerModal');
+                if (managerModal) {
+                    managerModal.remove();
+                    showWorkspacesManagerModal();
+                }
+                showToast(_t('workspace_updated'), { type: 'success' });
+            } else {
+                await createWorkspace(name);
+                showToast(_t('workspace_created'), { type: 'success' });
+            }
+            modal.remove();
+        };
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') modal.querySelector('#saveWorkspaceBtn').click();
+        });
+    }
+
+    function showDeleteWorkspaceFlow(workspaceId, parentModal = null) {
+        const workspace = workspaces.find(ws => ws.id === workspaceId);
+        if (!workspace) return;
+        if (workspace.id === PERSONAL_WORKSPACE_ID) {
+            showToast(_t('personal_workspace_no_delete'), { type: 'error' });
+            return;
+        }
+        showConfirm(_t('delete_workspace_confirm').replace('{name}', workspace.name), () => {
+            showConfirm(_t('delete_workspace_final_confirm').replace('{name}', workspace.name), async () => {
+                try {
+                    const deleteWorkspaceId = workspace.id;
+                    documents = documents.filter(doc => (doc.workspaceId || PERSONAL_WORKSPACE_ID) !== deleteWorkspaceId);
+                    folders = folders.filter(folder => (folder.workspaceId || PERSONAL_WORKSPACE_ID) !== deleteWorkspaceId);
+                    workspaces = workspaces.filter(ws => ws.id !== deleteWorkspaceId);
+                    saveWorkspaces();
+                    await saveDocuments();
+                    await saveFolders();
+                    if (getActiveWorkspaceId() === deleteWorkspaceId || localStorage.getItem(ACTIVE_WORKSPACE_KEY) === deleteWorkspaceId) {
+                        localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
+                    }
+                    if (window.location.hash.startsWith('#/document/')) window.location.hash = '';
+                    renderWorkspacesSidebar();
+                    renderDocumentsList();
+                    renderFoldersList();
+                    if (parentModal) parentModal.remove();
+                    showToast(_t('workspace_deleted'), { type: 'success' });
+                } catch(e) {
+                    console.error('Failed to delete workspace:', e);
+                    showToast(_t('failed_delete_workspace'), { type: 'error' });
+                }
+            });
+        });
+    }
+
+    function showWorkspacesManagerModal() {
+        document.getElementById('workspacesManagerModal')?.remove();
+        const modal = document.createElement('div');
+        modal.id = 'workspacesManagerModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:760px;max-height:84vh;overflow-y:auto;">
+                <span class="modal-content-close" id="closeWorkspacesManagerModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                <h2>${_t('workspaces')}</h2>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+                    <button id="managerAddWorkspaceBtn"><icon>add</icon> ${_t('add_workspace')}</button>
+                    <button id="managerToggleWorkspaceSidebarBtn"><icon>view_sidebar</icon> ${localStorage.getItem(WORKSPACES_HIDDEN_KEY) === 'true' ? _t('show_sidebar') : _t('hide_sidebar')}</button>
+                </div>
+                <div id="workspaceManagerList" style="display:grid;gap:10px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        function renderManagerList() {
+            const list = modal.querySelector('#workspaceManagerList');
+            const activeId = getActiveWorkspaceId();
+            list.innerHTML = workspaces.map(ws => {
+                const docCount = getWorkspaceDocuments(ws.id).length;
+                const folderCount = getWorkspaceFolders(ws.id).length;
+                return `
+                    <div class="settings-row" style="grid-template-columns:1fr auto auto auto;gap:10px;">
+                        <div class="settings-row-info">
+                            <div class="settings-row-title">${ws.name}${ws.id === activeId ? ' • ' + _t('active') : ''}</div>
+                            <div class="settings-row-subtitle">${_t('workspace_counts').replace('{documents}', docCount).replace('{folders}', folderCount)}</div>
+                        </div>
+                        <button data-action="switch" data-workspace-id="${ws.id}" style="width:auto;">${_t('open')}</button>
+                        <button data-action="edit" data-workspace-id="${ws.id}" style="width:auto;">${_t('edit')}</button>
+                        <button data-action="delete" data-workspace-id="${ws.id}" style="width:auto;background:#e74c3c;color:#fff;" ${ws.id === PERSONAL_WORKSPACE_ID ? 'disabled' : ''}>${_t('delete')}</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        renderManagerList();
+        modal.querySelector('#closeWorkspacesManagerModal').onclick = () => modal.remove();
+        modal.querySelector('#managerAddWorkspaceBtn').onclick = () => showWorkspaceModal();
+        modal.querySelector('#managerToggleWorkspaceSidebarBtn').onclick = function() {
+            const nextHidden = localStorage.getItem(WORKSPACES_HIDDEN_KEY) !== 'true';
+            localStorage.setItem(WORKSPACES_HIDDEN_KEY, nextHidden ? 'true' : 'false');
+            applyWorkspacesSidebarVisibility();
+            this.innerHTML = `<icon>view_sidebar</icon> ${nextHidden ? _t('show_sidebar') : _t('hide_sidebar')}`;
+        };
+        modal.querySelector('#workspaceManagerList').onclick = e => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+            const workspaceId = button.dataset.workspaceId;
+            if (button.dataset.action === 'switch') {
+                switchWorkspace(workspaceId);
+                modal.remove();
+            }
+            if (button.dataset.action === 'edit') {
+                showWorkspaceModal(workspaceId);
+            }
+            if (button.dataset.action === 'delete') {
+                showDeleteWorkspaceFlow(workspaceId, modal);
+            }
+        };
+    }
+
+    function setupWorkspaceSidebarControls() {
+        const addBtn = document.getElementById('addWorkspaceBtn');
+        const manageBtn = document.getElementById('manageWorkspacesBtn');
+        if (addBtn && addBtn.dataset.ready !== 'true') {
+            addBtn.dataset.ready = 'true';
+            addBtn.title = _t('add_workspace');
+            addBtn.setAttribute('aria-label', _t('add_workspace'));
+            addBtn.onclick = () => showWorkspaceModal();
+        }
+        if (manageBtn && manageBtn.dataset.ready !== 'true') {
+            manageBtn.dataset.ready = 'true';
+            manageBtn.title = _t('manage_workspaces');
+            manageBtn.setAttribute('aria-label', _t('manage_workspaces'));
+            manageBtn.onclick = () => showWorkspacesManagerModal();
+        }
+        applyWorkspacesSidebarVisibility();
+    }
 
     // Open IndexedDB and initialize stores
     function openDB() {
@@ -3713,12 +4317,14 @@ upgrade-insecure-requests;
                             writeTx.onerror = () => reject(writeTx.error);
                         }
                     } catch (e) {
+                    showToast('Failed to import/generate encryption key');
                         console.error('Failed to import/generate encryption key:', e);
                         reject(e);
                     }
                 };
                 getReq.onerror = () => reject(getReq.error);
             } catch (e) {
+                showToast('We are unable to setup OmniWrite right now.');
                 console.error('Failed to open key store transaction:', e);
                 reject(e);
             }
@@ -3738,6 +4344,7 @@ upgrade-insecure-requests;
             return { iv: Array.from(iv), data: Array.from(new Uint8Array(ciphertext)) };
         } catch (e) {
             console.error('Encryption failed:', e);
+            showToast('Failed to encrypt data');
             throw e;
         }
     }
@@ -3753,6 +4360,7 @@ upgrade-insecure-requests;
             );
             return dec.decode(plaintext);
         } catch (e) {
+            showToast('Failed to decrypt data');
             console.error('Decryption failed:', e);
             throw e;
         }
@@ -3823,6 +4431,7 @@ upgrade-insecure-requests;
             await new Promise((resolve, reject) => {
                 const tx = db.transaction(DOC_STORE, 'readwrite');
                 const store = tx.objectStore(DOC_STORE);
+                store.clear();
                 for (const encDoc of encryptedDocs) {
                     store.put(encDoc);
                 }
@@ -3894,6 +4503,7 @@ upgrade-insecure-requests;
                     try {
                         const docStr = await decryptData(item.enc);
                         const doc = JSON.parse(docStr);
+                        if (!doc.workspaceId) doc.workspaceId = PERSONAL_WORKSPACE_ID;
                         documents.push(doc);
                         addDocumentToList(doc);
                     } catch (e) {
@@ -3915,7 +4525,8 @@ upgrade-insecure-requests;
                         const doc = {
                             id: item.id,
                             title: 'Corrupted Document',
-                            content: `<pre style="color:#e74c3c;word-break:break-all;">${fallbackText}</pre>`
+                            content: `<pre style="color:#e74c3c;word-break:break-all;">${fallbackText}</pre>`,
+                            workspaceId: PERSONAL_WORKSPACE_ID
                         };
                         documents.push(doc);
                         addDocumentToList(doc);
@@ -3940,7 +4551,8 @@ upgrade-insecure-requests;
                     id: folder.id,
                     name: encName,
                     documentIds: encDocIds,
-                    createdAt: folder.createdAt
+                    createdAt: folder.createdAt,
+                    workspaceId: folder.workspaceId || PERSONAL_WORKSPACE_ID
                 });
             }
         } catch (error) {
@@ -3997,7 +4609,8 @@ upgrade-insecure-requests;
                             id: item.id,
                             name: name,
                             documentIds: documentIds,
-                            createdAt: item.createdAt
+                            createdAt: item.createdAt,
+                            workspaceId: item.workspaceId || PERSONAL_WORKSPACE_ID
                         };
                         folders.push(folder);
                     } catch (e) {
@@ -4063,8 +4676,28 @@ upgrade-insecure-requests;
         }
         db = await openDB();
         cryptoKey = await getOrCreateKey();
+        loadWorkspaces();
+        setupWorkspaceSidebarControls();
         await loadDocuments();
         await loadFolders();
+        let migratedWorkspaceData = false;
+        documents.forEach(doc => {
+            if (!doc.workspaceId) {
+                doc.workspaceId = PERSONAL_WORKSPACE_ID;
+                migratedWorkspaceData = true;
+            }
+        });
+        folders.forEach(folder => {
+            if (!folder.workspaceId) {
+                folder.workspaceId = PERSONAL_WORKSPACE_ID;
+                migratedWorkspaceData = true;
+            }
+        });
+        if (migratedWorkspaceData) {
+            await saveDocuments();
+            await saveFolders();
+        }
+        renderWorkspacesSidebar();
         // Render documents list in sorted order
         renderDocumentsList();
         renderFoldersList();
@@ -4093,7 +4726,8 @@ upgrade-insecure-requests;
                     id:        Date.now().toString(36) + Math.random().toString(36).slice(2),
                     title:     name,
                     content:   content,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    workspaceId: getActiveWorkspaceId()
                 };
                 documents.unshift(newDoc);
                 saveDocuments();
@@ -4138,6 +4772,12 @@ upgrade-insecure-requests;
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
+            localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
+            renderWorkspacesSidebar();
+            renderDocumentsList();
+            renderFoldersList();
+        }
         window.location.hash = '#/document/' + docId;
         // Show editor page
         switchPage('editorContent');
@@ -4182,7 +4822,9 @@ upgrade-insecure-requests;
 
     // Add document to sidebar list
     function addDocumentToList(doc) {
+        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) return;
         const list = document.getElementById('documentsList');
+        if (!list) return;
         const el = createDocumentElement(doc);
         list.appendChild(el);
     }
@@ -4197,8 +4839,9 @@ upgrade-insecure-requests;
         if (documentsList) documentsList.innerHTML = '';
         
         // Separate pinned and unpinned documents
-        const pinnedDocs = documents.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        const unpinnedDocs = documents.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const workspaceDocs = getWorkspaceDocuments();
+        const pinnedDocs = workspaceDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const unpinnedDocs = workspaceDocs.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
         // Render pinned documents
         if (pinnedList) {
@@ -4231,15 +4874,16 @@ upgrade-insecure-requests;
         
         foldersList.innerHTML = '';
         
-        if (folders.length === 0) {
+        const workspaceFolders = getWorkspaceFolders();
+        if (workspaceFolders.length === 0) {
             foldersList.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders</p>';
             renderHomeDashboard();
             return;
         }
         
-        folders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        workspaceFolders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
-        folders.forEach(folder => {
+        workspaceFolders.forEach(folder => {
             const div = document.createElement('div');
             div.className = 'sidebarnav__item folder-item';
             div.dataset.folderId = folder.id;
@@ -4335,6 +4979,12 @@ upgrade-insecure-requests;
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
         if (!doc) return;
+        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
+            localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
+            renderWorkspacesSidebar();
+            renderDocumentsList();
+            renderFoldersList();
+        }
         // Exit split view if active
         if (isSplitView) {
             exitSplitView();
@@ -5193,19 +5843,23 @@ upgrade-insecure-requests;
                 items.push({ sep: true });
                 items.push({ icon:'format_color_fill', label:_t('ctx_quote_color'), key:'ctx_quote_color', action: ()=>{
                     const colorPicker = document.getElementById('colorPicker');
+                    colorPickerTarget = null;
                     colorPicker.style.display = 'flex';
                     colorPicker.style.top = (e.clientY + 8) + 'px';
                     colorPicker.style.left = (e.clientX - 150) + 'px';
+                    if (colorPicker._quoteColorHandler) colorPicker.removeEventListener('advanced-color-pick', colorPicker._quoteColorHandler);
                     const handler = function(ev2) {
-                        const hex = document.getElementById('colorHexDisplay').textContent;
+                        const hex = ev2.detail?.hex || document.getElementById('colorHexDisplay').textContent;
                         quoteNode.style.borderLeft = '4px solid ' + hex;
                         const docId2 = window.location.hash.match(/^#\/document\/(.+)$/)?.[1];
                         const d2 = documents.find(d=>d.id===docId2);
                         if(d2){d2.content=editorArea.innerHTML;saveDocuments();}
                         colorPicker.style.display='none';
-                        colorPicker.querySelector('.color-swatch-gradient').removeEventListener('mousedown',handler);
+                        colorPicker.removeEventListener('advanced-color-pick', handler);
+                        colorPicker._quoteColorHandler = null;
                     };
-                    colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', handler);
+                    colorPicker._quoteColorHandler = handler;
+                    colorPicker.addEventListener('advanced-color-pick', handler);
                 }});
             }
 
@@ -5278,7 +5932,7 @@ upgrade-insecure-requests;
             pre.style.color = '#ffe066';
             pre.style.padding = '12px 16px';
             pre.style.borderRadius = '8px';
-            pre.style.fontFamily = 'monospace';
+            pre.style.fontFamily = 'Google Sans Code, monospace';
             pre.style.fontSize = '15px';
             pre.style.margin = '12px 0';
             pre.innerHTML = sel && !sel.isCollapsed ? sel.toString() : 'Code here...';
@@ -7402,6 +8056,8 @@ Q4: 22</textarea>
         try {
             const synth = new Tone.Synth().toDestination();
             synth.triggerAttackRelease("C5", "8n");
+              const synth2 = new Tone.Synth().toDestination();
+            synth2.triggerAttackRelease("G4", "8n");
         } catch (e) {
             console.warn('Could not play start sound:', e);
         }
@@ -7410,8 +8066,10 @@ Q4: 22</textarea>
     function playStopSound() {
         if (!toneLoaded || typeof Tone === 'undefined') return;
         try {
-            const synth = new Tone.Synth().toDestination();
-            synth.triggerAttackRelease("C3", "8n");
+                 const synth = new Tone.Synth().toDestination();
+            synth.triggerAttackRelease("C4", "8n");
+              const synth2 = new Tone.Synth().toDestination();
+            synth2.triggerAttackRelease("G4", "8n");
         } catch (e) {
             console.warn('Could not play stop sound:', e);
         }
@@ -7920,6 +8578,7 @@ Q4: 22</textarea>
                 <html>
                 <head>
                 <title>${doc.title}</title>
+                ${getPrintGoogleFontLinks()}
                 <style>
                     * { font-family: ${fontFamily} !important;}
                     font { font-family: ${fontFamily} !important; }
@@ -8391,7 +9050,7 @@ Q4: 22</textarea>
         `;
         document.body.appendChild(modal);
         modal.querySelector('#closeCompareModal').onclick = () => modal.remove();
-        const compareCandidates = documents.filter(d => d.id !== docId);
+        const compareCandidates = getWorkspaceDocuments().filter(d => d.id !== docId);
         let selectedCompareId = compareCandidates[0] ? compareCandidates[0].id : null;
         const compareDocSelectBtn = modal.querySelector('#compareDocSelectBtn');
         compareDocSelectBtn.textContent = compareCandidates[0] ? compareCandidates[0].title : 'No documents';
@@ -8571,6 +9230,7 @@ Q4: 22</textarea>
             printWindow.document.write(`
                 <!DOCTYPE html><html><head>
                 <title>${doc.title}</title>
+                ${getPrintGoogleFontLinks()}
                 <style>
                     body { font-family: ${fontFamily}; color: ${textColor}; background: ${bgColor}; margin: 40px auto; max-width: 820px; }
                     h1,h2,h3,h4,h5,h6 { font-family: ${fontFamily}; }
@@ -8607,7 +9267,8 @@ Q4: 22</textarea>
             id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
             title: doc.title + ' (Copy)',
             content: doc.content,
-            versions: doc.versions ? JSON.parse(JSON.stringify(doc.versions)) : []
+            versions: doc.versions ? JSON.parse(JSON.stringify(doc.versions)) : [],
+            workspaceId: doc.workspaceId || getActiveWorkspaceId()
         };
         documents.push(newDoc);
         addDocumentToList(newDoc);
@@ -8693,7 +9354,7 @@ Q4: 22</textarea>
                 <span class="modal-content-close" id="closeSplitSelectModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
                 <h2>${_t('select_doc_split')}</h2>
                 <div style="margin:18px 0;max-height:300px;overflow-y:auto;">
-                    ${documents.filter(d => d.id !== currentDocId).map(d => 
+                    ${getWorkspaceDocuments().filter(d => d.id !== currentDocId).map(d => 
                         `<div class="sidebarnav__item" data-doc-id="${d.id}" style="cursor:pointer;margin-bottom:8px;">
                             <icon>description</icon>
                             <div class="menu-text">${d.title}</div>
@@ -9125,6 +9786,7 @@ Q4: 22</textarea>
             const savedDefaultFont = localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex', sans-serif";
             ensureFontFaceLoadedFromValue(savedDefaultFont);
             editorArea.style.fontFamily = savedDefaultFont;
+            editorArea.style.fontFeatureSettings = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
             const currentSelectionSize = getSelectionFontSizePx(editorArea);
             fontSizeDisplay.textContent = normalizeFontSizeStep(currentSelectionSize || parseFloat(window.getComputedStyle(editorArea).fontSize) || 18) + 'px';
             // Update toolbar font family display to show the default font
@@ -9570,6 +10232,111 @@ Q4: 22</textarea>
     const textColorBtn = document.getElementById('textColorBtn');
     const colorPicker = document.getElementById('colorPicker');
     let colorPickerTarget = null;
+    const omniAdvancedColorState = { hue: 0, saturation: 1, value: 1, hex: '#FF0000' };
+
+    function hsvToRgb(h, s, v) {
+        const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+        return [Math.round(f(5) * 255), Math.round(f(3) * 255), Math.round(f(1) * 255)];
+    }
+
+    function rgbToHex(rgb) {
+        return '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function applyAdvancedColorPickerVisuals(picker = colorPicker, state = omniAdvancedColorState) {
+        const area = picker.querySelector('.advanced-color-area');
+        const dot = picker.querySelector('.advanced-color-dot');
+        const thumb = picker.querySelector('.advanced-hue-thumb');
+        const display = picker.querySelector('#colorHexDisplay, #customColorHexDisplay');
+        if (area) area.style.setProperty('--picker-hue', state.hue);
+        if (dot) {
+            dot.style.left = (state.saturation * 100) + '%';
+            dot.style.top = ((1 - state.value) * 100) + '%';
+        }
+        if (thumb) thumb.style.left = (state.hue / 360 * 100) + '%';
+        if (display) display.textContent = state.hex;
+    }
+
+    function setAdvancedColorFromHsv(h, s, v, picker = colorPicker, state = omniAdvancedColorState) {
+        state.hue = Math.max(0, Math.min(360, h));
+        state.saturation = Math.max(0, Math.min(1, s));
+        state.value = Math.max(0, Math.min(1, v));
+        state.hex = rgbToHex(hsvToRgb(state.hue, state.saturation, state.value));
+        applyAdvancedColorPickerVisuals(picker, state);
+        return state.hex;
+    }
+
+    function hexToHsv(hex) {
+        const clean = (hex || '#FF0000').replace('#', '');
+        const r = parseInt(clean.slice(0, 2), 16) / 255;
+        const g = parseInt(clean.slice(2, 4), 16) / 255;
+        const b = parseInt(clean.slice(4, 6), 16) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        let h = 0;
+        if (delta) {
+            if (max === r) h = 60 * (((g - b) / delta) % 6);
+            else if (max === g) h = 60 * ((b - r) / delta + 2);
+            else h = 60 * ((r - g) / delta + 4);
+        }
+        if (h < 0) h += 360;
+        return { hue: h, saturation: max === 0 ? 0 : delta / max, value: max, hex: '#' + clean.toUpperCase() };
+    }
+
+    function applyPickedColor(hex, shouldClose = true) {
+        const display = document.getElementById('colorHexDisplay');
+        if (display) display.textContent = hex;
+        colorPicker.dispatchEvent(new CustomEvent('advanced-color-pick', { detail: { hex } }));
+        if (colorPickerTarget === 'foreColor') {
+            document.execCommand('foreColor', false, hex);
+        } else if (colorPickerTarget === 'hiliteColor') {
+            document.execCommand('hiliteColor', false, hex);
+        }
+        const { doc, editorArea } = getCurrentDocAndEditor();
+        if (doc && editorArea) {
+            doc.content = editorArea.innerHTML;
+            saveDocuments();
+        }
+        if (shouldClose) colorPicker.style.display = 'none';
+    }
+
+    function bindAdvancedColorPicker(picker, onPick, state = { hue: 0, saturation: 1, value: 1, hex: '#FF0000' }, options = {}) {
+        const area = picker.querySelector('.advanced-color-area');
+        const slider = picker.querySelector('.advanced-hue-slider');
+        if (!area || !slider || picker.dataset.advancedBound === 'true') return state;
+        picker.dataset.advancedBound = 'true';
+        const commitArea = e => {
+            const rect = area.getBoundingClientRect();
+            const s = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const v = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+            const hex = setAdvancedColorFromHsv(state.hue, s, v, picker, state);
+            onPick(hex, options.closeOnPick !== false);
+        };
+        const commitHue = e => {
+            const rect = slider.getBoundingClientRect();
+            const h = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * 360;
+            const hex = setAdvancedColorFromHsv(h, state.saturation, state.value, picker, state);
+            if (options.liveHuePick) onPick(hex, false);
+        };
+        const drag = (startEvent, handler) => {
+            startEvent.preventDefault();
+            handler(startEvent);
+            const move = ev => handler(ev);
+            const up = () => {
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', up);
+            };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', up);
+        };
+        area.addEventListener('mousedown', e => drag(e, commitArea));
+        slider.addEventListener('mousedown', e => drag(e, commitHue));
+        applyAdvancedColorPickerVisuals(picker, state);
+        return state;
+    }
+
+    bindAdvancedColorPicker(colorPicker, applyPickedColor, omniAdvancedColorState);
 
     // Show/hide color picker when clicking the palette button
     textColorBtn.addEventListener('mousedown', function(e) {
@@ -9580,6 +10347,7 @@ Q4: 22</textarea>
         colorPicker.style.left = (rect.left + window.scrollX - 300) + 'px';
         colorPicker.style.display = colorPicker.style.display === 'flex' ? 'none' : 'flex';
         colorPickerTarget = 'foreColor';
+        applyAdvancedColorPickerVisuals(colorPicker, omniAdvancedColorState);
     });
 
     // Hide color picker when clicking outside
@@ -9598,61 +10366,10 @@ Q4: 22</textarea>
         dot.addEventListener('mousedown', function(e) {
             e.preventDefault();
             const hex = dot.getAttribute('data-color');
-            document.getElementById('colorHexDisplay').textContent = hex;
-            if (colorPickerTarget === 'foreColor') {
-                document.execCommand('foreColor', false, hex);
-            } else if (colorPickerTarget === 'hiliteColor') {
-                document.execCommand('hiliteColor', false, hex);
-            }
-            const { doc, editorArea } = getCurrentDocAndEditor();
-            if (doc && editorArea) { doc.content = editorArea.innerHTML; saveDocuments(); }
-            colorPicker.style.display = 'none';
+            Object.assign(omniAdvancedColorState, hexToHsv(hex));
+            applyAdvancedColorPickerVisuals(colorPicker, omniAdvancedColorState);
+            applyPickedColor(hex);
         });
-    });
-
-    // Color swatch click handler
-    colorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', function(e) {
-        // Get click position relative to swatch
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        // Convert x/y to HSV and then to RGB/HEX
-        // Horizontal: hue (0-360), Vertical: value/saturation
-        const hue = (x / rect.width) * 360;
-        const sat = 1 - (y / rect.height) * 0.8; // 0.2-1.0
-        const val = 1 - (y / rect.height) * 0.8; // 0.2-1.0
-
-        // HSV to RGB
-        function hsvToRgb(h, s, v) {
-        let f = (n, k = (n + h / 60) % 6) =>
-            v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-        return [
-            Math.round(f(5) * 255),
-            Math.round(f(3) * 255),
-            Math.round(f(1) * 255)
-        ];
-        }
-        const rgb = hsvToRgb(hue, sat, val);
-        const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-        // Show hex in display
-        document.getElementById('colorHexDisplay').textContent = hex;
-
-        // Apply color to selection
-        if (colorPickerTarget === 'foreColor') {
-        document.execCommand('foreColor', false, hex);
-        } else if (colorPickerTarget === 'hiliteColor') {
-        document.execCommand('hiliteColor', false, hex);
-        }
-        // Save after change - get current document from hash
-        const { doc, editorArea } = getCurrentDocAndEditor();
-        if (doc && editorArea) {
-            doc.content = editorArea.innerHTML;
-            saveDocuments();
-        }
-
-        // Hide picker after pick (optional: comment out if you want it to stay open)
-        colorPicker.style.display = 'none';
     });
     
     // --- Templates Logic ---
@@ -9897,7 +10614,8 @@ Q4: 22</textarea>
                         content: tpl.content,
                         createdAt: Date.now(),
                         updatedAt: Date.now(),
-                        pinned: false
+                        pinned: false,
+                        workspaceId: getActiveWorkspaceId()
                     };
                     documents.push(newDoc);
                     renderDocumentsList();
@@ -9974,7 +10692,7 @@ Q4: 22</textarea>
                         <div id="folderDocumentsSelect" style="max-height: 300px; overflow-y: auto; 
                                                                border: 1px solid rgba(255,255,255,0.2); 
                                                                border-radius: 8px; padding: 10px;">
-                            ${documents.map(doc => {
+                            ${getWorkspaceDocuments().map(doc => {
                                 const isSelected = isEdit && folder && folder.documentIds && folder.documentIds.includes(doc.id);
                                 return `
                                     <div class="folder-doc-checkbox" style="padding: 8px; cursor: pointer; 
@@ -10044,13 +10762,15 @@ Q4: 22</textarea>
                     // Update existing folder
                     folder.name = name;
                     folder.documentIds = selectedDocs;
+                    folder.workspaceId = folder.workspaceId || getActiveWorkspaceId();
                 } else {
                     // Create new folder
                     const newFolder = {
                         id: 'folder-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                         name: name,
                         documentIds: selectedDocs,
-                        createdAt: Date.now()
+                        createdAt: Date.now(),
+                        workspaceId: getActiveWorkspaceId()
                     };
                     folders.push(newFolder);
                 }
@@ -10067,7 +10787,7 @@ Q4: 22</textarea>
     }
 
     function getDocumentFolderIds(docId) {
-        return folders
+        return getWorkspaceFolders()
             .filter(folder => Array.isArray(folder.documentIds) && folder.documentIds.includes(docId))
             .map(folder => folder.id);
     }
@@ -10078,7 +10798,8 @@ Q4: 22</textarea>
             showToast(_t('please_open_document'), { type: 'error' });
             return;
         }
-        if (!folders.length) {
+        const workspaceFolders = getWorkspaceFolders();
+        if (!workspaceFolders.length) {
             showToast(_t('no_folders_available_move'), { type: 'info' });
             return;
         }
@@ -10101,7 +10822,7 @@ Q4: 22</textarea>
                             <icon>folder_off</icon>
                             <span>${_t('no_folder')}</span>
                         </label>
-                        ${folders
+                        ${workspaceFolders
                             .slice()
                             .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
                             .map(folder => `
@@ -10257,10 +10978,10 @@ Q4: 22</textarea>
             renderFoldersList();
         } else {
             // Filter documents
-            const filteredDocs = documents.filter(doc => doc.title && doc.title.toLowerCase().includes(query));
+            const filteredDocs = getWorkspaceDocuments().filter(doc => doc.title && doc.title.toLowerCase().includes(query));
             
             // Filter folders
-            const filteredFolders = folders.filter(folder => folder.name && folder.name.toLowerCase().includes(query));
+            const filteredFolders = getWorkspaceFolders().filter(folder => folder.name && folder.name.toLowerCase().includes(query));
             
             // Separate into pinned and unpinned
             const pinnedDocs = filteredDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -10339,7 +11060,8 @@ Q4: 22</textarea>
             // Create new doc
             const newDoc = {
                 id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
-                title: 'Untitled Document'
+                title: 'Untitled Document',
+                workspaceId: getActiveWorkspaceId()
             };
             documents.push(newDoc);
             addDocumentToList(newDoc);
@@ -10423,7 +11145,8 @@ Q4: 22</textarea>
                         const newDoc = {
                             id: 'doc-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).substr(2, 9)),
                             title: title || 'Imported Document',
-                            content: content
+                            content: content,
+                            workspaceId: getActiveWorkspaceId()
                         };
                         documents.push(newDoc);
                         addDocumentToList(newDoc);
@@ -10538,21 +11261,34 @@ Q4: 22</textarea>
         document.body.style.overflow = '';
     }
 
+    function updateResponsiveShellState() {
+        const isCompact = window.innerWidth <= 1190;
+        document.body.classList.toggle('omni-compact-shell', isCompact);
+        if (!isCompact) {
+            sidebarContainer.style.position = '';
+            sidebarContainer.style.left = '';
+            sidebarContainer.style.top = '';
+            sidebarContainer.style.zIndex = '';
+            sidebarContainer.style.height = '';
+            sidebarContainer.style.background = '';
+            sidebarContainer.style.boxShadow = '';
+            sidebarContainer.style.transition = '';
+            sidebarContainer.style.display = sidebarVisible ? '' : 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
     function toggleSidebar() {
         const width = window.innerWidth;
-        // Get all navbars (since there may be more than one)
-        const navbars = document.querySelectorAll('.navbar');
-        if (width > 1150) {
+        if (width > 1190) {
             // Desktop: toggle sidebar visibility
             if (sidebarVisible) {
                 sidebarContainer.style.display = 'none';
-                mainContainer.style.width = '100%';
-                navbars.forEach(nb => nb.style.setProperty('width', '100%', 'important'));
+                document.body.classList.add('omni-sidebar-collapsed');
                 sidebarVisible = false;
             } else {
                 sidebarContainer.style.display = '';
-                mainContainer.style.width = 'calc(100% - 300px)';
-                navbars.forEach(nb => nb.style.setProperty('width', 'calc(100% - 320px)', 'important'));
+                document.body.classList.remove('omni-sidebar-collapsed');
                 sidebarVisible = true;
             }
         } else {
@@ -10567,7 +11303,7 @@ Q4: 22</textarea>
 
     // Hide overlay sidebar when clicking outside (mobile/tablet)
     document.addEventListener('mousedown', function(event) {
-        if (window.innerWidth <= 1150) {
+        if (window.innerWidth <= 1190) {
             if (
                 sidebarContainer.style.left === '0px' &&
                 !sidebarContainer.contains(event.target) &&
@@ -10580,7 +11316,8 @@ Q4: 22</textarea>
 
     // Reset sidebar on resize
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 1150) {
+        updateResponsiveShellState();
+        if (window.innerWidth > 1190) {
             showSidebarDesktop();
             sidebarVisible = true;
         } else {
@@ -10592,7 +11329,8 @@ Q4: 22</textarea>
     toggleSidebarBtns.forEach(btn => btn.addEventListener('click', toggleSidebar));
 
     // On load, ensure correct sidebar state
-    if (window.innerWidth > 1150) {
+    updateResponsiveShellState();
+    if (window.innerWidth > 1190) {
         showSidebarDesktop();
         sidebarVisible = true;
     } else {
@@ -10601,10 +11339,55 @@ Q4: 22</textarea>
 
     // Hide sidebar overlay when switching content (mobile/tablet)
     function hideSidebarIfMobile() {
-        if (window.innerWidth <= 1150) {
+        if (window.innerWidth <= 1190) {
             hideSidebarOverlay();
         }
     }
+
+    document.querySelectorAll('#mobileMiniNav [data-mini-action]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-mini-action');
+            if (action === 'home') {
+                window.location.hash = '';
+                switchPage('selectArea');
+            } else if (action === 'images') {
+                window.location.hash = '#/images';
+                switchPage('imagesApp');
+            } else if (action === 'tasks') {
+                window.location.hash = '#/tasks';
+                switchPage('tasksApp');
+            } else if (action === 'templates') {
+                window.location.hash = '#/templates';
+                switchPage('templatesApp');
+            } else if (action === 'workspaces') {
+                showWorkspacesManagerModal();
+            } else if (action === 'documents') {
+                showSidebarOverlay();
+            } else if (action === 'settings') {
+                document.querySelector('.settings-item')?.click();
+            } else if (action === 'help') {
+                document.querySelector('.help-item')?.click();
+            }
+        });
+    });
+
+    function restoreMiniSidebarIcons() {
+        const miniSidebarIcons = {
+            images: 'image',
+            tasks: 'task_alt',
+            templates: 'browse',
+            workspaces: 'dashboard_customize',
+            documents: 'folder',
+            settings: 'settings',
+            help: 'help'
+        };
+        document.querySelectorAll('#mobileMiniNav [data-mini-action]').forEach(btn => {
+            const action = btn.getAttribute('data-mini-action');
+            const icon = btn.querySelector('icon');
+            if (icon && miniSidebarIcons[action]) icon.textContent = miniSidebarIcons[action];
+        });
+    }
+    restoreMiniSidebarIcons();
 
     // Patch sidebar navigation click handlers to also hide overlay
     document.querySelectorAll('.sidebarnav__item').forEach((item, idx) => {
@@ -11156,26 +11939,35 @@ Q4: 22</textarea>
                 createOptions.style.display = 'none';
             }
         });
-        /**
-         * Show a toast notification at the bottom center of the screen.
-         * @param {string} message - The message to display.
-         * @param {object} [options] - Optional settings: { duration: ms, type: 'success'|'error'|'info' }
-         */
-        function showToast(message, options = {}) {
-            const dict = TRANSLATIONS[localStorage.getItem('omniwrite-lang') || 'en'] || TRANSLATIONS['en'];
-            const msg = dict[message] || message;
-            // Remove any existing toast
-            const old = document.getElementById('omniwrite-toast');
-            if (old) old.remove();
+        function repositionToastStack() {
+            const toasts = [...document.querySelectorAll('.omniwrite-toast')];
+            let offset = 20;
+            toasts.forEach(toast => {
+                toast.style.top = offset + 'px';
+                offset += toast.getBoundingClientRect().height + 12;
+            });
+        }
+
+        function removeStackedToast(toast) {
+            if (!toast || toast.dataset.closing === 'true') return;
+            toast.dataset.closing = 'true';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px) scale(0.95)';
+            setTimeout(() => {
+                toast.remove();
+                repositionToastStack();
+            }, 300);
+        }
+
+        function showStackedToastMessage(msg, options = {}) {
             const toast = document.createElement('div');
-            toast.id = 'omniwrite-toast';
-            toast.className = 'liquid-glass';
+            toast.className = 'omniwrite-toast liquid-glass';
             toast.setAttribute('role', options.type === 'error' ? 'alert' : 'status');
             toast.setAttribute('aria-live', options.type === 'error' ? 'assertive' : 'polite');
             toast.innerHTML = `
-            <span style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;transition:transform 0.2s;" id="closeToast">&times;</span>
+            <span class="toast-close" style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;transition:transform 0.2s;">&times;</span>
             <div style="padding-right:20px;">${msg}</div>
-            <div id="toastProgressBar" style="position:absolute;bottom:0;left:0;height:3px;width:100%;background:linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));border-radius:0 0 20px 20px;"></div>
+            <div class="toast-progress-bar" style="position:absolute;bottom:0;left:0;height:3px;width:100%;background:linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));border-radius:0 0 20px 20px;"></div>
             `;
             toast.style.position = 'fixed';
             toast.style.right = '20px';
@@ -11184,7 +11976,7 @@ Q4: 22</textarea>
             toast.style.fontSize = '15px';
             toast.style.zIndex = 999999;
             toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            toast.style.transition = 'top 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             toast.style.transform = 'translateY(-20px) scale(0.95)';
             toast.style.borderRadius = '10px';
             toast.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)';
@@ -11197,55 +11989,56 @@ Q4: 22</textarea>
             let bg = 'linear-gradient(135deg, rgba(30,30,40,0.85) 0%, rgba(20,20,30,0.92) 100%)';
             let accentColor = 'rgba(255,255,255,0.4)';
             if (options.type === 'success') {
-            bg = 'linear-gradient(135deg, rgba(46, 204, 113, 0.25) 0%, rgba(39, 174, 96, 0.35) 100%)';
-            accentColor = 'rgba(46, 204, 113, 0.6)';
+                bg = 'linear-gradient(135deg, rgba(46, 204, 113, 0.25) 0%, rgba(39, 174, 96, 0.35) 100%)';
+                accentColor = 'rgba(46, 204, 113, 0.6)';
             } else if (options.type === 'error') {
-            bg = 'linear-gradient(135deg, rgba(231, 76, 60, 0.25) 0%, rgba(192, 57, 43, 0.35) 100%)';
-            accentColor = 'rgba(231, 76, 60, 0.6)';
+                bg = 'linear-gradient(135deg, rgba(231, 76, 60, 0.25) 0%, rgba(192, 57, 43, 0.35) 100%)';
+                accentColor = 'rgba(231, 76, 60, 0.6)';
             } else if (options.type === 'info') {
-            bg = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(41, 128, 185, 0.35) 100%)';
-            accentColor = 'rgba(52, 152, 219, 0.6)';
+                bg = 'linear-gradient(135deg, rgba(52, 152, 219, 0.25) 0%, rgba(41, 128, 185, 0.35) 100%)';
+                accentColor = 'rgba(52, 152, 219, 0.6)';
             }
             toast.style.background = bg;
             toast.style.borderLeft = `4px solid ${accentColor}`;
 
             document.body.appendChild(toast);
             applyAccessibilityEnhancements(toast);
+            repositionToastStack();
 
-            // Close toast on X icon click with hover effect
-            const closeBtn = toast.querySelector('#closeToast');
-            closeBtn.onclick = () => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-20px) scale(0.95)';
-            setTimeout(() => toast.remove(), 300);
-            };
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.onclick = () => removeStackedToast(toast);
             closeBtn.onmouseenter = () => {
-            closeBtn.style.transform = 'scale(1.2) rotate(90deg)';
+                closeBtn.style.transform = 'scale(1.2) rotate(90deg)';
             };
             closeBtn.onmouseleave = () => {
-            closeBtn.style.transform = 'scale(1) rotate(0deg)';
+                closeBtn.style.transform = 'scale(1) rotate(0deg)';
             };
 
-            // Animate in
             setTimeout(() => {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0) scale(1)';
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0) scale(1)';
+                repositionToastStack();
             }, 10);
 
-            // Progress bar animation
             const duration = typeof options.duration === 'number' ? options.duration : 2600;
-            const progressBar = toast.querySelector('#toastProgressBar');
+            const progressBar = toast.querySelector('.toast-progress-bar');
             progressBar.style.transition = `width ${duration}ms linear`;
             setTimeout(() => {
-            progressBar.style.width = '0';
+                progressBar.style.width = '0';
             }, 10);
 
-            // Remove after duration with fade out animation
-            setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-20px) scale(0.95)';
-            setTimeout(() => toast.remove(), 300);
-            }, duration);
+            setTimeout(() => removeStackedToast(toast), duration);
+            return toast;
+        }
+
+        /**
+         * Show a toast notification at the bottom center of the screen.
+         * @param {string} message - The message to display.
+         * @param {object} [options] - Optional settings: { duration: ms, type: 'success'|'error'|'info' }
+         */
+        function showToast(message, options = {}) {
+            const msg = _t(message);
+            return showStackedToastMessage(msg, options);
         }
 
         // Add custom confirm modal function
@@ -11357,6 +12150,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.12.4 - Added workspaces, toolbar customization, stacked toasts, print font loading, responsive mini sidebar, and improved collapsed sidebar layout.</li>
                         <li> v1.12.3 - Added Move to folder and improved UI</li>
                                <li>v1.12.2 — Migrated hosting to Cloudflare Pages for improved uptime and global performance.</li>
                         <li>v1.12.1 - Added Virtual keyboard and tooltips and more.</li>
@@ -11436,33 +12230,33 @@ Q4: 22</textarea>
             modal.innerHTML = `
                 <div class="modal-content liquid-glass" style="max-width:620px;position:relative;">
                     <span class="modal-content-close" id="closeBusinessModeModal">&times;</span>
-                    <h2>For Business</h2>
-                    <p style="opacity:0.76;">Brand OmniWrite for teams, proposals, clients, and polished business workspaces.</p>
+                    <h2>${_t('for_business')}</h2>
+                    <p style="opacity:0.76;">${_t('business_mode_modal_desc')}</p>
                     <div style="display:grid;gap:16px;margin-top:20px;">
                         <label style="display:grid;gap:8px;">
-                            <span style="font-weight:700;">Main Title</span>
-                            <input id="businessTitleInput" type="text" maxlength="40" value="${(settings.title || '').replace(/"/g, '&quot;')}" placeholder="Your Business Workspace">
+                            <span style="font-weight:700;">${_t('business_main_title')}</span>
+                            <input id="businessTitleInput" type="text" maxlength="40" value="${(settings.title || '').replace(/"/g, '&quot;')}" placeholder="${_t('business_title_placeholder')}">
                         </label>
                         <label style="display:grid;gap:8px;">
-                            <span style="font-weight:700;">Subtitle</span>
-                            <input id="businessSubtitleInput" type="text" maxlength="120" value="${(settings.subtitle || '').replace(/"/g, '&quot;')}" placeholder="Client-ready writing, proposals, and planning.">
+                            <span style="font-weight:700;">${_t('business_subtitle')}</span>
+                            <input id="businessSubtitleInput" type="text" maxlength="120" value="${(settings.subtitle || '').replace(/"/g, '&quot;')}" placeholder="${_t('business_subtitle_placeholder')}">
                         </label>
                         <div style="display:grid;gap:8px;">
-                            <span style="font-weight:700;">Background Image File</span>
+                            <span style="font-weight:700;">${_t('business_background_image')}</span>
                             <input id="businessBgFileInput" type="file" accept="image/*" style="display:none;">
-                            <button id="businessBgChooseBtn" type="button" style="justify-content:center;"><icon>image</icon> Choose Background Image</button>
-                            <div id="businessBgFileLabel" style="font-size:13px;opacity:0.72;">${settings.backgroundImage ? 'Background image selected' : 'No background image selected'}</div>
+                            <button id="businessBgChooseBtn" type="button" style="justify-content:center;"><icon>image</icon> ${_t('choose_background_image')}</button>
+                            <div id="businessBgFileLabel" style="font-size:13px;opacity:0.72;">${settings.backgroundImage ? _t('background_image_selected') : _t('no_background_image_selected')}</div>
                             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                                <button id="businessBgClearBtn" type="button" style="background:rgba(255,255,255,0.08);justify-content:center;${settings.backgroundImage ? '' : 'display:none;'}"><icon>delete</icon> Remove Background</button>
+                                <button id="businessBgClearBtn" type="button" style="background:rgba(255,255,255,0.08);justify-content:center;${settings.backgroundImage ? '' : 'display:none;'}"><icon>delete</icon> ${_t('remove_background')}</button>
                             </div>
                         </div>
                         <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                            <span style="font-weight:700;">Enable Business Mode</span>
+                            <span style="font-weight:700;">${_t('enable_business_mode')}</span>
                             <label class="setting-toggle"><input type="checkbox" id="businessEnabledToggle" ${isBusinessModeEnabled() ? 'checked' : ''}><span class="setting-toggle-track"></span></label>
                         </label>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                            <button id="saveBusinessModeBtn" style="flex:1;justify-content:center;"><icon>business_center</icon> Save Business Mode</button>
-                            <button id="clearBusinessModeBtn" style="flex:1;justify-content:center;background:rgba(255,255,255,0.08);"><icon>restart_alt</icon> Reset</button>
+                            <button id="saveBusinessModeBtn" style="flex:1;justify-content:center;"><icon>business_center</icon> ${_t('save_business_mode')}</button>
+                            <button id="clearBusinessModeBtn" style="flex:1;justify-content:center;background:rgba(255,255,255,0.08);"><icon>restart_alt</icon> ${_t('reset')}</button>
                         </div>
                     </div>
                 </div>
@@ -11488,7 +12282,7 @@ Q4: 22</textarea>
                 selectedBackgroundImage = '';
                 const input = modal.querySelector('#businessBgFileInput');
                 input.value = '';
-                modal.querySelector('#businessBgFileLabel').textContent = 'No background image selected';
+                modal.querySelector('#businessBgFileLabel').textContent = _t('no_background_image_selected');
                 this.style.display = 'none';
             };
             modal.querySelector('#clearBusinessModeBtn').onclick = function() {
@@ -11510,11 +12304,302 @@ Q4: 22</textarea>
                 applyBusinessMode();
                 renderHomeDashboard();
                 renderTemplatesList();
-                showToast('Business mode updated.', { type: 'success' });
+                showToast(_t('business_mode_updated'), { type: 'success' });
                 modal.remove();
             };
         }
         
+        const OMNI_TOOLBAR_CUSTOMIZATION_KEY = 'omniwrite-editor-toolbar-customization';
+        const OMNI_DOCUMENT_FONT_FEATURES_KEY = 'omniwrite-document-font-features';
+        const OMNI_FONT_FEATURE_KEYS = ['ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08'];
+
+        function getDefaultFontFeatureState() {
+            return { ss01: true, ss02: false, ss03: false, ss04: false, ss05: false, ss06: false, ss07: false, ss08: false };
+        }
+
+        function loadFontFeatureState(storageKey) {
+            const defaults = getDefaultFontFeatureState();
+            try {
+                const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+                return { ...defaults, ...(stored && typeof stored === 'object' ? stored : {}) };
+            } catch(e) {
+                return defaults;
+            }
+        }
+
+        function saveFontFeatureState(storageKey, state) {
+            try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch(e) { console.warn('localStorage unavailable:', e); }
+        }
+
+        function fontFeaturesToCss(state) {
+            return OMNI_FONT_FEATURE_KEYS.map(key => `"${key}" ${state[key] ? 1 : 0}`).join(', ');
+        }
+
+        function applyFontPreferences() {
+            const documentFont = localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex', sans-serif";
+            const documentFeatures = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
+            if (typeof ensureFontFaceLoadedFromValue === 'function') ensureFontFaceLoadedFromValue(documentFont);
+            let style = document.getElementById('omniFontPreferencesStyle');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'omniFontPreferencesStyle';
+                document.head.appendChild(style);
+            }
+            style.textContent = `
+                #editorArea,
+                .document-page-editor,
+                .split-editor,
+                .editor-surface,
+                #editorArea *,
+                .document-page-editor *,
+                .split-editor * {
+                    font-family: ${documentFont} !important;
+                    font-feature-settings: ${documentFeatures} !important;
+                }
+            `;
+            document.querySelectorAll('#editorArea, .document-page-editor, .split-editor').forEach(editor => {
+                editor.style.fontFamily = documentFont;
+                editor.style.fontFeatureSettings = documentFeatures;
+            });
+        }
+
+        function getPrintGoogleFontLinks() {
+            return [...document.querySelectorAll('link[rel="stylesheet"][href*="fonts.googleapis.com"]')]
+                .map(link => `<link rel="stylesheet" href="${link.href}">`)
+                .join('\n');
+        }
+
+        function getToolbarElementLabel(el, fallback) {
+            if (!el) return fallback;
+            const title = el.getAttribute('title');
+            if (title) return title;
+            const text = el.querySelector('.menu-text')?.textContent?.trim();
+            if (text) return text;
+            const icon = el.querySelector('icon')?.textContent?.trim();
+            return icon ? icon.replace(/_/g, ' ') : fallback;
+        }
+
+        function getToolbarDefaultConfig() {
+            const toolbar = document.querySelector('.toolbar');
+            if (!toolbar) return [];
+            if (window._omniToolbarDefaultConfig && window._omniToolbarDefaultConfig.length) return window._omniToolbarDefaultConfig;
+            const defaults = [];
+            let dividerIndex = 1;
+            [...toolbar.children].forEach(child => {
+                if (child.classList && child.classList.contains('toolbar-item') && child.id) {
+                    child.dataset.toolbarKey = child.id;
+                    child.dataset.toolbarType = 'item';
+                    defaults.push({ type: 'item', key: child.id, label: getToolbarElementLabel(child, child.id), visible: true, custom: false });
+                } else if (child.tagName && child.tagName.toLowerCase() === 'vl') {
+                    const key = child.dataset.toolbarKey || `default-divider-${dividerIndex++}`;
+                    child.dataset.toolbarKey = key;
+                    child.dataset.toolbarType = 'divider';
+                    defaults.push({ type: 'divider', key, label: _t('vertical_line'), visible: true, custom: false });
+                }
+            });
+            window._omniToolbarDefaultConfig = defaults;
+            return defaults;
+        }
+
+        function loadToolbarCustomization() {
+            const defaults = getToolbarDefaultConfig();
+            try {
+                const stored = JSON.parse(localStorage.getItem(OMNI_TOOLBAR_CUSTOMIZATION_KEY) || 'null');
+                if (!Array.isArray(stored)) return defaults.map(item => ({ ...item }));
+                const defaultMap = new Map(defaults.map(item => [item.key, item]));
+                const normalized = [];
+                stored.forEach(item => {
+                    if (!item || !item.key || !item.type) return;
+                    const base = defaultMap.get(item.key);
+                    if (base) {
+                        normalized.push({ ...base, visible: item.visible !== false });
+                        return;
+                    }
+                    if (item.type === 'divider' && item.custom) {
+                        normalized.push({ type: 'divider', key: item.key, label: _t('vertical_line'), visible: item.visible !== false, custom: true });
+                    }
+                });
+                defaults.forEach(item => {
+                    if (!normalized.some(existing => existing.key === item.key)) normalized.push({ ...item });
+                });
+                return normalized;
+            } catch(e) {
+                return defaults.map(item => ({ ...item }));
+            }
+        }
+
+        function saveToolbarCustomization(config) {
+            try { localStorage.setItem(OMNI_TOOLBAR_CUSTOMIZATION_KEY, JSON.stringify(config)); } catch(e) { console.warn('localStorage unavailable:', e); }
+        }
+
+        function applyToolbarCustomization(config = loadToolbarCustomization()) {
+            const toolbar = document.querySelector('.toolbar');
+            if (!toolbar) return;
+            getToolbarDefaultConfig();
+            const fragment = document.createDocumentFragment();
+            const usedKeys = new Set();
+            config.forEach(item => {
+                let node = toolbar.querySelector(`[data-toolbar-key="${CSS.escape(item.key)}"]`);
+                if (!node && item.type === 'divider') {
+                    node = document.createElement('vl');
+                    node.dataset.toolbarKey = item.key;
+                    node.dataset.toolbarType = 'divider';
+                }
+                if (!node) return;
+                node.style.display = item.visible === false ? 'none' : '';
+                fragment.appendChild(node);
+                usedKeys.add(item.key);
+            });
+            [...toolbar.children].forEach(child => {
+                const key = child.dataset.toolbarKey;
+                if (key && !usedKeys.has(key)) {
+                    child.style.display = 'none';
+                    fragment.appendChild(child);
+                }
+            });
+            toolbar.appendChild(fragment);
+        }
+
+        function openToolbarCustomizerModal() {
+            document.getElementById('toolbarCustomizerModal')?.remove();
+            let workingConfig = loadToolbarCustomization();
+            const modal = document.createElement('div');
+            modal.id = 'toolbarCustomizerModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="position:relative;max-width:760px;max-height:84vh;overflow-y:auto;">
+                    <span class="modal-content-close" id="closeToolbarCustomizerModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                    <h2>${_t('customize_editor_toolbar')}</h2>
+                    <div class="toolbar-customizer-actions">
+                        <button id="toolbarAddDividerBtn"><icon>vertical_align_center</icon> ${_t('insert_vertical_line')}</button>
+                        <button id="toolbarResetBtn"><icon>restart_alt</icon> ${_t('reset')}</button>
+                        <button id="toolbarSaveBtn"><icon>save</icon> ${_t('save')}</button>
+                    </div>
+                    <div class="toolbar-customizer-list" id="toolbarCustomizerList"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#toolbarCustomizerList');
+            let draggingKey = null;
+
+            function renderList() {
+                list.innerHTML = workingConfig.map(item => `
+                    <div class="toolbar-customizer-row${item.visible === false ? ' is-hidden' : ''}" draggable="true" data-key="${item.key}">
+                        <icon>${item.type === 'divider' ? 'vertical_align_center' : 'drag_indicator'}</icon>
+                        <div class="toolbar-customizer-title">${item.label || item.key}</div>
+                    <button type="button" data-action="up" title="${_t('move_up')}"><icon>keyboard_arrow_up</icon></button>
+                    <button type="button" data-action="down" title="${_t('move_down')}"><icon>keyboard_arrow_down</icon></button>
+                    <button type="button" data-action="${item.type === 'divider' && item.custom ? 'delete' : 'toggle'}">${item.type === 'divider' && item.custom ? '<icon>delete</icon>' : (item.visible === false ? _t('show') : _t('hide'))}</button>
+                    </div>
+                `).join('');
+            }
+
+            function moveItem(key, direction) {
+                const index = workingConfig.findIndex(item => item.key === key);
+                const nextIndex = index + direction;
+                if (index < 0 || nextIndex < 0 || nextIndex >= workingConfig.length) return;
+                const [item] = workingConfig.splice(index, 1);
+                workingConfig.splice(nextIndex, 0, item);
+                renderList();
+            }
+
+            renderList();
+            list.addEventListener('dragstart', e => {
+                const row = e.target.closest('.toolbar-customizer-row');
+                if (!row) return;
+                draggingKey = row.dataset.key;
+                row.classList.add('is-dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggingKey);
+            });
+            list.addEventListener('dragend', e => {
+                e.target.closest('.toolbar-customizer-row')?.classList.remove('is-dragging');
+                draggingKey = null;
+            });
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                const row = e.target.closest('.toolbar-customizer-row');
+                if (!row || !draggingKey || row.dataset.key === draggingKey) return;
+                const from = workingConfig.findIndex(item => item.key === draggingKey);
+                const to = workingConfig.findIndex(item => item.key === row.dataset.key);
+                if (from < 0 || to < 0 || from === to) return;
+                const [item] = workingConfig.splice(from, 1);
+                workingConfig.splice(to, 0, item);
+                renderList();
+            });
+            list.addEventListener('click', e => {
+                const button = e.target.closest('button[data-action]');
+                if (!button) return;
+                const row = button.closest('.toolbar-customizer-row');
+                const key = row?.dataset.key;
+                const action = button.dataset.action;
+                const item = workingConfig.find(entry => entry.key === key);
+                if (!item) return;
+                if (action === 'up') moveItem(key, -1);
+                if (action === 'down') moveItem(key, 1);
+                if (action === 'toggle') {
+                    item.visible = item.visible === false;
+                    renderList();
+                }
+                if (action === 'delete') {
+                    workingConfig = workingConfig.filter(entry => entry.key !== key);
+                    renderList();
+                }
+            });
+            modal.querySelector('#toolbarAddDividerBtn').onclick = () => {
+                workingConfig.push({ type: 'divider', key: 'custom-divider-' + Date.now(), label: _t('vertical_line'), visible: true, custom: true });
+                renderList();
+            };
+            modal.querySelector('#toolbarResetBtn').onclick = () => {
+                workingConfig = getToolbarDefaultConfig().map(item => ({ ...item }));
+                renderList();
+            };
+            modal.querySelector('#toolbarSaveBtn').onclick = () => {
+                saveToolbarCustomization(workingConfig);
+                applyToolbarCustomization(workingConfig);
+                showToast(_t('toolbar_customization_saved'), { type: 'success' });
+                modal.remove();
+            };
+            modal.querySelector('#closeToolbarCustomizerModal').onclick = () => modal.remove();
+        }
+
+        function setupSidebarContextMenu() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar || sidebar.dataset.contextMenuReady === 'true') return;
+            sidebar.dataset.contextMenuReady = 'true';
+            sidebar.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.omni-ctx-menu').forEach(menu => menu.remove());
+                const currentPosition = localStorage.getItem('omniwrite-sidebar-position') || 'left';
+                const nextPosition = currentPosition === 'right' ? 'left' : 'right';
+                const menu = document.createElement('div');
+                menu.className = 'omni-ctx-menu liquid-glass';
+                menu.innerHTML = `
+                    <div class="omni-ctx-item" data-position="${nextPosition}">
+                        <icon>${nextPosition === 'right' ? 'right_panel_open' : 'left_panel_open'}</icon>
+                        <span>${nextPosition === 'right' ? 'Move to right' : 'Move to left'}</span>
+                    </div>
+                `;
+                menu.style.left = Math.min(e.clientX, window.innerWidth - 220) + 'px';
+                menu.style.top = Math.min(e.clientY, window.innerHeight - 80) + 'px';
+                document.body.appendChild(menu);
+                menu.querySelector('.omni-ctx-item').onclick = function() {
+                    const position = this.dataset.position;
+                    try { localStorage.setItem('omniwrite-sidebar-position', position); } catch(err) { console.warn('localStorage unavailable:', err); }
+                    applySidebarPosition(position);
+                    showToast(position === 'right' ? 'Sidebar moved to right.' : 'Sidebar moved to left.', { type: 'success' });
+                    menu.remove();
+                };
+                const removeMenu = ev => {
+                    if (!menu.contains(ev.target)) {
+                        menu.remove();
+                        document.removeEventListener('mousedown', removeMenu);
+                    }
+                };
+                setTimeout(() => document.addEventListener('mousedown', removeMenu), 0);
+            });
+        }
+
         // Apply sidebar position
         function applySidebarPosition(position) {
             const app = document.querySelector('.app');
@@ -11523,7 +12608,7 @@ Q4: 22</textarea>
             
             if (position === 'right') {
                 app.style.flexDirection = 'row-reverse';
-                if (window.innerWidth <= 1150) {
+                if (window.innerWidth <= 1190) {
                     // Mobile/tablet: overlay from right
                     if (sidebarContainer.style.left === '0px') {
                         sidebarContainer.style.left = '';
@@ -11532,7 +12617,7 @@ Q4: 22</textarea>
                 }
             } else {
                 app.style.flexDirection = 'row';
-                if (window.innerWidth <= 1150) {
+                if (window.innerWidth <= 1190) {
                     // Mobile/tablet: overlay from left
                     if (sidebarContainer.style.right === '0') {
                         sidebarContainer.style.right = '';
@@ -11893,10 +12978,10 @@ Q4: 22</textarea>
             });
         }
         function renderHomeDashboard() {
-            const docs = typeof documents !== 'undefined' && Array.isArray(documents) ? documents.slice() : [];
+            const docs = typeof getWorkspaceDocuments === 'function' ? getWorkspaceDocuments() : (typeof documents !== 'undefined' && Array.isArray(documents) ? documents.slice() : []);
             const pinned = docs.filter(function(doc) { return !!doc.pinned; });
             const imagesCount = typeof images !== 'undefined' && Array.isArray(images) ? images.length : 0;
-            const foldersCount = typeof folders !== 'undefined' && Array.isArray(folders) ? folders.length : 0;
+            const foldersCount = typeof getWorkspaceFolders === 'function' ? getWorkspaceFolders().length : (typeof folders !== 'undefined' && Array.isArray(folders) ? folders.length : 0);
             const recent = docs.slice().sort(function(a, b) {
                 return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
             }).slice(0, 5);
@@ -12862,7 +13947,7 @@ Q4: 22</textarea>
                 'apply_theme': 'Apply Theme',
                 // --- Toast messages (dynamic) ---
                 'no_text_to_read': 'No text to read.',
-                'error_reading_text': 'Error reading text.',
+                'error_reading_text': 'Failed to start reading mode.',
                 'action_cancelled': 'Action cancelled.',
                 'no_headings_toc': 'No headings found to build Table of Contents.',
                 'print_dialog_opened': 'Print dialog opened. Choose "Save as PDF" to download.',
@@ -12973,7 +14058,7 @@ Q4: 22</textarea>
                 'document_pinned': 'Document pinned.',
                 'document_unpinned': 'Document unpinned.',
                 'download_as_pdf': 'Download as PDF',
-                'ctx_paste_md_error': 'Clipboard read failed',
+                'ctx_paste_md_error': 'Failed to paste clipboard from Markdown.',
                 // --- Apps sidebar ---
                 'maps_app': 'Maps',
                 'tasks_app': 'Tasks',
@@ -13125,6 +14210,92 @@ Q4: 22</textarea>
                 'vk_mode_qwerty': 'QWERTY',
                 'vk_mode_symbols': 'Symbols',
                 'vk_mode_math': 'Math',
+                // --- Workspaces ---
+                'workspaces': 'Workspaces',
+                'workspace': 'Workspace',
+                'personal_workspace': 'Personal',
+                'untitled_workspace': 'Untitled Workspace',
+                'add_workspace': 'Add Workspace',
+                'manage_workspaces': 'Manage Workspaces',
+                'new_workspace': 'New Workspace',
+                'edit_workspace': 'Edit Workspace',
+                'workspace_name': 'Workspace name',
+                'create_workspace': 'Create Workspace',
+                'save_workspace': 'Save Workspace',
+                'workspace_name_required': 'Please enter a workspace name.',
+                'workspace_created': 'Workspace created.',
+                'workspace_updated': 'Workspace updated.',
+                'workspace_deleted': 'Workspace deleted.',
+                'failed_delete_workspace': 'Failed to delete workspace.',
+                'personal_workspace_no_delete': 'Personal workspace cannot be deleted.',
+                'delete_workspace_confirm': 'Delete workspace "{name}"? Documents and folders in this workspace will be deleted.',
+                'delete_workspace_final_confirm': 'Final confirmation: permanently delete "{name}" and all of its workspace data?',
+                'workspaces_sidebar': 'Workspaces sidebar',
+                'workspaces_sidebar_desc': 'Show or hide the mini sidebar for switching workspaces.',
+                'workspaces_sidebar_shown': 'Workspaces sidebar shown.',
+                'workspaces_sidebar_hidden': 'Workspaces sidebar hidden.',
+                'show_sidebar': 'Show Sidebar',
+                'hide_sidebar': 'Hide Sidebar',
+                'active': 'Active',
+                'open': 'Open',
+                'edit': 'Edit',
+                'workspace_counts': '{documents} documents • {folders} folders',
+                // --- Toolbar customization ---
+                'customize_editor_toolbar': 'Customize Editor Toolbar',
+                'customize_editor_toolbar_desc': 'Show, hide, drag, reorder, and insert vertical lines in the editor toolbar.',
+                'toolbar_customization_saved': 'Toolbar customization saved.',
+                'insert_vertical_line': 'Insert vertical line',
+                'vertical_line': 'Vertical line',
+                'reset': 'Reset',
+                'save': 'Save',
+                'show': 'Show',
+                'hide': 'Hide',
+                'move_up': 'Move up',
+                'move_down': 'Move down',
+                // --- Font feature settings ---
+                'document_font_stylistic_sets': 'Document font stylistic sets',
+                'document_font_stylistic_sets_desc': 'Toggle ss01 through ss08 for document text. ss01 is on by default.',
+                // --- Business/settings extras ---
+                'for_business': 'For Business',
+                'for_business_desc': 'Rename the workspace, enable business mode, and choose a local background image.',
+                'business_mode_updated': 'Business mode updated.',
+                'business_mode_modal_desc': 'Brand OmniWrite for teams, proposals, clients, and polished business workspaces.',
+                'business_main_title': 'Main Title',
+                'business_title_placeholder': 'Your Business Workspace',
+                'business_subtitle': 'Subtitle',
+                'business_subtitle_placeholder': 'Client-ready writing, proposals, and planning.',
+                'business_background_image': 'Background Image File',
+                'choose_background_image': 'Choose Background Image',
+                'background_image_selected': 'Background image selected',
+                'no_background_image_selected': 'No background image selected',
+                'remove_background': 'Remove Background',
+                'enable_business_mode': 'Enable Business Mode',
+                'save_business_mode': 'Save Business Mode',
+                // --- Dashboard ---
+                'browse_templates': 'Browse Templates',
+                'business_setup': 'Business Setup',
+                'recent_documents': 'Recent Documents',
+                'workspace_highlights': 'Workspace Highlights',
+                'highlight_formatting': 'Formatting',
+                'highlight_formatting_desc': 'Use charts, code blocks, tables, and page layouts in one editor.',
+                'highlight_focus': 'Focus',
+                'highlight_focus_desc': 'Switch between balanced, wide, full, or custom writing widths instantly.',
+                'highlight_privacy': 'Privacy',
+                'highlight_privacy_desc': 'End-to-end encrypted local documents with optional locking and recovery flows.',
+                // --- Additional toast/message keys ---
+                'Failed to import/generate encryption key': 'Failed to import or generate encryption key.',
+                'We are unable to setup OmniWrite right now.': 'We are unable to set up OmniWrite right now.',
+                'Failed to encrypt data': 'Failed to encrypt data.',
+                'Failed to decrypt data': 'Failed to decrypt data.',
+                'Only http, https, mailto, and tel URLs are allowed.': 'Only http, https, mailto, and tel URLs are allowed.',
+                'Add at least one valid chart row.': 'Add at least one valid chart row.',
+                'Could not render chart image.': 'Could not render chart image.',
+                'Document text copied.': 'Document text copied.',
+                'Could not copy document text.': 'Could not copy document text.',
+                'Markdown copied.': 'Markdown copied.',
+                'Could not copy markdown.': 'Could not copy markdown.',
+                'System share is not available in this browser.': 'System share is not available in this browser.',
+                'System share failed.': 'System share failed.',
                 'create_new': 'New',
             },
             es: {
@@ -17492,11 +18663,157 @@ Q4: 22</textarea>
             },
         };
 
+        const WORKSPACE_TRANSLATION_EXTENSIONS = {
+            es: {
+                'workspaces': 'Espacios de trabajo', 'workspace': 'Espacio de trabajo', 'personal_workspace': 'Personal', 'untitled_workspace': 'Espacio sin título',
+                'add_workspace': 'Agregar espacio', 'manage_workspaces': 'Administrar espacios', 'new_workspace': 'Nuevo espacio', 'edit_workspace': 'Editar espacio',
+                'workspace_name': 'Nombre del espacio', 'create_workspace': 'Crear espacio', 'save_workspace': 'Guardar espacio',
+                'workspace_name_required': 'Ingrese un nombre para el espacio.', 'workspace_created': 'Espacio creado.', 'workspace_updated': 'Espacio actualizado.',
+                'workspace_deleted': 'Espacio eliminado.', 'failed_delete_workspace': 'No se pudo eliminar el espacio.', 'personal_workspace_no_delete': 'El espacio Personal no se puede eliminar.',
+                'delete_workspace_confirm': '¿Eliminar el espacio "{name}"? Se eliminarán los documentos y carpetas de este espacio.',
+                'delete_workspace_final_confirm': 'Confirmación final: ¿eliminar permanentemente "{name}" y todos sus datos?',
+                'workspaces_sidebar': 'Barra de espacios', 'workspaces_sidebar_desc': 'Muestra u oculta la mini barra para cambiar de espacio.',
+                'workspaces_sidebar_shown': 'Barra de espacios visible.', 'workspaces_sidebar_hidden': 'Barra de espacios oculta.',
+                'show_sidebar': 'Mostrar barra', 'hide_sidebar': 'Ocultar barra', 'active': 'Activo', 'open': 'Abrir', 'edit': 'Editar',
+                'workspace_counts': '{documents} documentos • {folders} carpetas',
+                'customize_editor_toolbar': 'Personalizar barra del editor', 'customize_editor_toolbar_desc': 'Muestra, oculta, arrastra, reordena e inserta líneas verticales.',
+                'toolbar_customization_saved': 'Personalización de barra guardada.', 'insert_vertical_line': 'Insertar línea vertical', 'vertical_line': 'Línea vertical',
+                'reset': 'Restablecer', 'save': 'Guardar', 'show': 'Mostrar', 'hide': 'Ocultar', 'move_up': 'Subir', 'move_down': 'Bajar',
+                'document_font_stylistic_sets': 'Conjuntos estilísticos de fuente', 'document_font_stylistic_sets_desc': 'Activa ss01 a ss08 para el texto del documento. ss01 está activo por defecto.',
+                'for_business': 'Para empresas', 'for_business_desc': 'Renombra el espacio, activa modo empresarial y elige una imagen local.',
+                'business_mode_updated': 'Modo empresarial actualizado.', 'business_mode_modal_desc': 'Adapta OmniWrite para equipos, propuestas, clientes y espacios profesionales.',
+                'business_main_title': 'Título principal', 'business_title_placeholder': 'Tu espacio empresarial', 'business_subtitle': 'Subtítulo',
+                'business_subtitle_placeholder': 'Escritura, propuestas y planificación listas para clientes.', 'business_background_image': 'Archivo de imagen de fondo',
+                'choose_background_image': 'Elegir imagen de fondo', 'background_image_selected': 'Imagen de fondo seleccionada',
+                'no_background_image_selected': 'No hay imagen de fondo seleccionada', 'remove_background': 'Quitar fondo',
+                'enable_business_mode': 'Activar modo empresarial', 'save_business_mode': 'Guardar modo empresarial'
+            },
+            fr: {
+                'workspaces': 'Espaces de travail', 'workspace': 'Espace de travail', 'untitled_workspace': 'Espace sans titre',
+                'add_workspace': 'Ajouter un espace', 'manage_workspaces': 'Gérer les espaces', 'new_workspace': 'Nouvel espace', 'edit_workspace': 'Modifier l’espace',
+                'workspace_name': 'Nom de l’espace', 'create_workspace': 'Créer l’espace', 'save_workspace': 'Enregistrer l’espace',
+                'workspace_name_required': 'Saisissez un nom d’espace.', 'workspace_created': 'Espace créé.', 'workspace_updated': 'Espace mis à jour.',
+                'workspace_deleted': 'Espace supprimé.', 'failed_delete_workspace': 'Impossible de supprimer l’espace.', 'personal_workspace_no_delete': 'L’espace Personnel ne peut pas être supprimé.',
+                'delete_workspace_confirm': 'Supprimer l’espace "{name}" ? Les documents et dossiers de cet espace seront supprimés.',
+                'delete_workspace_final_confirm': 'Confirmation finale : supprimer définitivement "{name}" et toutes ses données ?',
+                'workspaces_sidebar': 'Barre des espaces', 'workspaces_sidebar_desc': 'Afficher ou masquer la mini barre de changement d’espace.',
+                'workspaces_sidebar_shown': 'Barre des espaces affichée.', 'workspaces_sidebar_hidden': 'Barre des espaces masquée.',
+                'show_sidebar': 'Afficher la barre', 'hide_sidebar': 'Masquer la barre', 'active': 'Actif', 'open': 'Ouvrir', 'edit': 'Modifier',
+                'workspace_counts': '{documents} documents • {folders} dossiers',
+                'customize_editor_toolbar': 'Personnaliser la barre de l’éditeur', 'toolbar_customization_saved': 'Personnalisation enregistrée.',
+                'insert_vertical_line': 'Insérer une ligne verticale', 'vertical_line': 'Ligne verticale', 'reset': 'Réinitialiser', 'save': 'Enregistrer',
+                'show': 'Afficher', 'hide': 'Masquer', 'move_up': 'Monter', 'move_down': 'Descendre',
+                'document_font_stylistic_sets': 'Jeux stylistiques de la police', 'for_business': 'Pour entreprise',
+                'business_mode_updated': 'Mode entreprise mis à jour.', 'business_main_title': 'Titre principal', 'business_subtitle': 'Sous-titre',
+                'choose_background_image': 'Choisir une image de fond', 'remove_background': 'Supprimer le fond',
+                'enable_business_mode': 'Activer le mode entreprise', 'save_business_mode': 'Enregistrer le mode entreprise'
+            },
+            de: {
+                'workspaces': 'Arbeitsbereiche', 'workspace': 'Arbeitsbereich', 'untitled_workspace': 'Unbenannter Arbeitsbereich',
+                'add_workspace': 'Arbeitsbereich hinzufügen', 'manage_workspaces': 'Arbeitsbereiche verwalten', 'new_workspace': 'Neuer Arbeitsbereich', 'edit_workspace': 'Arbeitsbereich bearbeiten',
+                'workspace_name': 'Name des Arbeitsbereichs', 'create_workspace': 'Arbeitsbereich erstellen', 'save_workspace': 'Arbeitsbereich speichern',
+                'workspace_name_required': 'Bitte geben Sie einen Namen ein.', 'workspace_created': 'Arbeitsbereich erstellt.', 'workspace_updated': 'Arbeitsbereich aktualisiert.',
+                'workspace_deleted': 'Arbeitsbereich gelöscht.', 'failed_delete_workspace': 'Arbeitsbereich konnte nicht gelöscht werden.', 'personal_workspace_no_delete': 'Der persönliche Arbeitsbereich kann nicht gelöscht werden.',
+                'delete_workspace_confirm': 'Arbeitsbereich "{name}" löschen? Dokumente und Ordner darin werden gelöscht.',
+                'delete_workspace_final_confirm': 'Letzte Bestätigung: "{name}" und alle Daten dauerhaft löschen?',
+                'workspaces_sidebar': 'Arbeitsbereichsleiste', 'workspaces_sidebar_desc': 'Mini-Leiste zum Wechseln der Arbeitsbereiche ein- oder ausblenden.',
+                'workspaces_sidebar_shown': 'Arbeitsbereichsleiste angezeigt.', 'workspaces_sidebar_hidden': 'Arbeitsbereichsleiste ausgeblendet.',
+                'show_sidebar': 'Leiste anzeigen', 'hide_sidebar': 'Leiste ausblenden', 'active': 'Aktiv', 'open': 'Öffnen', 'edit': 'Bearbeiten',
+                'workspace_counts': '{documents} Dokumente • {folders} Ordner',
+                'customize_editor_toolbar': 'Editorleiste anpassen', 'toolbar_customization_saved': 'Editorleiste gespeichert.',
+                'insert_vertical_line': 'Vertikale Linie einfügen', 'vertical_line': 'Vertikale Linie', 'reset': 'Zurücksetzen', 'save': 'Speichern',
+                'show': 'Anzeigen', 'hide': 'Ausblenden', 'move_up': 'Nach oben', 'move_down': 'Nach unten',
+                'document_font_stylistic_sets': 'Stilsets der Dokumentschrift', 'for_business': 'Für Unternehmen',
+                'business_mode_updated': 'Unternehmensmodus aktualisiert.', 'business_main_title': 'Haupttitel', 'business_subtitle': 'Untertitel',
+                'choose_background_image': 'Hintergrundbild wählen', 'remove_background': 'Hintergrund entfernen',
+                'enable_business_mode': 'Unternehmensmodus aktivieren', 'save_business_mode': 'Unternehmensmodus speichern'
+            },
+            zh: {
+                'workspaces': '工作区', 'workspace': '工作区', 'untitled_workspace': '未命名工作区', 'add_workspace': '添加工作区', 'manage_workspaces': '管理工作区',
+                'new_workspace': '新建工作区', 'edit_workspace': '编辑工作区', 'workspace_name': '工作区名称', 'create_workspace': '创建工作区', 'save_workspace': '保存工作区',
+                'workspace_name_required': '请输入工作区名称。', 'workspace_created': '工作区已创建。', 'workspace_updated': '工作区已更新。', 'workspace_deleted': '工作区已删除。',
+                'failed_delete_workspace': '无法删除工作区。', 'personal_workspace_no_delete': '不能删除个人工作区。',
+                'delete_workspace_confirm': '删除工作区“{name}”？此工作区中的文档和文件夹将被删除。',
+                'delete_workspace_final_confirm': '最终确认：永久删除“{name}”及其所有数据？',
+                'workspaces_sidebar': '工作区侧栏', 'workspaces_sidebar_desc': '显示或隐藏用于切换工作区的迷你侧栏。',
+                'workspaces_sidebar_shown': '工作区侧栏已显示。', 'workspaces_sidebar_hidden': '工作区侧栏已隐藏。',
+                'show_sidebar': '显示侧栏', 'hide_sidebar': '隐藏侧栏', 'active': '当前', 'open': '打开', 'edit': '编辑',
+                'workspace_counts': '{documents} 个文档 • {folders} 个文件夹',
+                'customize_editor_toolbar': '自定义编辑器工具栏', 'toolbar_customization_saved': '工具栏自定义已保存。',
+                'insert_vertical_line': '插入竖线', 'vertical_line': '竖线', 'reset': '重置', 'save': '保存', 'show': '显示', 'hide': '隐藏',
+                'move_up': '上移', 'move_down': '下移', 'document_font_stylistic_sets': '文档字体样式集', 'for_business': '企业版',
+                'business_mode_updated': '企业模式已更新。'
+            },
+            ja: {
+                'workspaces': 'ワークスペース', 'workspace': 'ワークスペース', 'untitled_workspace': '無題のワークスペース', 'add_workspace': 'ワークスペースを追加',
+                'manage_workspaces': 'ワークスペースを管理', 'new_workspace': '新規ワークスペース', 'edit_workspace': 'ワークスペースを編集',
+                'workspace_name': 'ワークスペース名', 'create_workspace': '作成', 'save_workspace': '保存',
+                'workspace_name_required': 'ワークスペース名を入力してください。', 'workspace_created': 'ワークスペースを作成しました。', 'workspace_updated': 'ワークスペースを更新しました。',
+                'workspace_deleted': 'ワークスペースを削除しました。', 'failed_delete_workspace': 'ワークスペースを削除できませんでした。', 'personal_workspace_no_delete': 'Personal ワークスペースは削除できません。',
+                'delete_workspace_confirm': '「{name}」を削除しますか？このワークスペース内の文書とフォルダーも削除されます。',
+                'delete_workspace_final_confirm': '最終確認：「{name}」とすべてのデータを完全に削除しますか？',
+                'workspaces_sidebar': 'ワークスペースサイドバー', 'workspaces_sidebar_desc': 'ワークスペース切替用のミニサイドバーを表示または非表示にします。',
+                'show_sidebar': 'サイドバーを表示', 'hide_sidebar': 'サイドバーを非表示', 'active': 'アクティブ', 'open': '開く', 'edit': '編集',
+                'workspace_counts': '{documents} 件の文書 • {folders} 件のフォルダー',
+                'customize_editor_toolbar': 'エディターツールバーをカスタマイズ', 'toolbar_customization_saved': 'ツールバー設定を保存しました。',
+                'reset': 'リセット', 'save': '保存', 'show': '表示', 'hide': '非表示', 'for_business': 'ビジネス向け', 'business_mode_updated': 'ビジネスモードを更新しました。'
+            },
+            ar: {
+                'workspaces': 'مساحات العمل', 'workspace': 'مساحة العمل', 'untitled_workspace': 'مساحة عمل بلا اسم', 'add_workspace': 'إضافة مساحة عمل',
+                'manage_workspaces': 'إدارة مساحات العمل', 'new_workspace': 'مساحة عمل جديدة', 'edit_workspace': 'تعديل مساحة العمل',
+                'workspace_name': 'اسم مساحة العمل', 'create_workspace': 'إنشاء مساحة عمل', 'save_workspace': 'حفظ مساحة العمل',
+                'workspace_name_required': 'يرجى إدخال اسم مساحة العمل.', 'workspace_created': 'تم إنشاء مساحة العمل.', 'workspace_updated': 'تم تحديث مساحة العمل.',
+                'workspace_deleted': 'تم حذف مساحة العمل.', 'failed_delete_workspace': 'تعذر حذف مساحة العمل.', 'personal_workspace_no_delete': 'لا يمكن حذف مساحة العمل الشخصية.',
+                'workspaces_sidebar': 'شريط مساحات العمل', 'show_sidebar': 'إظهار الشريط', 'hide_sidebar': 'إخفاء الشريط', 'active': 'نشط', 'open': 'فتح', 'edit': 'تعديل',
+                'workspace_counts': '{documents} مستندات • {folders} مجلدات', 'customize_editor_toolbar': 'تخصيص شريط المحرر',
+                'toolbar_customization_saved': 'تم حفظ تخصيص شريط الأدوات.', 'reset': 'إعادة تعيين', 'save': 'حفظ', 'show': 'إظهار', 'hide': 'إخفاء',
+                'for_business': 'للأعمال', 'business_mode_updated': 'تم تحديث وضع الأعمال.'
+            }
+        };
+        ['pt', 'it', 'ko', 'hi', 'ru'].forEach(lang => {
+            TRANSLATIONS[lang] = { ...TRANSLATIONS.en, ...(TRANSLATIONS[lang] || {}) };
+        });
+        Object.keys(WORKSPACE_TRANSLATION_EXTENSIONS).forEach(lang => {
+            TRANSLATIONS[lang] = { ...TRANSLATIONS.en, ...(TRANSLATIONS[lang] || {}), ...WORKSPACE_TRANSLATION_EXTENSIONS[lang] };
+        });
+
+        function getNonIconText(el) {
+            if (!el || el.tagName?.toLowerCase() === 'icon') return '';
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    return node.parentElement?.closest('icon') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            let text = '';
+            while (walker.nextNode()) text += walker.currentNode.textContent;
+            return text.trim();
+        }
+
+        function setTranslatedTextExcludingIcons(el, value) {
+            if (!el || el.tagName?.toLowerCase() === 'icon') return;
+            if (!el.querySelector?.('icon')) {
+                el.textContent = value;
+                return;
+            }
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    return node.parentElement?.closest('icon') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            const target = nodes.find(node => node.textContent.trim()) || nodes[0];
+            if (target) {
+                target.textContent = target.textContent.match(/^\s/) ? ' ' + value : value;
+                nodes.forEach(node => { if (node !== target) node.textContent = ''; });
+            }
+        }
+
         function applyTranslations(lang) {
             const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (dict[key]) el.textContent = dict[key];
+                if (dict[key]) setTranslatedTextExcludingIcons(el, dict[key]);
             });
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
@@ -17558,20 +18875,25 @@ Q4: 22</textarea>
                 __vkp.querySelectorAll('.vk-mode-tab').forEach((t, i) => { const __v = dict[__mk[i]]; if (__v) t.textContent = __v; });
             }
             document.querySelectorAll('.sidebarnav__item .menu-text').forEach(el => {
-                if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                const text = getNonIconText(el);
+                if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
             });
             document.querySelectorAll('#createOptions .menu-text').forEach(el => {
-                if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                const text = getNonIconText(el);
+                if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
             });
             document.querySelectorAll('.modal-content label, .modal-content b, .modal-content h2, .modal-content h3, .modal-content h1, .modal-content h4, .modal-content h5, .modal-content h6').forEach(el => {
-                if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                const text = getNonIconText(el);
+                if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
             });
             document.querySelectorAll('button, .modal-content-close').forEach(el => {
-                if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                const text = getNonIconText(el);
+                if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
             });
              // Translate toast messages (patch showToast)
                 window.showToast = function(message, options = {}) {
-                    const msg = dict[message] || message;
+                    const msg = _t(message);
+                    return showStackedToastMessage(msg, options);
                     // Remove any existing toast
                     const old = document.getElementById('omniwrite-toast');
                     if (old) old.remove();
@@ -17671,6 +18993,9 @@ Q4: 22</textarea>
         try { applyTheme(localStorage.getItem('omniwrite-theme') || 'system'); } catch(e) { applyTheme('system'); }
         try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) { applyTranslations('en'); }
         try { applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left'); } catch(e) { applySidebarPosition('left'); }
+        try { setupSidebarContextMenu(); } catch(e) { console.warn('Sidebar context menu unavailable:', e); }
+        try { applyToolbarCustomization(); } catch(e) { console.warn('Toolbar customization unavailable:', e); }
+        try { applyFontPreferences(); } catch(e) { console.warn('Font preferences unavailable:', e); }
         try { applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true'); } catch(e) {}
         try { applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true'); } catch(e) {}
         
@@ -17721,6 +19046,13 @@ Q4: 22</textarea>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('workspaces_sidebar')}</div>
+                                    <div class="settings-row-subtitle">${_t('workspaces_sidebar_desc')}</div>
+                                </div>
+                                <label class="setting-toggle"><input type="checkbox" id="workspacesSidebarToggle"><span class="setting-toggle-track"></span></label>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-info">
                                     <div class="settings-row-title">${_t('default_font_settings_label')}</div>
                                     <div class="settings-row-subtitle">${_t('default_font_desc')}</div>
                                 </div>
@@ -17742,10 +19074,10 @@ Q4: 22</textarea>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-row-info">
-                                    <div class="settings-row-title">For Business</div>
-                                    <div class="settings-row-subtitle">Rename the workspace, enable business mode, and choose a local background image.</div>
+                                    <div class="settings-row-title">${_t('for_business')}</div>
+                                    <div class="settings-row-subtitle">${_t('for_business_desc')}</div>
                                 </div>
-                                <button id="businessSettingsBtn" class="settings-select-btn">Open</button>
+                                <button id="businessSettingsBtn" class="settings-select-btn">${_t('open')}</button>
                             </div>
                         </div>
                     </div>
@@ -17780,6 +19112,20 @@ Q4: 22</textarea>
                                     <div class="settings-row-subtitle">${_t('smart_suggestions_desc')}</div>
                                 </div>
                                 <label class="setting-toggle"><input type="checkbox" id="smartSuggestionsToggle"><span class="setting-toggle-track"></span></label>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('customize_editor_toolbar')}</div>
+                                    <div class="settings-row-subtitle">${_t('customize_editor_toolbar_desc')}</div>
+                                </div>
+                                <button id="customizeToolbarBtn" class="settings-select-btn">${_t('open')}</button>
+                            </div>
+                            <div class="settings-row" style="align-items:start;">
+                                <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('document_font_stylistic_sets')}</div>
+                                    <div class="settings-row-subtitle">${_t('document_font_stylistic_sets_desc')}</div>
+                                </div>
+                                <div class="font-feature-grid" id="documentFontFeatureGrid"></div>
                             </div>
                         </div>
                     </div>
@@ -17899,10 +19245,28 @@ Q4: 22</textarea>
                             customColorPicker.style.display = 'none';
                             customColorPicker.style.zIndex = '1000001';
                             customColorPicker.innerHTML = `
-                                <div class="color-swatch-gradient"></div>
+                                <div class="advanced-color-area">
+                                    <div class="advanced-color-dot"></div>
+                                </div>
+                                <div class="advanced-hue-slider">
+                                    <div class="advanced-hue-thumb"></div>
+                                </div>
                                 <div id="customColorHexDisplay" style="margin-top:10px;font-family:monospace;font-size:14px;text-align:center;">#FFFFFF</div>
                             `;
                             document.body.appendChild(customColorPicker);
+                            const customPickerState = hexToHsv(selectedBgColor);
+                            const applyCustomPickerColor = hex => {
+                                if (currentPickerTarget === 'bg') {
+                                    selectedBgColor = hex;
+                                    customModal.querySelector('#bgColorLabel').textContent = hex;
+                                    customModal.querySelector('#pickBgColorBtn span:last-child').style.background = hex;
+                                } else if (currentPickerTarget === 'text') {
+                                    selectedTextColor = hex;
+                                    customModal.querySelector('#textColorLabel').textContent = hex;
+                                    customModal.querySelector('#pickTextColorBtn span:last-child').style.background = hex;
+                                }
+                            };
+                            bindAdvancedColorPicker(customColorPicker, applyCustomPickerColor, customPickerState, { closeOnPick: false, liveHuePick: true });
                             
                             customModal.querySelector('#closeCustomThemeModal').onclick = () => {
                                 customColorPicker.remove();
@@ -17917,7 +19281,8 @@ Q4: 22</textarea>
                                 customColorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                                 customColorPicker.style.left = (rect.left + window.scrollX) + 'px';
                                 customColorPicker.style.display = 'flex';
-                                customColorPicker.querySelector('#customColorHexDisplay').textContent = selectedBgColor;
+                                Object.assign(customPickerState, hexToHsv(selectedBgColor));
+                                applyAdvancedColorPickerVisuals(customColorPicker, customPickerState);
                             };
                             
                             // Text color picker button
@@ -17928,44 +19293,9 @@ Q4: 22</textarea>
                                 customColorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                                 customColorPicker.style.left = (rect.left + window.scrollX) + 'px';
                                 customColorPicker.style.display = 'flex';
-                                customColorPicker.querySelector('#customColorHexDisplay').textContent = selectedTextColor;
+                                Object.assign(customPickerState, hexToHsv(selectedTextColor));
+                                applyAdvancedColorPickerVisuals(customColorPicker, customPickerState);
                             };
-                            
-                            // Color swatch click handler
-                            customColorPicker.querySelector('.color-swatch-gradient').addEventListener('mousedown', function(e) {
-                                const rect = this.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const y = e.clientY - rect.top;
-                                const hue = (x / rect.width) * 360;
-                                const sat = 1 - (y / rect.height) * 0.8;
-                                const val = 1 - (y / rect.height) * 0.8;
-                                
-                                function hsvToRgb(h, s, v) {
-                                    let f = (n, k = (n + h / 60) % 6) =>
-                                        v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
-                                    return [
-                                        Math.round(f(5) * 255),
-                                        Math.round(f(3) * 255),
-                                        Math.round(f(1) * 255)
-                                    ];
-                                }
-                                const rgb = hsvToRgb(hue, sat, val);
-                                const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-                                
-                                customColorPicker.querySelector('#customColorHexDisplay').textContent = hex;
-                                
-                                if (currentPickerTarget === 'bg') {
-                                    selectedBgColor = hex;
-                                    customModal.querySelector('#bgColorLabel').textContent = hex;
-                                    customModal.querySelector('#pickBgColorBtn span:last-child').style.background = hex;
-                                } else if (currentPickerTarget === 'text') {
-                                    selectedTextColor = hex;
-                                    customModal.querySelector('#textColorLabel').textContent = hex;
-                                    customModal.querySelector('#pickTextColorBtn span:last-child').style.background = hex;
-                                }
-                                
-                                customColorPicker.style.display = 'none';
-                            });
                             
                             // Hide picker when clicking outside
                             document.addEventListener('mousedown', function hideCustomPicker(e) {
@@ -18114,6 +19444,16 @@ Q4: 22</textarea>
                 }
             });
 
+            const workspacesSidebarToggle = settingsModal.querySelector('#workspacesSidebarToggle');
+            if (workspacesSidebarToggle) {
+                workspacesSidebarToggle.checked = localStorage.getItem(WORKSPACES_HIDDEN_KEY) !== 'true';
+                workspacesSidebarToggle.onchange = function() {
+                    localStorage.setItem(WORKSPACES_HIDDEN_KEY, this.checked ? 'false' : 'true');
+                    applyWorkspacesSidebarVisibility();
+                    showToast(this.checked ? _t('workspaces_sidebar_shown') : _t('workspaces_sidebar_hidden'), { type: 'success' });
+                };
+            }
+
             // Reduce Transparency toggle
             const reduceTransparencyToggle = settingsModal.querySelector('#reduceTransparencyToggle');
             const isReduceTransparencyEnabled = localStorage.getItem('omniwrite-reduce-transparency') === 'true';
@@ -18199,6 +19539,7 @@ Q4: 22</textarea>
                             fontFamilyTextEl.style.fontFamily = font;
                         }
                     }
+                    applyFontPreferences();
                     showToast(_t('default_font_updated'), { type: 'success' });
                 };
             });
@@ -18211,6 +19552,34 @@ Q4: 22</textarea>
                     defaultFontDropdown.style.display = 'none';
                 }
             });
+
+            function renderFontFeatureToggles(grid, storageKey) {
+                if (!grid) return;
+                const state = loadFontFeatureState(storageKey);
+                grid.innerHTML = OMNI_FONT_FEATURE_KEYS.map(key => `
+                    <label class="font-feature-chip">
+                        <span>${key}</span>
+                        <span class="setting-toggle">
+                            <input type="checkbox" data-feature="${key}" ${state[key] ? 'checked' : ''}>
+                            <span class="setting-toggle-track"></span>
+                        </span>
+                    </label>
+                `).join('');
+                grid.querySelectorAll('input[data-feature]').forEach(input => {
+                    input.onchange = function() {
+                        const next = loadFontFeatureState(storageKey);
+                        next[this.dataset.feature] = this.checked;
+                        saveFontFeatureState(storageKey, next);
+                        applyFontPreferences();
+                    };
+                });
+            }
+
+            renderFontFeatureToggles(settingsModal.querySelector('#documentFontFeatureGrid'), OMNI_DOCUMENT_FONT_FEATURES_KEY);
+            settingsModal.querySelector('#customizeToolbarBtn').onclick = function(e) {
+                e.preventDefault();
+                openToolbarCustomizerModal();
+            };
 
             const editorWidthOptions = [
                 { value: 'compact', label: _t('editor_width_compact') },
@@ -18380,6 +19749,9 @@ Q4: 22</textarea>
                     // Export all documents as JSON
                     const backup = {
                         documents: documents,
+                        folders: folders,
+                        workspaces: workspaces,
+                        activeWorkspaceId: getActiveWorkspaceId(),
                         time: Date.now()
                     };
                     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -18417,11 +19789,37 @@ Q4: 22</textarea>
                         // Import all documents
                         for (const doc of backup.documents) {
                             if (!documents.find(d => d.id === doc.id)) {
+                                if (!doc.workspaceId) doc.workspaceId = PERSONAL_WORKSPACE_ID;
                                 documents.push(doc);
                             }
                         }
+                        if (Array.isArray(backup.folders)) {
+                            for (const folder of backup.folders) {
+                                if (!folders.find(f => f.id === folder.id)) {
+                                    if (!folder.workspaceId) folder.workspaceId = PERSONAL_WORKSPACE_ID;
+                                    folders.push(folder);
+                                }
+                            }
+                            await saveFolders();
+                        }
+                        if (Array.isArray(backup.workspaces)) {
+                            backup.workspaces.forEach(ws => {
+                                if (ws && ws.id && ws.name && !workspaces.some(existing => existing.id === ws.id)) {
+                                    workspaces.push(ws);
+                                }
+                            });
+                            if (!workspaces.some(ws => ws.id === PERSONAL_WORKSPACE_ID)) {
+                                workspaces.unshift({ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: true });
+                            }
+                            saveWorkspaces();
+                        }
+                        if (backup.activeWorkspaceId && workspaces.some(ws => ws.id === backup.activeWorkspaceId)) {
+                            localStorage.setItem(ACTIVE_WORKSPACE_KEY, backup.activeWorkspaceId);
+                        }
                         await saveDocuments();
+                        renderWorkspacesSidebar();
                         renderDocumentsList();
+                        renderFoldersList();
                         showToast(_t('backup_imported'), { type: 'success' });
                     } catch (err) {
                         console.error('Failed to import backup:', err);
@@ -18525,7 +19923,7 @@ Q4: 22</textarea>
                 // Translate static text elements
                 document.querySelectorAll('[data-i18n]').forEach(el => {
                     const key = el.getAttribute('data-i18n');
-                    if (dict[key]) el.textContent = dict[key];
+                    if (dict[key]) setTranslatedTextExcludingIcons(el, dict[key]);
                 });
                 // Translate input placeholders
                 document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
@@ -18534,24 +19932,32 @@ Q4: 22</textarea>
                 });
                 // Translate sidebar menu
                 document.querySelectorAll('.sidebarnav__item .menu-text').forEach(el => {
-                    if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                    const text = getNonIconText(el);
+                    if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
                 });
                 // Translate create options
                 document.querySelectorAll('#createOptions .menu-text').forEach(el => {
-                    if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                    const text = getNonIconText(el);
+                    if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
                 });
                 // Translate settings modal labels
                 document.querySelectorAll('.modal-content label, .modal-content b, .modal-content h2, .modal-content h3, .modal-content h1, .modal-content h4, .modal-content h5, .modal-content h6').forEach(el => {
-                    if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                    const text = getNonIconText(el);
+                    if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
                 });
                 // Translate buttons
                 document.querySelectorAll('button, .modal-content-close').forEach(el => {
-                    if (dict[el.textContent]) el.textContent = dict[el.textContent];
+                    if (el.closest('#mobileMiniNav')) return;
+                    if (el.matches('button') && el.children.length === 1 && el.children[0].tagName.toLowerCase() === 'icon') return;
+                    const text = getNonIconText(el);
+                    if (dict[text]) setTranslatedTextExcludingIcons(el, dict[text]);
                 });
+                restoreMiniSidebarIcons();
                 // Translate toast messages (patch showToast)
                  // Translate toast messages (patch showToast)
                 window.showToast = function(message, options = {}) {
-                    const msg = dict[message] || message;
+                    const msg = _t(message);
+                    return showStackedToastMessage(msg, options);
                     // Remove any existing toast
                     const old = document.getElementById('omniwrite-toast');
                     if (old) old.remove();
@@ -18673,12 +20079,16 @@ Q4: 22</textarea>
                         { title: 'Step 2', description: _t('delete_all_warning_1') },
                         { title: 'Step 3', description: _t('delete_all_warning_2') },
                         { title: 'Step 4', description: _t('delete_all_warning_3') },
-                        { title: 'Final Warning', description: 'Documents, folders, images, videos, audios, saved apps, backup settings, and local editor data will all be deleted from this device.' }
+                        { title: 'Final Warning', description: 'Documents, folders, workspaces, images, videos, audios, saved apps, backup settings, and local editor data will all be deleted from this device.' }
                     ],
                     onComplete: async function() {
                         documents = [];
+                        folders = [];
+                        workspaces = [{ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: true }];
                         try { localStorage.clear(); } catch(e) { console.warn('localStorage.clear failed:', e); }
-                        const storesToClear = ['documents', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
+                        localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
+                        localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
+                        const storesToClear = ['documents', 'folders', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
                         const clearPromises = [];
                         for (const storeName of storesToClear) {
                             if (db.objectStoreNames.contains(storeName)) {
@@ -18697,6 +20107,9 @@ Q4: 22</textarea>
                         }
                         await Promise.all(clearPromises);
                         document.getElementById('documentsList').innerHTML = '';
+                        const foldersListEl = document.getElementById('foldersList');
+                        if (foldersListEl) foldersListEl.innerHTML = '';
+                        renderWorkspacesSidebar();
                         showToast(_t('all_data_deleted'), { type: 'success' });
                         setTimeout(() => window.location.reload(), 1200);
                     }
