@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        
+        <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
+        // Redirect unsupported browsers using feature detection (no UA sniffing)
+       // removed because of false possives
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Munetios OmniWrite</title>
@@ -9704,6 +9707,31 @@ Q4: 22</textarea>
             }
         }
 
+        function normalizeEditorFontFamilyMarkup(editorArea, fallbackFont) {
+            if (!editorArea) return;
+            editorArea.querySelectorAll('font[face]').forEach(fontEl => {
+                const span = document.createElement('span');
+                span.style.fontFamily = fontEl.getAttribute('face') || fallbackFont;
+                span.innerHTML = fontEl.innerHTML;
+                fontEl.parentNode.replaceChild(span, fontEl);
+            });
+        }
+
+        function applyEditorFontFamily(doc, editorArea, fontFamilyText, item, font) {
+            if (!doc || !editorArea || !font) return;
+            ensureFontFaceLoadedFromValue(font);
+            const execFontName = font.replace(/['"]/g, '').split(',')[0].trim();
+            document.execCommand('fontName', false, execFontName);
+            normalizeEditorFontFamilyMarkup(editorArea, font);
+            if (fontFamilyText) {
+                const label = item?.querySelector?.('.menu-text');
+                fontFamilyText.textContent = label ? label.innerText : (item?.innerText || execFontName);
+                fontFamilyText.style.fontFamily = font;
+            }
+            doc.content = editorArea.innerHTML;
+            saveDocuments();
+        }
+
         if (!window._fontToolbarSelectionBound) {
             window._fontToolbarSelectionBound = true;
             document.addEventListener('selectionchange', syncFontToolbarState);
@@ -9845,18 +9873,10 @@ Q4: 22</textarea>
                     e.preventDefault();
                     const font = item.getAttribute('data-font');
                     if (!font) return;
-                    ensureFontFaceLoadedFromValue(font);
                     const { doc: curDoc, editorArea: curEditor, fontFamilyText: curText } = fontFamilyPicker._ctx;
                     if (!curDoc || !curEditor) return;
-                    document.execCommand('fontName', false, font.replace(/['"]/g, '').split(',')[0]);
-                    if (curText) {
-                        const label = item.querySelector('.menu-text');
-                        curText.textContent = label ? label.innerText : item.innerText;
-                        curText.style.fontFamily = font;
-                    }
+                    applyEditorFontFamily(curDoc, curEditor, curText, item, font);
                     if (document.body.contains(fontFamilyPicker)) fontFamilyPicker.remove();
-                    curDoc.content = curEditor.innerHTML;
-                    saveDocuments();
                 });
             }
 
@@ -12318,11 +12338,13 @@ Q4: 22</textarea>
                 #editorArea,
                 .document-page-editor,
                 .split-editor,
-                .editor-surface,
+                .editor-surface {
+                    font-family: ${documentFont} !important;
+                    font-feature-settings: ${documentFeatures} !important;
+                }
                 #editorArea *,
                 .document-page-editor *,
                 .split-editor * {
-                    font-family: ${documentFont} !important;
                     font-feature-settings: ${documentFeatures} !important;
                 }
             `;
