@@ -148,6 +148,32 @@ upgrade-insecure-requests;
             font-feature-settings: 'ss01' 1, 'liga' 0;
             box-sizing: border-box;
         }
+        video::-webkit-media-controls-time-remaining-display{
+                        font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+        }
+        video::-internal-media-controls-overflow-menu-list-item {
+                                    font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+        }
+        video::-webkit-media-controls-current-time-display  {
+                               font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+        }
+        video::-internal-media-controls-overflow-menu-list-item {
+                      font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+        }
+        video label, span {
+                            font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;   
+        }
+        video::-internal-media-controls-overflow-menu-list {
+            background-color: rgba(0, 0, 0, 0.01) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            backdrop-filter: blur(2px) !important;
+            border-radius: 16px !important;
+        }
+        /* to change the font for native video controls */
+        @font-face {
+            font-family: Roboto-Regular;
+            src: url('https://api.munetios.com/fonts/google-sans-flex/googlesansflex.ttf') format('truetype');
+        }
         input,
         textarea,
         .custom-font-input {
@@ -344,9 +370,23 @@ upgrade-insecure-requests;
             align-items: center;
         }
         body.omni-sidebar-collapsed .sidebar__container {
-            display: none;
+            display: none !important;
             width: 0;
             flex-basis: 0;
+        }
+        body.omni-sidebar-collapsed .workspaces-sidebar {
+            display: flex !important;
+            width: 76px;
+            flex-basis: 76px;
+        }
+        body.omni-sidebar-collapsed #mobileMiniNav {
+            display: flex;
+        }
+        body.omni-sidebar-collapsed #workspacesList,
+        body.omni-sidebar-collapsed #addWorkspaceBtn,
+        body.omni-sidebar-collapsed #manageWorkspacesBtn,
+        body.omni-sidebar-collapsed .workspace-rail-spacer {
+            display: none !important;
         }
         body.omni-sidebar-collapsed .navbar {
             width: calc(100% - 80px);
@@ -361,7 +401,7 @@ upgrade-insecure-requests;
             border-radius: 20px !important;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-            overflow-y: auto;
+            overflow: hidden;
         }
         .sidebar::-webkit-scrollbar {
             width: 8px;
@@ -450,7 +490,6 @@ upgrade-insecure-requests;
             box-sizing: border-box;
             scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
             -ms-overflow-style: none;  /* IE and Edge Legacy */
-            height: calc(100% - 610px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -495,6 +534,604 @@ upgrade-insecure-requests;
             display: flex;
             flex-direction: column;
             gap: 6px;
+        }
+        .sidenav {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .sidebar-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.22);
+            border-radius: 20px;
+        }
+        body.omni-sidebar-collapsed .sidebar {
+            border-radius: 20px !important;
+        }
+        body.omni-sidebar-collapsed .sidebar__header {
+            justify-content: center;
+            padding: 12px 8px;
+        }
+        body.omni-sidebar-collapsed .sidebar__header h3 {
+            width: 46px;
+            height: 46px;
+            margin: 0;
+            border-radius: 14px;
+            font-size: 0;
+            background: rgba(255,255,255,0.08) url('apple-touch-icon.png') center/32px 32px no-repeat;
+            flex-shrink: 0;
+        }
+        body.omni-sidebar-collapsed .sidebar__header-right,
+        body.omni-sidebar-collapsed .search-bar,
+        body.omni-sidebar-collapsed .sidebar__content,
+        body.omni-sidebar-collapsed .sidebarnav__item .menu-text,
+        body.omni-sidebar-collapsed .sidebar__bottom .menu-text {
+            display: none !important;
+        }
+        body.omni-sidebar-collapsed .sidebarnav__items {
+            align-items: center;
+            padding-top: 4px;
+        }
+        body.omni-sidebar-collapsed .sidebarnav__item {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            margin: 5px 0;
+            justify-content: center;
+            gap: 0;
+        }
+        body.omni-sidebar-collapsed .sidebarnav__item:hover {
+            transform: translateY(-2px);
+        }
+        body.omni-sidebar-collapsed .sidebar__bottom {
+            align-items: center;
+            padding: 8px 0 12px;
+        }
+        body.omni-sidebar-collapsed .apps-menu-anchor {
+            display: block;
+        }
+        .omni-video-frame {
+            position: relative;
+            display: inline-block;
+            width: fit-content;
+            max-width: 100%;
+            margin: 12px 0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(8, 6, 18, 0.42);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            user-select: none;
+            vertical-align: top;
+            line-height: 0;
+            container-type: inline-size;
+        }
+        .omni-video-frame video {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: inherit;
+            margin: 0 !important;
+            background: #05040c;
+        }
+        .omni-native-video {
+            display: block;
+            max-width: 100%;
+            border-radius: inherit;
+            background: #05040c;
+        }
+        .omni-native-video::-webkit-media-controls-enclosure,
+        .omni-native-video::-webkit-media-controls-panel {
+            border-radius: 0 0 14px 14px;
+
+        }
+        .omni-native-video::-webkit-media-controls-play-button,
+        .omni-native-video::-webkit-media-controls-mute-button,
+        .omni-native-video::-webkit-media-controls-fullscreen-button {
+            border-radius: 999px;
+        }
+        .custom-video-controls {
+            display: none !important;
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            z-index: 5;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 14px;
+            background: rgba(8, 6, 18, 0.72);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            user-select: none;
+            line-height: 1;
+        }
+        .omni-video-frame:hover .custom-video-controls,
+        .omni-video-frame:focus-within .custom-video-controls,
+        .omni-video-frame.video-controls-visible .custom-video-controls,
+        .custom-video-controls:focus-within {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .custom-video-controls button {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .custom-video-controls icon {
+            font-size: 20px;
+        }
+        .custom-video-controls input[type="range"] {
+            flex: 1 1 72px;
+            min-width: 0;
+            padding: 0;
+            box-shadow: none;
+            background: transparent;
+            accent-color: #ffe066;
+        }
+        .custom-video-controls .video-time-display {
+            min-width: 88px;
+            font-family: inherit;
+            font-size: 13px;
+            color: #fff;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        .custom-video-controls .video-volume-slider {
+            flex: 0 0 72px;
+            width: 72px;
+            display: block;
+        }
+        .omni-video-speed-menu {
+            position: absolute;
+            right: 44px;
+            bottom: 54px;
+            min-width: 92px;
+            display: none;
+            z-index: 6;
+        }
+        .omni-video-speed-menu.open {
+            display: block;
+        }
+        @container (max-width: 460px) {
+            .custom-video-controls {
+                gap: 6px;
+                padding: 7px;
+            }
+            .custom-video-controls button {
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+            }
+            .custom-video-controls .video-time-display,
+            .custom-video-controls .video-volume-slider {
+                display: none;
+            }
+        }
+        .omni-images-shell {
+            min-height: calc(100vh - 118px);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 18px;
+        }
+        .omni-images-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 18px;
+            border-radius: 18px;
+        }
+        .omni-images-hero h1 {
+            margin: 0;
+            font-size: clamp(28px, 5vw, 52px);
+        }
+        .omni-images-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .omni-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            align-content: start;
+        }
+        .omni-image-card {
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.055);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .omni-image-card img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            background: rgba(0,0,0,0.2);
+        }
+        .omni-image-card-body {
+            display: grid;
+            gap: 8px;
+            padding: 12px;
+        }
+        .omni-image-card-title {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .omni-image-card-meta {
+            font-size: 12px;
+            opacity: 0.68;
+        }
+        .omni-image-card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .omni-icon-button {
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.07);
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .omni-notes-grid,
+        .omni-trash-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .omni-note-card,
+        .omni-trash-card {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.055);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: grid;
+            gap: 10px;
+        }
+        .omni-note-textarea {
+            width: 100%;
+            min-height: 130px;
+            resize: vertical;
+            box-sizing: border-box;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.07);
+            color: inherit;
+            padding: 12px;
+            outline: none;
+            font: inherit;
+        }
+        @media (max-width: 760px) {
+            #notesContentArea,
+            #trashContentArea {
+                margin-top: 72px;
+                height: auto;
+                min-height: calc(100vh - 90px);
+                padding: 14px;
+            }
+            #notesContentArea > div:first-child,
+            #trashContentArea > div:first-child {
+                margin-bottom: 14px;
+            }
+            #notesContentArea h1,
+            #trashContentArea h1 {
+                font-size: clamp(26px, 8vw, 38px);
+                line-height: 1.05;
+                margin-bottom: 8px;
+            }
+            #notesContentArea p,
+            #trashContentArea p {
+                font-size: 14px;
+                line-height: 1.45;
+                margin-top: 0;
+            }
+            #notesApp .navbar,
+            #trashApp .navbar {
+                gap: 10px;
+                padding: 0 10px;
+            }
+            #notesApp .navbar__left,
+            #trashApp .navbar__left {
+                min-width: 0;
+                gap: 8px;
+            }
+            #notesApp .navbar__right,
+            #trashApp .navbar__right {
+                gap: 8px !important;
+                padding: 9px 10px !important;
+                flex-shrink: 0;
+            }
+            #notesApp .navbar__left > .liquid-glass,
+            #trashApp .navbar__left > .liquid-glass {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #newQuickNoteBtn span {
+                display: none;
+            }
+            .omni-notes-grid,
+            .omni-trash-grid {
+                gap: 10px;
+            }
+            .omni-note-card,
+            .omni-trash-card {
+                padding: 12px;
+                border-radius: 14px;
+            }
+            .omni-trash-card > div {
+                display: grid !important;
+                align-items: start !important;
+            }
+            .omni-trash-card > div > div:last-child,
+            .omni-note-card > div:last-child > div {
+                width: 100%;
+                display: grid !important;
+                grid-template-columns: 1fr;
+                gap: 8px !important;
+            }
+            .omni-trash-card button,
+            .omni-note-card button {
+                width: 100%;
+                justify-content: center;
+            }
+            .omni-note-textarea {
+                min-height: 150px;
+                font-size: 16px;
+            }
+        }
+        @media (max-width: 430px) {
+            #notesApp .navbar__right,
+            #trashApp .navbar__right {
+                padding: 8px !important;
+            }
+            #trashApp .navbar__right icon {
+                font-size: 21px;
+            }
+        }
+        .omni-custom-palette {
+            position: fixed;
+            z-index: 1000002;
+            width: min(290px, calc(100vw - 24px));
+            padding: 12px;
+            border-radius: 18px;
+            display: grid;
+            gap: 10px;
+        }
+        .omni-custom-palette-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        .omni-custom-swatch {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.25);
+            cursor: pointer;
+        }
+        .omni-find-replace {
+            position: fixed;
+            top: 18px;
+            right: 40px;
+            z-index: 10010;
+            display: grid;
+            grid-template-columns: auto minmax(150px, 210px) minmax(150px, 210px) auto auto auto auto;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 16px;
+        }
+        .omni-find-replace input {
+            min-width: 0;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            outline: none;
+            background: rgba(255,255,255,0.07);
+            color: inherit;
+            padding: 9px 10px;
+        }
+        .omni-find-replace button {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 12px;
+        }
+        .omni-resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 5px;
+            background: #ffe066;
+            box-shadow: 0 0 0 2px rgba(17,7,54,0.55);
+            z-index: 20;
+            cursor: nwse-resize;
+        }
+        img.omni-image-selected {
+            outline: 2px solid #ffe066;
+            outline-offset: 3px;
+        }
+        .omni-handwriting-modal .modal-content {
+            width: min(960px, calc(100vw - 24px));
+            max-height: 90vh;
+            display: grid;
+            grid-template-rows: auto auto minmax(320px, 1fr) auto;
+            gap: 14px;
+        }
+        .omni-handwriting-toolbar {
+            display: grid;
+            grid-template-columns: minmax(150px, 190px) auto minmax(160px, 1fr) auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+        .omni-handwriting-select {
+            position: relative;
+        }
+        .omni-handwriting-select-btn {
+            width: 100%;
+            min-height: 42px;
+            justify-content: space-between;
+        }
+        .omni-handwriting-select-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: none;
+            padding: 6px;
+            border-radius: 14px;
+            background: rgba(17,7,54,0.82);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .omni-handwriting-select-menu.open {
+            display: grid;
+            gap: 4px;
+        }
+        .omni-handwriting-option {
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: inherit;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .omni-handwriting-option:hover,
+        .omni-handwriting-option.active {
+            background: rgba(255,255,255,0.1);
+        }
+        .omni-handwriting-color-btn {
+            min-width: 118px;
+            justify-content: center;
+        }
+        .omni-handwriting-color-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.35);
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .omni-handwriting-size {
+            display: grid;
+            grid-template-columns: auto minmax(90px, 1fr) auto;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .omni-handwriting-size input[type="range"] {
+            width: 100%;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+        .omni-handwriting-canvas-wrap {
+            min-height: 320px;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background:
+                linear-gradient(rgba(17,7,54,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(17,7,54,0.06) 1px, transparent 1px),
+                #ffffff;
+            background-size: 24px 24px;
+        }
+        #omniHandwritingCanvas {
+            width: 100%;
+            height: 100%;
+            min-height: 320px;
+            display: block;
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .omni-handwriting-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 760px) {
+            .omni-handwriting-toolbar {
+                grid-template-columns: 1fr 1fr;
+            }
+            .omni-handwriting-size {
+                grid-column: 1 / -1;
+            }
+        }
+        .document-page-editor[data-bg-tone="light"],
+        .split-editor[data-bg-tone="light"] {
+            color: #110736 !important;
+        }
+        .document-page-editor[data-bg-tone="dark"],
+        .split-editor[data-bg-tone="dark"] {
+            color: #ffffff !important;
+        }
+        .editor-page-add-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        @media (max-width: 760px) {
+            .omni-find-replace {
+                left: 12px;
+                right: 12px;
+                grid-template-columns: 1fr 1fr auto auto;
+            }
+            .omni-find-replace > icon,
+            .omni-find-replace #omniFindCount {
+                display: none;
+            }
         }
         .settings-shell {
             display: grid;
@@ -547,8 +1184,8 @@ upgrade-insecure-requests;
             border-radius: 22px;
             background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
             border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px) saturate(180%);
-            -webkit-backdrop-filter: blur(5px) saturate(180%);
+            backdrop-filter: blur(3px) saturate(180%);
+            -webkit-backdrop-filter: blur(3px) saturate(180%);
         }
         .settings-card h3 {
             margin: 0 0 6px;
@@ -722,8 +1359,8 @@ upgrade-insecure-requests;
             background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
             border: 1px solid rgba(255,255,255,0.14);
             color: #fff;
-            backdrop-filter: blur(5px) saturate(180%);
-            -webkit-backdrop-filter: blur(5px) saturate(180%);
+            backdrop-filter: blur(3px) saturate(180%);
+            -webkit-backdrop-filter: blur(3px) saturate(180%);
             box-shadow: 0 16px 40px rgba(0,0,0,0.28);
             max-width: min(420px, calc(100vw - 24px));
         }
@@ -1144,7 +1781,82 @@ upgrade-insecure-requests;
         .navbar__left {
             display: flex;
             align-items: center;
+                width: 100%;
             gap: 10px;
+        }
+        .navbar {
+        align-items: stretch;
+        min-width: 0;
+    }
+        #editorContent .navbar {
+            gap: 10px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        #editorContent .navbar__left {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto;
+            overflow: hidden;
+        }
+        #editorContent .navbar__right {
+            flex: 0 0 auto;
+            min-width: max-content;
+            max-width: 52%;
+            overflow: hidden;
+        }
+        #editorContent #documentTitle {
+            flex: 1 1 clamp(150px, 28vw, 320px);
+            min-width: 0;
+            max-width: clamp(150px, 32vw, 360px);
+        }
+        #editorContent .saving-time {
+            flex: 0 1 auto;
+            min-width: 34px;
+            max-width: clamp(34px, 20vw, 260px);
+        }
+        #editorContent #savingStatus {
+            display: inline-block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+        @media (max-width: 900px) {
+            #editorContent .navbar {
+                gap: 8px;
+                padding: 0 8px;
+            }
+            #editorContent .navbar__left {
+                gap: 8px;
+            }
+            #editorContent .navbar__right {
+                gap: 10px !important;
+                padding: 10px 10px !important;
+                max-width: none;
+            }
+            #editorContent #documentTitle {
+                flex-basis: clamp(150px, 32vw, 260px);
+                max-width: clamp(150px, 34vw, 280px);
+                padding: 14px 12px !important;
+            }
+            #editorContent .saving-time {
+                width: auto;
+                max-width: 34px;
+                flex: 0 0 34px;
+                justify-content: center;
+            }
+            #editorContent #savingStatus {
+                display: none;
+            }
+         
+        }
+        @media (max-width: 720px) {
+          
+            #editorContent #documentTitle {
+                flex-basis: clamp(128px, 38vw, 220px);
+                max-width: clamp(128px, 40vw, 220px);
+            }
         }
         .modal {
             position: fixed;
@@ -1152,7 +1864,7 @@ upgrade-insecure-requests;
             left: 0;
             width: 100%;
             height: 100%;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(3px);
             background-color: rgba(0, 0, 0, 0.671);
             display: flex;
             justify-content: center;
@@ -1808,7 +2520,7 @@ upgrade-insecure-requests;
                     width: 100%;
                     min-width: 0;
                     flex-wrap: nowrap;
-                    overflow-x: hidden;
+    
                 }
 
                 #editorArea {
@@ -2317,8 +3029,8 @@ upgrade-insecure-requests;
                     transform: translateX(-50%) scale(0.96);
                     transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s cubic-bezier(0.4,0,0.2,1);
                     border: 1px solid rgba(255,255,255,0.12);
-                    backdrop-filter: blur(5px) saturate(190%) brightness(110%);
-                    -webkit-backdrop-filter: blur(5px) saturate(190%) brightness(110%);
+                    backdrop-filter: blur(3px) saturate(190%) brightness(110%);
+                    -webkit-backdrop-filter: blur(3px) saturate(190%) brightness(110%);
                     overflow: hidden;
                     border-radius: 24px;
                     box-shadow: 0 24px 80px rgba(0,0,0,0.42);
@@ -2561,6 +3273,29 @@ upgrade-insecure-requests;
                     text-align: right;
                     margin-bottom: 8px;
                 }
+                .saving-time {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    min-width: 0;
+                    width:100%;
+                    max-width: 900px;
+                    white-space: nowrap;
+                }
+                #savingStatus {
+                    white-space: nowrap;
+                }
+                #documentTitle {
+                    display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        width: 100%;
+        max-width: 500px;
+                }
                 .reading-mode-current-word {
                     background: rgba(102,126,234,0.3);
                     border-radius: 4px;
@@ -2600,8 +3335,8 @@ upgrade-insecure-requests;
             background: rgba(18, 12, 48, 0.30);
             border: 1px solid rgba(255,255,255,0.18);
             color: #fff;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
             border-radius: 8px;
             padding: 5px 11px;
             font-size: 12.5px;
@@ -2865,6 +3600,8 @@ upgrade-insecure-requests;
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="images" aria-label="Images"><icon>image</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="tasks" aria-label="Tasks"><icon>task_alt</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="templates" aria-label="Templates"><icon>browse</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="notes" aria-label="Notes"><icon>edit_note</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="trash" aria-label="Trash"><icon>delete</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="workspaces" aria-label="OmniWrite Workspaces"><icon>dashboard_customize</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Folders and documents"><icon>folder</icon></button>
                     <div class="mobile-mini-bottom">
@@ -2887,6 +3624,7 @@ upgrade-insecure-requests;
                        <icon id="createBtn">add</icon> 
                     </div>
                 </div>
+                <div class="sidebar-scroll" id="sidebarScroll">
                 <div class="sidebarnav__items">
                     <div class="sidebarnav__item">
                         <icon>filter</icon>
@@ -2899,6 +3637,14 @@ upgrade-insecure-requests;
                     <div class="sidebarnav__item">
                         <icon>browse</icon>
                         <div class="menu-text business-templates-label" data-i18n="templates">Templates</div>
+                    </div>
+                    <div class="sidebarnav__item">
+                        <icon>edit_note</icon>
+                        <div class="menu-text" data-i18n="notes">Notes</div>
+                    </div>
+                    <div class="sidebarnav__item">
+                        <icon>delete</icon>
+                        <div class="menu-text" data-i18n="trash">Trash</div>
                     </div>
                 </div> 
                 <div class="search-bar liquid-glass" data-parent="true">
@@ -2930,6 +3676,7 @@ upgrade-insecure-requests;
                     <h4 data-i18n="documents_section">Documents</h4>
                     <div class="documents--list" id="documentsList">
                         <!-- Document items will be dynamically added here -->
+                    </div>
                     </div>
                 </div>
                 </div>
@@ -3039,6 +3786,7 @@ upgrade-insecure-requests;
                                 <div class="menu-btn liquid-glass" id="toggleSidebar">
                                     <icon>menu</icon>
                                 </div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="images">Images</div>
                             </div>
                             <div class="navbar__right">
                                 <div class="menu-btn liquid-glass" style="display: flex; align-items: center; gap: 10px;" id="uploadImageBtn">
@@ -3052,8 +3800,61 @@ upgrade-insecure-requests;
                         </div>
                     </div>
                     <div class="content-area" id="imagesContentArea">
-                        <h1 data-i18n="images">Images</h1>
-                        <div id="imagesList">No Images</div>
+                        <div class="omni-images-shell">
+                            <div class="omni-images-hero liquid-glass">
+                                <div>
+                                    <h1 id="imagesPageTitle" data-i18n="images">Images</h1>
+                                    <p id="imagesPageSubtitle" data-i18n="images_page_subtitle">Browse, preview, restore, and manage your local image library.</p>
+                                </div>
+                                <div class="omni-images-actions">
+                                    <button id="imagesUploadHeroBtn" type="button"><icon>upload_file</icon><span data-i18n="upload_image">Upload Image</span></button>
+                                    <button id="imagesTrashHeroBtn" type="button"><icon>delete</icon><span data-i18n="trash">Trash</span></button>
+                                </div>
+                            </div>
+                            <div id="imagesList" class="omni-images-grid">No Images</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="notesApp" class="page">
+                    <div class="navbar-container">
+                        <div class="navbar">
+                            <div class="navbar__left">
+                                <div class="menu-btn liquid-glass" id="toggleSidebar"><icon>menu</icon></div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="notes">Notes</div>
+                            </div>
+                            <div class="navbar__right">
+                                <button class="menu-btn liquid-glass" id="newQuickNoteBtn" type="button"><icon>add</icon><span data-i18n="new_note">New Note</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-area" id="notesContentArea">
+                        <div class="dashboard-hero liquid-glass" style="margin-bottom:18px;">
+                            <h1 data-i18n="quick_notes">Quick Notes</h1>
+                            <p data-i18n="quick_notes_desc">Capture ideas and insert them into the current document when needed.</p>
+                        </div>
+                        <div id="notesList" class="omni-notes-grid"></div>
+                    </div>
+                </div>
+                <div id="trashApp" class="page">
+                    <div class="navbar-container">
+                        <div class="navbar">
+                            <div class="navbar__left">
+                                <div class="menu-btn liquid-glass" id="toggleSidebar"><icon>menu</icon></div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="trash">Trash</div>
+                            </div>
+                            <div class="navbar__right liquid-glass" style="padding:11px 14px;display:flex;align-items:center;gap:12px;">
+                                <icon id="trashRestoreAllBtn" title="Restore All">restore</icon>
+                                <icon id="trashDeleteAllBtn" title="Delete All">delete_forever</icon>
+                                <icon id="trashSettingsBtn" title="Trash Settings">settings</icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-area" id="trashContentArea">
+                        <div class="dashboard-hero liquid-glass" style="margin-bottom:18px;">
+                            <h1 data-i18n="trash">Trash</h1>
+                            <p data-i18n="trash_desc">Deleted documents stay here before permanent cleanup.</p>
+                        </div>
+                        <div id="trashDocumentsList" class="omni-trash-grid"></div>
                     </div>
                 </div>
                 <div id="tasksApp" class="page">
@@ -3147,6 +3948,9 @@ upgrade-insecure-requests;
                     <div class="toolbar-item" id="checkboxListBtn" title="Checkbox List">
                         <icon>check_box</icon>
                         </div>
+                    <div class="toolbar-item" id="handwritingBtn" title="Handwriting" data-i18n-title="handwriting">
+                        <icon>draw</icon>
+                    </div>
                         <vl></vl>
                         <div class="toolbar-item" id="alignLeftBtn" title="Align Left">
                             <icon>format_align_left</icon>
@@ -3237,6 +4041,9 @@ upgrade-insecure-requests;
                     </div>
                     <div class="toolbar-item" id="bgColorBtn" title="Text Background Color">
                         <icon>format_color_fill</icon>
+                    </div>
+                    <div class="toolbar-item" id="documentBgColorBtn" title="Document Background Color" data-i18n-title="document_background_color">
+                        <icon>format_color_reset</icon>
                     </div>
                   
                     <div class="toolbar-item" id="paragraphBtn" title="Normal Text / Paragraph">
@@ -4727,6 +5534,12 @@ upgrade-insecure-requests;
                     switchPage('imagesApp');
                 } else if (hash === '#/templates') {
                     switchPage('templatesApp');
+                } else if (hash === '#/notes') {
+                    switchPage('notesApp');
+                    if (typeof renderNotes === 'function') renderNotes();
+                } else if (hash === '#/trash') {
+                    switchPage('trashApp');
+                    if (typeof renderTrashDocuments === 'function') renderTrashDocuments();
                 } else {
                     switchPage('selectArea');
                 }
@@ -6883,6 +7696,8 @@ Q4: 22</textarea>
             const video = document.createElement('video');
             video.src = dataUrl;
             video.controls = true;
+            video.setAttribute('controls', '');
+            video.classList.add('omni-native-video');
             video.style.maxWidth = '100%';
             video.style.borderRadius = '8px';
             video.style.margin = '8px 0';
@@ -8185,7 +9000,7 @@ Q4: 22</textarea>
         const dismissText = dict['dismiss'] || 'Dismiss';
         const modal = document.createElement('div');
         modal.id = 'nonLocalVoiceWarningModal';
-        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:9999999;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:9999999;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);';
         modal.innerHTML = `
             <div class="liquid-glass" style="padding:28px 32px;border-radius:16px;max-width:420px;width:90%;text-align:left;animation:fadeInModal 0.2s ease;">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
@@ -9946,7 +10761,7 @@ Q4: 22</textarea>
                 if (!blurOverlay) {
                     blurOverlay = document.createElement('div');
                     blurOverlay.id = blurOverlayId;
-                    blurOverlay.style.cssText = 'position:absolute;inset:0;z-index:10;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(17,7,54,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;border-radius:inherit;pointer-events:all;';
+                    blurOverlay.style.cssText = 'position:absolute;inset:0;z-index:10;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);background:rgba(17,7,54,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;border-radius:inherit;pointer-events:all;';
                     blurOverlay.innerHTML = '<icon style="font-size:48px;color:#ffe066;">lock</icon>'
                         + '<span style="font-size:18px;font-weight:600;color:#fff;text-align:center;padding:0 24px;">' + _t('doc_locked_prevent_viewing_msg') + '</span>'
                         + '<button id="unlockBlurOverlayBtn" style="padding:10px 28px;font-size:15px;background:#ffe066;color:#110736;border-radius:10px;border:none;cursor:pointer;font-weight:700;">' + _t('unlock_document') + '</button>';
@@ -11091,6 +11906,12 @@ Q4: 22</textarea>
                 switchPage('imagesApp');
             } else if (hash === '#/templates') {
                 switchPage('templatesApp');
+            } else if (hash === '#/notes') {
+                switchPage('notesApp');
+                if (typeof renderNotes === 'function') renderNotes();
+            } else if (hash === '#/trash') {
+                switchPage('trashApp');
+                if (typeof renderTrashDocuments === 'function') renderTrashDocuments();
             } else {
                 switchPage('selectArea');
                 renderHomeDashboard();
@@ -11365,6 +12186,8 @@ Q4: 22</textarea>
             images: 'image',
             tasks: 'task_alt',
             templates: 'browse',
+            notes: 'edit_note',
+            trash: 'delete',
             workspaces: 'dashboard_customize',
             documents: 'folder',
             settings: 'settings',
@@ -12139,6 +12962,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.13.0 - MAJOR UPDATE: Added document background colors, handwriting insertion, Notes, Trash, image page improvements, native video controls, expanded translations, find and replace, keyboard shortcuts, and improved responsive layouts.</li>
                         <li>v1.12.4 - Added workspaces, toolbar customization, stacked toasts, print font loading, responsive mini sidebar, and improved collapsed sidebar layout.</li>
                         <li> v1.12.3 - Added Move to folder and improved UI</li>
                                <li>v1.12.2 — Migrated hosting to Cloudflare Pages for improved uptime and global performance.</li>
@@ -20645,9 +21469,1623 @@ Q4: 22</textarea>
         document.addEventListener('touchend', () => { dragging = false; });
     })();
 
-   
+    // --- OmniWrite document background, notes, trash, images, shortcuts, and i18n extensions ---
+    (function omniWriteFeatureExpansion() {
+        const NEW_TRANSLATIONS = {
+            en: {
+                notes: 'Notes',
+                trash: 'Trash',
+                new_note: 'New Note',
+                quick_notes: 'Quick Notes',
+                quick_notes_desc: 'Capture ideas and insert them into the current document when needed.',
+                note_placeholder: 'Write a quick note...',
+                insert_note_document: 'Insert into Document',
+                select_document_for_note: 'Choose Document',
+                select_document_for_note_desc: 'Select the document where this note should be inserted.',
+                no_documents_for_note: 'No documents available.',
+                note_inserted_document: 'Note inserted into document.',
+                delete_note: 'Delete Note',
+                empty_notes: 'No notes yet.',
+                trash_desc: 'Deleted documents stay here before permanent cleanup.',
+                trash_empty: 'Trash is empty.',
+                trash_settings: 'Trash Settings',
+                trash_clear_after: 'Clear deleted documents after',
+                days: 'days',
+                restore_all: 'Restore All',
+                delete_all: 'Delete All',
+                restore_document: 'Restore Document',
+                delete_forever: 'Delete Forever',
+                document_moved_to_trash: 'Document moved to trash.',
+                document_restored: 'Document restored.',
+                trash_settings_saved: 'Trash settings saved.',
+                confirm_delete_all_trash: 'Permanently delete all trashed documents?',
+                confirm_delete_forever: 'Permanently delete this document?',
+                images_page_subtitle: 'Browse, preview, restore, and manage your local image library.',
+                document_background_color: 'Document Background Color',
+                handwriting: 'Handwriting',
+                handwriting_modal_title: 'Handwriting',
+                handwriting_modal_desc: 'Draw with a pen, marker, highlighter, pencil, or calligraphy brush and insert the result into the document.',
+                handwriting_tool: 'Tool',
+                handwriting_pen: 'Pen',
+                handwriting_marker: 'Marker',
+                handwriting_highlighter: 'Highlighter',
+                handwriting_pencil: 'Pencil',
+                handwriting_calligraphy: 'Calligraphy',
+                handwriting_eraser: 'Eraser',
+                handwriting_size: 'Size',
+                handwriting_color: 'Color',
+                handwriting_clear: 'Clear',
+                handwriting_undo: 'Undo',
+                handwriting_insert: 'Insert to Document',
+                handwriting_empty: 'Draw something before inserting.',
+                video_progress: 'Video progress',
+                video_speed: 'Speed',
+                volume: 'Volume',
+                fullscreen: 'Fullscreen',
+                zoom_in: 'Zoom In',
+                zoom_out: 'Zoom Out',
+                replace: 'Replace',
+                replace_all: 'Replace All',
+                find_in_document: 'Find in document',
+                replace_with: 'Replace with',
+                locked_no_add_page: 'Unlock this document before adding a page.',
+                locked_no_split_view: 'Unlock this document before using split view.',
+                untitled_document: 'Untitled Document',
+                template_document_title: '{template} Document'
+            },
+            es: {
+                notes: 'Notas',
+                trash: 'Papelera',
+                new_note: 'Nueva nota',
+                quick_notes: 'Notas rápidas',
+                quick_notes_desc: 'Captura ideas e insértalas en el documento actual cuando las necesites.',
+                note_placeholder: 'Escribe una nota rápida...',
+                insert_note_document: 'Insertar en el documento',
+                select_document_for_note: 'Elegir documento',
+                select_document_for_note_desc: 'Selecciona el documento donde se debe insertar esta nota.',
+                no_documents_for_note: 'No hay documentos disponibles.',
+                note_inserted_document: 'Nota insertada en el documento.',
+                delete_note: 'Eliminar nota',
+                empty_notes: 'Aún no hay notas.',
+                trash_desc: 'Los documentos eliminados permanecen aquí antes de limpiarse permanentemente.',
+                trash_empty: 'La papelera está vacía.',
+                trash_settings: 'Configuración de papelera',
+                trash_clear_after: 'Borrar documentos eliminados después de',
+                days: 'días',
+                restore_all: 'Restaurar todo',
+                delete_all: 'Eliminar todo',
+                restore_document: 'Restaurar documento',
+                delete_forever: 'Eliminar definitivamente',
+                document_moved_to_trash: 'Documento movido a la papelera.',
+                document_restored: 'Documento restaurado.',
+                trash_settings_saved: 'Configuración de papelera guardada.',
+                confirm_delete_all_trash: '¿Eliminar permanentemente todos los documentos en la papelera?',
+                confirm_delete_forever: '¿Eliminar permanentemente este documento?',
+                images_page_subtitle: 'Explora, previsualiza, restaura y administra tu biblioteca local de imágenes.',
+                document_background_color: 'Color de fondo del documento',
+                handwriting: 'Escritura a mano',
+                handwriting_modal_title: 'Escritura a mano',
+                handwriting_modal_desc: 'Dibuja con pluma, marcador, resaltador, lápiz o pincel caligráfico e inserta el resultado en el documento.',
+                handwriting_tool: 'Herramienta',
+                handwriting_pen: 'Pluma',
+                handwriting_marker: 'Marcador',
+                handwriting_highlighter: 'Resaltador',
+                handwriting_pencil: 'Lápiz',
+                handwriting_calligraphy: 'Caligrafía',
+                handwriting_eraser: 'Borrador',
+                handwriting_size: 'Tamaño',
+                handwriting_color: 'Color',
+                handwriting_clear: 'Limpiar',
+                handwriting_undo: 'Deshacer',
+                handwriting_insert: 'Insertar en el documento',
+                handwriting_empty: 'Dibuja algo antes de insertar.',
+                video_progress: 'Progreso del video',
+                video_speed: 'Velocidad',
+                volume: 'Volumen',
+                fullscreen: 'Pantalla completa',
+                zoom_in: 'Acercar',
+                zoom_out: 'Alejar',
+                replace: 'Reemplazar',
+                replace_all: 'Reemplazar todo',
+                find_in_document: 'Buscar en el documento',
+                replace_with: 'Reemplazar con',
+                locked_no_add_page: 'Desbloquea este documento antes de agregar una página.',
+                locked_no_split_view: 'Desbloquea este documento antes de usar la vista dividida.',
+                untitled_document: 'Documento sin título',
+                template_document_title: 'Documento de {template}'
+            }
+        };
+        if (typeof TRANSLATIONS !== 'undefined') {
+            Object.keys(NEW_TRANSLATIONS).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, NEW_TRANSLATIONS[lang]);
+            });
+            Object.keys(TRANSLATIONS).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign({}, NEW_TRANSLATIONS.en, TRANSLATIONS[lang]);
+            });
+        }
+        const originalTranslateHelper = typeof _t === 'function' ? _t : null;
+        if (originalTranslateHelper) {
+            _t = function(key) {
+                const translated = originalTranslateHelper(key);
+                if (translated !== key) return translated;
+                const lang = localStorage.getItem('omniwrite-lang') || 'en';
+                return (NEW_TRANSLATIONS[lang] && NEW_TRANSLATIONS[lang][key]) || NEW_TRANSLATIONS.en[key] || key;
+            };
+        }
+
+        const escapeHtml = value => String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const currentDocId = () => window.location.hash.match(/^#\/document\/(.+)$/)?.[1] || null;
+        const currentDoc = () => {
+            const id = currentDocId();
+            return id ? documents.find(doc => doc.id === id) || null : null;
+        };
+        const isLockedDoc = doc => !!(doc && typeof isEffectivelyLocked === 'function' && isEffectivelyLocked(doc));
+        const getTrashDays = () => Math.max(1, Math.min(365, parseInt(localStorage.getItem('omniwrite-trash-clear-days') || '30', 10) || 30));
+
+        function documentTitleDefault() {
+            return _t('untitled_document') || _t('Untitled Document') || 'Untitled Document';
+        }
+
+        function cleanupExpiredTrashedDocuments() {
+            const cutoff = Date.now() - getTrashDays() * 24 * 60 * 60 * 1000;
+            const before = documents.length;
+            documents = documents.filter(doc => !doc.trashedAt || doc.trashedAt > cutoff);
+            if (documents.length !== before) saveDocuments();
+        }
+
+        if (typeof getWorkspaceDocuments === 'function') {
+            const originalGetWorkspaceDocuments = getWorkspaceDocuments;
+            getWorkspaceDocuments = function(workspaceId = getActiveWorkspaceId()) {
+                return originalGetWorkspaceDocuments(workspaceId).filter(doc => !doc.trashedAt);
+            };
+        }
+
+        if (typeof createDocumentElement === 'function') {
+            const originalCreateDocumentElement = createDocumentElement;
+            createDocumentElement = function(doc) {
+                if (doc.trashedAt) {
+                    const ghost = document.createElement('div');
+                    ghost.style.display = 'none';
+                    return ghost;
+                }
+                return originalCreateDocumentElement(doc);
+            };
+        }
+
+        function applyDocumentVisuals(doc) {
+            const bg = doc && doc.backgroundColor ? doc.backgroundColor : '#1a0f3c';
+            document.querySelectorAll('.document-page-editor[data-doc-id="' + (doc?.id || '') + '"], #editorArea, .split-editor[data-doc-id="' + (doc?.id || '') + '"]').forEach(editor => {
+                if (!editor.classList.contains('editor-surface')) return;
+                editor.style.backgroundColor = bg;
+                editor.dataset.bgTone = getReadableTone(bg);
+                if (!editor.style.color || editor.dataset.bgTone) editor.style.color = editor.dataset.bgTone === 'light' ? '#110736' : '#ffffff';
+            });
+        }
+
+        function getReadableTone(hex) {
+            const value = String(hex || '#1a0f3c').replace('#', '');
+            const full = value.length === 3 ? value.split('').map(ch => ch + ch).join('') : value.padEnd(6, '0').slice(0, 6);
+            const r = parseInt(full.slice(0, 2), 16) || 0;
+            const g = parseInt(full.slice(2, 4), 16) || 0;
+            const b = parseInt(full.slice(4, 6), 16) || 0;
+            return ((r * 299 + g * 587 + b * 114) / 1000) > 160 ? 'light' : 'dark';
+        }
+
+        function showCustomColorPicker(anchor, onPick, titleKey = 'document_background_color') {
+            document.querySelectorAll('.omni-custom-palette').forEach(el => el.remove());
+            const colors = ['#ffffff', '#f8fafc', '#fff7d6', '#fce7f3', '#e0f2fe', '#dcfce7', '#1a0f3c', '#111827', '#312e81', '#7f1d1d', '#14532d', '#164e63', '#ffe066', '#8f5cff', '#ff8a6b', '#6ff3c5', '#67d6ff', '#ff7fbf'];
+            const picker = document.createElement('div');
+            picker.className = 'omni-custom-palette liquid-glass';
+            picker.innerHTML = '<div style="font-weight:700;">' + escapeHtml(_t(titleKey)) + '</div><div class="omni-custom-palette-grid"></div><input id="omniCustomHexInput" type="text" value="#ffffff" maxlength="7" style="border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.07);color:inherit;padding:10px;outline:none;"><button id="omniApplyCustomColorBtn">' + escapeHtml(_t('apply_theme') || 'Apply') + '</button>';
+            const grid = picker.querySelector('.omni-custom-palette-grid');
+            colors.forEach(color => {
+                const swatch = document.createElement('button');
+                swatch.type = 'button';
+                swatch.className = 'omni-custom-swatch';
+                swatch.style.background = color;
+                swatch.title = color;
+                swatch.addEventListener('click', () => {
+                    onPick(color);
+                    picker.remove();
+                });
+                grid.appendChild(swatch);
+            });
+            document.body.appendChild(picker);
+            const rect = anchor.getBoundingClientRect();
+            picker.style.top = Math.min(window.innerHeight - 260, rect.bottom + 8) + 'px';
+            picker.style.left = Math.max(12, Math.min(window.innerWidth - 302, rect.left)) + 'px';
+            picker.querySelector('#omniApplyCustomColorBtn').onclick = () => {
+                const input = picker.querySelector('#omniCustomHexInput').value.trim();
+                if (/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(input)) {
+                    onPick(input);
+                    picker.remove();
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('mousedown', function closePicker(e) {
+                    if (!picker.contains(e.target) && !anchor.contains(e.target)) {
+                        picker.remove();
+                        document.removeEventListener('mousedown', closePicker);
+                    }
+                });
+            }, 0);
+        }
+
+        function setupDocumentBackgroundButton() {
+            const btn = document.getElementById('documentBgColorBtn');
+            if (!btn || btn.dataset.omniReady === 'true') return;
+            btn.dataset.omniReady = 'true';
+            btn.addEventListener('click', function() {
+                const doc = currentDoc();
+                if (!doc) return;
+                if (isLockedDoc(doc)) {
+                    showToast(_t('doc_locked_rename') || _t('locked_no_add_page'), { type: 'error' });
+                    return;
+                }
+                showCustomColorPicker(btn, color => {
+                    doc.backgroundColor = color;
+                    applyDocumentVisuals(doc);
+                    doc.timestamp = Date.now();
+                    debouncedSaveDocuments(120);
+                });
+            });
+        }
+
+        function setupHandwritingButton() {
+            const btn = document.getElementById('handwritingBtn');
+            if (!btn || btn.dataset.omniReady === 'true') return;
+            btn.dataset.omniReady = 'true';
+            btn.addEventListener('click', function() {
+                const doc = currentDoc();
+                if (!doc) {
+                    showToast(_t('please_open_document'), { type: 'info' });
+                    return;
+                }
+                if (isLockedDoc(doc)) {
+                    showToast(_t('doc_locked_rename') || _t('locked_no_add_page'), { type: 'error' });
+                    return;
+                }
+                showHandwritingModal();
+            });
+        }
+
+        function showHandwritingModal() {
+            document.getElementById('omniHandwritingModal')?.remove();
+            const modal = document.createElement('div');
+            modal.className = 'modal omni-handwriting-modal';
+            modal.id = 'omniHandwritingModal';
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;">
+                    <span class="modal-content-close" id="closeHandwritingModal" style="position:absolute;top:14px;right:20px;cursor:pointer;font-size:28px;z-index:3;">&times;</span>
+                    <div style="padding-right:40px;">
+                        <h2 style="margin:0 0 6px;display:flex;align-items:center;gap:10px;"><icon>draw</icon>${escapeHtml(_t('handwriting_modal_title'))}</h2>
+                        <p style="margin:0;opacity:.72;">${escapeHtml(_t('handwriting_modal_desc'))}</p>
+                    </div>
+                    <div class="omni-handwriting-toolbar">
+                        <div class="omni-handwriting-select" id="handwritingToolSelect">
+                            <button type="button" class="omni-handwriting-select-btn" id="handwritingToolBtn">
+                                <span style="display:flex;align-items:center;gap:8px;"><icon id="handwritingToolIcon">edit</icon><span id="handwritingToolLabel">${escapeHtml(_t('handwriting_pen'))}</span></span>
+                                <icon>expand_more</icon>
+                            </button>
+                            <div class="omni-handwriting-select-menu liquid-glass" id="handwritingToolMenu"></div>
+                        </div>
+                        <button type="button" class="omni-handwriting-color-btn" id="handwritingColorBtn">
+                            <span class="omni-handwriting-color-dot" id="handwritingColorDot"></span>
+                            <span>${escapeHtml(_t('handwriting_color'))}</span>
+                        </button>
+                        <div class="omni-handwriting-size">
+                            <span>${escapeHtml(_t('handwriting_size'))}</span>
+                            <input id="handwritingSizeInput" type="range" min="1" max="42" value="6">
+                            <strong id="handwritingSizeLabel">6px</strong>
+                        </div>
+                        <button type="button" id="handwritingUndoBtn"><icon>undo</icon><span>${escapeHtml(_t('handwriting_undo'))}</span></button>
+                        <button type="button" id="handwritingClearBtn"><icon>delete_sweep</icon><span>${escapeHtml(_t('handwriting_clear'))}</span></button>
+                    </div>
+                    <div class="omni-handwriting-canvas-wrap">
+                        <canvas id="omniHandwritingCanvas"></canvas>
+                    </div>
+                    <div class="omni-handwriting-actions">
+                        <button type="button" id="handwritingCancelBtn"><icon>close</icon><span>${escapeHtml(_t('cancel'))}</span></button>
+                        <button type="button" id="handwritingInsertBtn" style="background:#ffe066;color:#110736;"><icon>post_add</icon><span>${escapeHtml(_t('handwriting_insert'))}</span></button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const canvas = modal.querySelector('#omniHandwritingCanvas');
+            const ctx = canvas.getContext('2d');
+            const toolButton = modal.querySelector('#handwritingToolBtn');
+            const toolMenu = modal.querySelector('#handwritingToolMenu');
+            const toolLabel = modal.querySelector('#handwritingToolLabel');
+            const toolIcon = modal.querySelector('#handwritingToolIcon');
+            const colorButton = modal.querySelector('#handwritingColorBtn');
+            const colorDot = modal.querySelector('#handwritingColorDot');
+            const sizeInput = modal.querySelector('#handwritingSizeInput');
+            const sizeLabel = modal.querySelector('#handwritingSizeLabel');
+            const strokes = [];
+            let activeTool = 'pen';
+            let activeColor = '#111827';
+            let isDrawing = false;
+            let activeStroke = null;
+            let hasInk = false;
+
+            const tools = [
+                { value: 'pen', label: _t('handwriting_pen'), icon: 'edit', size: 4, alpha: 1, cap: 'round', composite: 'source-over' },
+                { value: 'marker', label: _t('handwriting_marker'), icon: 'ink_marker', size: 12, alpha: 0.92, cap: 'round', composite: 'source-over' },
+                { value: 'highlighter', label: _t('handwriting_highlighter'), icon: 'ink_highlighter', size: 20, alpha: 0.32, cap: 'square', composite: 'multiply' },
+                { value: 'pencil', label: _t('handwriting_pencil'), icon: 'stylus_note', size: 3, alpha: 0.82, cap: 'round', composite: 'source-over' },
+                { value: 'calligraphy', label: _t('handwriting_calligraphy'), icon: 'gesture', size: 8, alpha: 1, cap: 'round', composite: 'source-over' },
+                { value: 'eraser', label: _t('handwriting_eraser'), icon: 'ink_eraser', size: 18, alpha: 1, cap: 'round', composite: 'destination-out' }
+            ];
+
+            function resizeCanvas() {
+                const wrap = modal.querySelector('.omni-handwriting-canvas-wrap');
+                const rect = wrap.getBoundingClientRect();
+                const ratio = Math.max(1, window.devicePixelRatio || 1);
+                const snapshot = canvas.width && canvas.height ? canvas.toDataURL('image/png') : null;
+                canvas.width = Math.max(320, Math.floor(rect.width * ratio));
+                canvas.height = Math.max(320, Math.floor(rect.height * ratio));
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = Math.max(320, rect.height) + 'px';
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (snapshot && hasInk) {
+                    const img = new Image();
+                    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, Math.max(320, rect.height));
+                    img.src = snapshot;
+                }
+            }
+
+            function rgbaFromHex(hex, alpha) {
+                const clean = String(hex || '#111827').replace('#', '');
+                const full = clean.length === 3 ? clean.split('').map(ch => ch + ch).join('') : clean.padEnd(6, '0').slice(0, 6);
+                const r = parseInt(full.slice(0, 2), 16) || 0;
+                const g = parseInt(full.slice(2, 4), 16) || 0;
+                const b = parseInt(full.slice(4, 6), 16) || 0;
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+
+            function getTool() {
+                return tools.find(tool => tool.value === activeTool) || tools[0];
+            }
+
+            function drawStroke(stroke) {
+                if (!stroke || stroke.points.length < 2) return;
+                const tool = tools.find(item => item.value === stroke.tool) || tools[0];
+                ctx.save();
+                ctx.globalCompositeOperation = tool.composite;
+                ctx.strokeStyle = tool.composite === 'destination-out' ? 'rgba(0,0,0,1)' : rgbaFromHex(stroke.color, stroke.alpha);
+                ctx.lineWidth = stroke.size;
+                ctx.lineCap = tool.cap;
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    const prev = stroke.points[i - 1];
+                    const point = stroke.points[i];
+                    if (stroke.tool === 'calligraphy') {
+                        ctx.lineWidth = Math.max(1, stroke.size * (0.72 + (i % 3) * 0.22));
+                    }
+                    ctx.quadraticCurveTo(prev.x, prev.y, (prev.x + point.x) / 2, (prev.y + point.y) / 2);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function redraw() {
+                const rect = canvas.getBoundingClientRect();
+                ctx.clearRect(0, 0, rect.width, rect.height);
+                strokes.forEach(drawStroke);
+                hasInk = strokes.some(stroke => stroke.tool !== 'eraser');
+            }
+
+            function pointFromEvent(event) {
+                const rect = canvas.getBoundingClientRect();
+                const source = event.touches ? event.touches[0] : event;
+                return {
+                    x: Math.max(0, Math.min(rect.width, source.clientX - rect.left)),
+                    y: Math.max(0, Math.min(rect.height, source.clientY - rect.top))
+                };
+            }
+
+            function beginDraw(event) {
+                event.preventDefault();
+                const tool = getTool();
+                isDrawing = true;
+                activeStroke = {
+                    tool: tool.value,
+                    color: activeColor,
+                    alpha: tool.alpha,
+                    size: Number(sizeInput.value) || tool.size,
+                    points: [pointFromEvent(event)]
+                };
+                strokes.push(activeStroke);
+            }
+
+            function moveDraw(event) {
+                if (!isDrawing || !activeStroke) return;
+                event.preventDefault();
+                activeStroke.points.push(pointFromEvent(event));
+                redraw();
+            }
+
+            function endDraw() {
+                if (!isDrawing) return;
+                isDrawing = false;
+                if (activeStroke && activeStroke.points.length === 1) {
+                    activeStroke.points.push({ x: activeStroke.points[0].x + 0.1, y: activeStroke.points[0].y + 0.1 });
+                    redraw();
+                }
+                activeStroke = null;
+            }
+
+            function closeHandwritingModal() {
+                document.removeEventListener('mouseup', endDraw);
+                modal.remove();
+            }
+
+            function setTool(value) {
+                const tool = tools.find(item => item.value === value) || tools[0];
+                activeTool = tool.value;
+                toolLabel.textContent = tool.label;
+                toolIcon.textContent = tool.icon;
+                sizeInput.value = String(tool.size);
+                sizeLabel.textContent = tool.size + 'px';
+                toolMenu.querySelectorAll('.omni-handwriting-option').forEach(option => {
+                    option.classList.toggle('active', option.dataset.tool === tool.value);
+                });
+            }
+
+            function setColor(color) {
+                activeColor = color;
+                colorDot.style.background = color;
+            }
+
+            toolMenu.innerHTML = tools.map(tool => `
+                <button type="button" class="omni-handwriting-option${tool.value === activeTool ? ' active' : ''}" data-tool="${escapeHtml(tool.value)}">
+                    <icon>${escapeHtml(tool.icon)}</icon>
+                    <span>${escapeHtml(tool.label)}</span>
+                </button>
+            `).join('');
+
+            toolButton.onclick = event => {
+                event.stopPropagation();
+                toolMenu.classList.toggle('open');
+            };
+            toolMenu.querySelectorAll('.omni-handwriting-option').forEach(option => {
+                option.onclick = () => {
+                    setTool(option.dataset.tool);
+                    toolMenu.classList.remove('open');
+                };
+            });
+            colorButton.onclick = () => showCustomColorPicker(colorButton, setColor, 'handwriting_color');
+            sizeInput.oninput = () => {
+                sizeLabel.textContent = sizeInput.value + 'px';
+            };
+            modal.querySelector('#handwritingUndoBtn').onclick = () => {
+                strokes.pop();
+                redraw();
+            };
+            modal.querySelector('#handwritingClearBtn').onclick = () => {
+                strokes.length = 0;
+                hasInk = false;
+                redraw();
+            };
+            modal.querySelector('#handwritingCancelBtn').onclick = closeHandwritingModal;
+            modal.querySelector('#closeHandwritingModal').onclick = closeHandwritingModal;
+            modal.addEventListener('mousedown', event => {
+                if (event.target === modal) closeHandwritingModal();
+                if (!event.target.closest('.omni-handwriting-select')) toolMenu.classList.remove('open');
+            });
+            modal.querySelector('#handwritingInsertBtn').onclick = () => {
+                if (!hasInk) {
+                    showToast(_t('handwriting_empty'), { type: 'info' });
+                    return;
+                }
+                const editor = typeof getActiveEditorSurface === 'function' ? getActiveEditorSurface() : document.getElementById('editorArea');
+                const doc = currentDoc();
+                if (!editor || !doc || isLockedDoc(doc)) return;
+                const img = document.createElement('img');
+                img.src = canvas.toDataURL('image/png');
+                img.alt = _t('handwriting');
+                img.style.maxWidth = '100%';
+                img.style.width = '420px';
+                img.style.height = 'auto';
+                img.style.display = 'block';
+                img.style.margin = '12px auto';
+                placeNodeAtSelectionOrEnd(editor, img);
+                saveEditorSurfaceContent(editor);
+                closeHandwritingModal();
+            };
+
+            canvas.addEventListener('mousedown', beginDraw);
+            canvas.addEventListener('mousemove', moveDraw);
+            document.addEventListener('mouseup', endDraw, { once: false });
+            canvas.addEventListener('touchstart', beginDraw, { passive: false });
+            canvas.addEventListener('touchmove', moveDraw, { passive: false });
+            canvas.addEventListener('touchend', endDraw);
+            setColor(activeColor);
+            setTool(activeTool);
+            requestAnimationFrame(resizeCanvas);
+            setTimeout(resizeCanvas, 80);
+        }
+
+        if (typeof openDocument === 'function') {
+            const originalOpenDocument = openDocument;
+            openDocument = function(docId) {
+                const doc = documents.find(d => d.id === docId);
+                if (doc && doc.trashedAt) {
+                    window.location.hash = '#/trash';
+                    switchPage('trashApp');
+                    renderTrashDocuments();
+                    return;
+                }
+                originalOpenDocument(docId);
+                setTimeout(() => {
+                    const opened = documents.find(d => d.id === docId);
+                    applyDocumentVisuals(opened);
+                    applyDocumentLanguage(localStorage.getItem('omniwrite-lang') || opened?.language || 'en');
+                    if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers(document);
+                    syncLockedDocumentControls(opened);
+                }, 0);
+            };
+        }
+
+        if (typeof renderDocumentPages === 'function') {
+            const originalRenderDocumentPages = renderDocumentPages;
+            renderDocumentPages = function(doc) {
+                const first = originalRenderDocumentPages(doc);
+                applyDocumentVisuals(doc);
+                applyDocumentLanguage(localStorage.getItem('omniwrite-lang') || doc?.language || 'en');
+                if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers(document);
+                syncLockedDocumentControls(doc);
+                return first;
+            };
+        }
+
+        function syncLockedDocumentControls(doc = currentDoc()) {
+            const locked = isLockedDoc(doc);
+            const addPageBtn = document.getElementById('addPageBtn');
+            if (addPageBtn) {
+                addPageBtn.disabled = locked;
+                addPageBtn.title = locked ? _t('locked_no_add_page') : '';
+            }
+            const splitBtn = document.getElementById('splitScreenBtn');
+            if (splitBtn && !window.isSplitView) {
+                splitBtn.style.opacity = locked ? '0.45' : '';
+                splitBtn.title = locked ? _t('locked_no_split_view') : _t('split_screen');
+            }
+        }
+
+        if (typeof applyDocumentLockState === 'function') {
+            const originalApplyDocumentLockState = applyDocumentLockState;
+            applyDocumentLockState = function(doc, editorArea) {
+                originalApplyDocumentLockState(doc, editorArea);
+                syncLockedDocumentControls(doc);
+            };
+        }
+
+        document.addEventListener('click', function(event) {
+            const addBtn = event.target.closest && event.target.closest('#addPageBtn');
+            if (addBtn && addBtn.disabled) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                showToast(_t('locked_no_add_page'), { type: 'error' });
+            }
+        }, true);
+
+        const splitBtn = document.getElementById('splitScreenBtn');
+        if (splitBtn) {
+            splitBtn.addEventListener('click', function(event) {
+                const doc = currentDoc();
+                if (isLockedDoc(doc)) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    showToast(_t('locked_no_split_view'), { type: 'error' });
+                }
+            }, true);
+        }
+        if (typeof activateSplitView === 'function') {
+            const originalActivateSplitView = activateSplitView;
+            activateSplitView = function(leftDocId, rightDocId) {
+                const left = documents.find(d => d.id === leftDocId);
+                const right = documents.find(d => d.id === rightDocId);
+                if (isLockedDoc(left) || isLockedDoc(right)) {
+                    showToast(_t('locked_no_split_view'), { type: 'error' });
+                    return;
+                }
+                originalActivateSplitView(leftDocId, rightDocId);
+            };
+        }
+
+        function setupSoftDeleteIntercept() {
+            const deleteBtn = document.getElementById('deleteMoreOptionsBtn');
+            if (!deleteBtn || deleteBtn.dataset.omniTrashIntercept === 'true') return;
+            deleteBtn.dataset.omniTrashIntercept = 'true';
+            deleteBtn.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const menu = document.getElementById('editorMoreOptions');
+                if (menu) menu.style.display = 'none';
+                const doc = currentDoc();
+                if (!doc) return;
+                if (isLockedDoc(doc)) {
+                    showToast(_t('doc_locked_no_delete'), { type: 'error' });
+                    return;
+                }
+                showConfirm(_t('delete_document_confirm'), async () => {
+                    doc.trashedAt = Date.now();
+                    doc.timestamp = Date.now();
+                    await saveDocuments();
+                    renderDocumentsList();
+                    renderFoldersList();
+                    window.location.hash = '#/trash';
+                    switchPage('trashApp');
+                    renderTrashDocuments();
+                    showToast(_t('document_moved_to_trash'), { type: 'success' });
+                });
+            }, true);
+        }
+
+        function getTrashedDocuments() {
+            cleanupExpiredTrashedDocuments();
+            return documents.filter(doc => !!doc.trashedAt).sort((a, b) => b.trashedAt - a.trashedAt);
+        }
+
+        function renderTrashDocuments() {
+            const list = document.getElementById('trashDocumentsList');
+            if (!list) return;
+            const trashed = getTrashedDocuments();
+            if (!trashed.length) {
+                list.innerHTML = '<div class="omni-trash-card"><strong>' + escapeHtml(_t('trash_empty')) + '</strong></div>';
+                return;
+            }
+            list.innerHTML = trashed.map(doc => {
+                const daysLeft = Math.max(0, getTrashDays() - Math.floor((Date.now() - doc.trashedAt) / 86400000));
+                return '<div class="omni-trash-card" data-doc-id="' + escapeHtml(doc.id) + '">'
+                    + '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">'
+                    + '<div><strong>' + escapeHtml(doc.title || documentTitleDefault()) + '</strong><br><small style="opacity:.68;">' + escapeHtml(new Date(doc.trashedAt).toLocaleString()) + ' · ' + daysLeft + ' ' + escapeHtml(_t('days')) + '</small></div>'
+                    + '<div style="display:flex;gap:8px;"><button data-action="restore"><icon>restore</icon>' + escapeHtml(_t('restore_document')) + '</button><button data-action="delete" style="background:#e74c3c;color:#fff;"><icon>delete_forever</icon>' + escapeHtml(_t('delete_forever')) + '</button></div>'
+                    + '</div></div>';
+            }).join('');
+            list.querySelectorAll('button[data-action]').forEach(button => {
+                button.onclick = async () => {
+                    const docId = button.closest('[data-doc-id]').dataset.docId;
+                    const doc = documents.find(d => d.id === docId);
+                    if (!doc) return;
+                    if (button.dataset.action === 'restore') {
+                        delete doc.trashedAt;
+                        doc.timestamp = Date.now();
+                        await saveDocuments();
+                        renderDocumentsList();
+                        renderTrashDocuments();
+                        showToast(_t('document_restored'), { type: 'success' });
+                    } else {
+                        showConfirm(_t('confirm_delete_forever'), async () => {
+                            documents = documents.filter(d => d.id !== docId);
+                            await saveDocuments();
+                            renderDocumentsList();
+                            renderTrashDocuments();
+                        });
+                    }
+                };
+            });
+        }
+
+        function showTrashSettingsModal() {
+            const existing = document.getElementById('trashSettingsModal');
+            if (existing) existing.remove();
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'trashSettingsModal';
+            modal.innerHTML = '<div class="modal-content liquid-glass" style="position:relative;max-width:420px;">'
+                + '<span class="modal-content-close" id="closeTrashSettingsModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;">&times;</span>'
+                + '<h2>' + escapeHtml(_t('trash_settings')) + '</h2>'
+                + '<label style="display:grid;gap:8px;margin:18px 0;"><span>' + escapeHtml(_t('trash_clear_after')) + '</span><input id="trashDaysInput" type="number" min="1" max="365" value="' + getTrashDays() + '" style="border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.07);color:inherit;padding:10px;"></label>'
+                + '<button id="saveTrashSettingsBtn"><icon>save</icon>' + escapeHtml(_t('save')) + '</button>'
+                + '</div>';
+            document.body.appendChild(modal);
+            modal.querySelector('#closeTrashSettingsModal').onclick = () => modal.remove();
+            modal.querySelector('#saveTrashSettingsBtn').onclick = () => {
+                const value = Math.max(1, Math.min(365, parseInt(modal.querySelector('#trashDaysInput').value, 10) || 30));
+                localStorage.setItem('omniwrite-trash-clear-days', String(value));
+                cleanupExpiredTrashedDocuments();
+                renderTrashDocuments();
+                modal.remove();
+                showToast(_t('trash_settings_saved'), { type: 'success' });
+            };
+        }
+
+        function setupTrashControls() {
+            document.getElementById('trashSettingsBtn')?.addEventListener('click', showTrashSettingsModal);
+            document.getElementById('trashRestoreAllBtn')?.addEventListener('click', async () => {
+                getTrashedDocuments().forEach(doc => {
+                    delete doc.trashedAt;
+                    doc.timestamp = Date.now();
+                });
+                await saveDocuments();
+                renderDocumentsList();
+                renderTrashDocuments();
+            });
+            document.getElementById('trashDeleteAllBtn')?.addEventListener('click', () => {
+                showConfirm(_t('confirm_delete_all_trash'), async () => {
+                    documents = documents.filter(doc => !doc.trashedAt);
+                    await saveDocuments();
+                    renderDocumentsList();
+                    renderTrashDocuments();
+                });
+            });
+        }
+
+        function getNotes() {
+            try { return JSON.parse(localStorage.getItem('omniwrite-quick-notes') || '[]'); }
+            catch(e) { return []; }
+        }
+        function saveNotes(notes) {
+            localStorage.setItem('omniwrite-quick-notes', JSON.stringify(notes));
+        }
+        function buildNoteBlockHtml(noteText) {
+            return '<aside class="callout-block"><strong>' + escapeHtml(_t('notes')) + '</strong><p>' + escapeHtml(noteText).replace(/\n/g, '<br>') + '</p></aside>';
+        }
+        function appendHtmlToDocumentContent(doc, html) {
+            const current = String(doc.content || '');
+            if (/<section\b[^>]*class=["'][^"']*omniwrite-page/i.test(current)) {
+                const temp = document.createElement('div');
+                temp.innerHTML = current;
+                const pages = temp.querySelectorAll('.omniwrite-page');
+                const lastPage = pages[pages.length - 1];
+                if (lastPage) {
+                    lastPage.insertAdjacentHTML('beforeend', html);
+                    doc.content = temp.innerHTML;
+                    return;
+                }
+            }
+            doc.content = current + html;
+        }
+        function insertNoteIntoDocument(noteText, doc) {
+            if (!doc || isLockedDoc(doc)) return false;
+            const html = buildNoteBlockHtml(noteText);
+            const openDocId = currentDocId();
+            const activeEditor = typeof getActiveEditorSurface === 'function' ? getActiveEditorSurface() : document.getElementById('editorArea');
+            const activeEditorDocId = activeEditor ? getEditorDocId(activeEditor) : null;
+            if (openDocId === doc.id && activeEditor && activeEditorDocId === doc.id) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                placeNodeAtSelectionOrEnd(activeEditor, temp.firstElementChild);
+                saveEditorSurfaceContent(activeEditor);
+            } else {
+                appendHtmlToDocumentContent(doc, html);
+                doc.timestamp = Date.now();
+                debouncedSaveDocuments(120);
+            }
+            return true;
+        }
+        function showNoteInsertDocumentModal(noteText) {
+            document.getElementById('noteInsertDocumentModal')?.remove();
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'noteInsertDocumentModal';
+            const availableDocs = (typeof getWorkspaceDocuments === 'function' ? getWorkspaceDocuments() : documents.filter(doc => !doc.trashedAt));
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;max-width:560px;">
+                    <span class="modal-content-close" id="closeNoteInsertModal" style="position:absolute;top:14px;right:20px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                    <h2 style="display:flex;align-items:center;gap:10px;"><icon>post_add</icon>${escapeHtml(_t('select_document_for_note'))}</h2>
+                    <p style="opacity:.72;margin:8px 0 16px;">${escapeHtml(_t('select_document_for_note_desc'))}</p>
+                    <div id="noteDocumentPickerList" style="display:grid;gap:10px;max-height:360px;overflow-y:auto;padding-right:4px;"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#noteDocumentPickerList');
+            if (!availableDocs.length) {
+                list.innerHTML = '<div class="omni-note-card"><strong>' + escapeHtml(_t('no_documents_for_note')) + '</strong></div>';
+            } else {
+                availableDocs.forEach(doc => {
+                    const locked = isLockedDoc(doc);
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'sidebarnav__item';
+                    item.disabled = locked;
+                    item.style.margin = '0';
+                    item.style.justifyContent = 'flex-start';
+                    item.style.opacity = locked ? '0.48' : '';
+                    item.innerHTML = '<icon>' + (locked ? 'lock' : 'description') + '</icon><div class="menu-text" style="min-width:0;text-align:left;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(doc.title || documentTitleDefault()) + '</strong><small style="opacity:.64;">' + escapeHtml(new Date(doc.timestamp || doc.updatedAt || doc.createdAt || Date.now()).toLocaleString()) + '</small></div>';
+                    item.onclick = async () => {
+                        if (!insertNoteIntoDocument(noteText, doc)) return;
+                        await saveDocuments();
+                        renderDocumentsList();
+                        modal.remove();
+                        showToast(_t('note_inserted_document'), { type: 'success' });
+                    };
+                    list.appendChild(item);
+                });
+            }
+            modal.querySelector('#closeNoteInsertModal').onclick = () => modal.remove();
+            modal.addEventListener('mousedown', event => {
+                if (event.target === modal) modal.remove();
+            });
+        }
+        function renderNotes() {
+            const list = document.getElementById('notesList');
+            if (!list) return;
+            const notes = getNotes();
+            if (!notes.length) {
+                list.innerHTML = '<div class="omni-note-card"><strong>' + escapeHtml(_t('empty_notes')) + '</strong></div>';
+                return;
+            }
+            list.innerHTML = notes.map(note => '<div class="omni-note-card" data-note-id="' + escapeHtml(note.id) + '">'
+                + '<textarea class="omni-note-textarea" placeholder="' + escapeHtml(_t('note_placeholder')) + '">' + escapeHtml(note.text) + '</textarea>'
+                + '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><small style="opacity:.66;">' + escapeHtml(new Date(note.updatedAt || note.createdAt).toLocaleString()) + '</small><div style="display:flex;gap:8px;"><button data-action="insert"><icon>post_add</icon>' + escapeHtml(_t('insert_note_document')) + '</button><button data-action="delete" style="background:#e74c3c;color:#fff;"><icon>delete</icon>' + escapeHtml(_t('delete_note')) + '</button></div></div>'
+                + '</div>').join('');
+            list.querySelectorAll('.omni-note-card').forEach(card => {
+                const noteId = card.dataset.noteId;
+                const textarea = card.querySelector('textarea');
+                textarea.addEventListener('input', () => {
+                    const next = getNotes();
+                    const note = next.find(n => n.id === noteId);
+                    if (note) {
+                        note.text = textarea.value;
+                        note.updatedAt = Date.now();
+                        saveNotes(next);
+                    }
+                });
+                card.querySelector('[data-action="insert"]').onclick = () => {
+                    showNoteInsertDocumentModal(textarea.value);
+                };
+                card.querySelector('[data-action="delete"]').onclick = () => {
+                    saveNotes(getNotes().filter(n => n.id !== noteId));
+                    renderNotes();
+                };
+            });
+        }
+        document.getElementById('newQuickNoteBtn')?.addEventListener('click', () => {
+            const notes = getNotes();
+            notes.unshift({ id: 'note-' + Date.now().toString(36) + Math.random().toString(36).slice(2), text: '', createdAt: Date.now(), updatedAt: Date.now() });
+            saveNotes(notes);
+            renderNotes();
+        });
+
+        function setupNavigationExtensions() {
+            const navItems = document.querySelectorAll('.sidebarnav__items .sidebarnav__item');
+            if (navItems[3] && navItems[3].dataset.omniReady !== 'true') {
+                navItems[3].dataset.omniReady = 'true';
+                navItems[3].addEventListener('click', event => {
+                    event.stopImmediatePropagation();
+                    window.location.hash = '#/notes';
+                    switchPage('notesApp');
+                    renderNotes();
+                    hideSidebarIfMobile();
+                }, true);
+            }
+            if (navItems[4] && navItems[4].dataset.omniReady !== 'true') {
+                navItems[4].dataset.omniReady = 'true';
+                navItems[4].addEventListener('click', event => {
+                    event.stopImmediatePropagation();
+                    window.location.hash = '#/trash';
+                    switchPage('trashApp');
+                    renderTrashDocuments();
+                    hideSidebarIfMobile();
+                }, true);
+            }
+            document.querySelectorAll('#mobileMiniNav [data-mini-action="notes"]').forEach(btn => btn.onclick = () => { window.location.hash = '#/notes'; switchPage('notesApp'); renderNotes(); });
+            document.querySelectorAll('#mobileMiniNav [data-mini-action="trash"]').forEach(btn => btn.onclick = () => { window.location.hash = '#/trash'; switchPage('trashApp'); renderTrashDocuments(); });
+        }
+
+        if (typeof switchPage === 'function') {
+            const originalSwitchPage = switchPage;
+            switchPage = function(pageId) {
+                if (pageId === 'notesApp') renderNotes();
+                if (pageId === 'trashApp') renderTrashDocuments();
+                originalSwitchPage(pageId);
+                if (pageId === 'notesApp') renderNotes();
+                if (pageId === 'trashApp') renderTrashDocuments();
+            };
+        }
+
+        window.addEventListener('hashchange', function() {
+            if (window.location.hash === '#/notes') switchPage('notesApp');
+            if (window.location.hash === '#/trash') switchPage('trashApp');
+        });
+
+        function renderImagesListAdvanced() {
+            const imagesList = document.getElementById('imagesList');
+            if (!imagesList || typeof getAllImages !== 'function') return;
+            imagesList.className = 'omni-images-grid';
+            imagesList.innerHTML = '<div class="omni-image-card"><div class="omni-image-card-body">' + escapeHtml(_t('loading_images')) + '</div></div>';
+            const storeName = imagesTabMode === 'main' ? IMAGE_STORE : TRASH_STORE;
+            const title = document.getElementById('imagesPageTitle');
+            if (title) title.textContent = imagesTabMode === 'trash' ? _t('trash') : _t('images');
+            getAllImages(storeName).then(items => {
+                if (!items.length) {
+                    imagesList.innerHTML = '<div class="omni-image-card"><div class="omni-image-card-body"><strong>' + escapeHtml(imagesTabMode === 'main' ? _t('No Images') : _t('trash_empty')) + '</strong></div></div>';
+                    return;
+                }
+                imagesList.innerHTML = '';
+                items.forEach(img => {
+                    const url = URL.createObjectURL(img.file);
+                    const card = document.createElement('div');
+                    card.className = 'omni-image-card';
+                    card.innerHTML = '<img src="' + url + '" alt="' + escapeHtml(img.name) + '">'
+                        + '<div class="omni-image-card-body"><div class="omni-image-card-title">' + escapeHtml(img.name) + '</div>'
+                        + '<div class="omni-image-card-meta">' + escapeHtml(new Date(img.created).toLocaleString()) + '</div>'
+                        + '<div class="omni-image-card-actions">'
+                        + (imagesTabMode === 'main'
+                            ? '<button class="omni-icon-button img-delete-btn" data-id="' + img.id + '" title="' + escapeHtml(_t('trash')) + '"><icon>delete</icon></button>'
+                            : '<button class="omni-icon-button img-restore-btn" data-id="' + img.id + '" title="' + escapeHtml(_t('restore_document')) + '"><icon>restore</icon></button><button class="omni-icon-button img-delete-perm-btn" data-id="' + img.id + '" title="' + escapeHtml(_t('delete_forever')) + '"><icon>delete_forever</icon></button>')
+                        + '</div></div>';
+                    card.querySelector('img').onclick = () => showImagePreview(url, img.name);
+                    imagesList.appendChild(card);
+                });
+                imagesList.querySelectorAll('.img-delete-btn').forEach(btn => btn.onclick = async () => { await deleteImage(Number(btn.dataset.id), true); renderImagesListAdvanced(); });
+                imagesList.querySelectorAll('.img-restore-btn').forEach(btn => btn.onclick = async () => { await restoreImageFromTrash(Number(btn.dataset.id)); renderImagesListAdvanced(); });
+                imagesList.querySelectorAll('.img-delete-perm-btn').forEach(btn => btn.onclick = async () => { await deleteImage(Number(btn.dataset.id), false); renderImagesListAdvanced(); });
+            });
+        }
+        if (typeof renderImagesList === 'function') renderImagesList = renderImagesListAdvanced;
+
+        function showImagePreview(url, name) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = '<div class="modal-content liquid-glass" style="position:relative;max-width:min(92vw,1100px);max-height:88vh;display:grid;gap:12px;">'
+                + '<span class="modal-content-close" style="position:absolute;top:14px;right:20px;cursor:pointer;font-size:28px;">&times;</span>'
+                + '<div style="font-weight:700;padding-right:34px;">' + escapeHtml(name) + '</div>'
+                + '<img src="' + url + '" alt="' + escapeHtml(name) + '" style="max-width:100%;max-height:72vh;object-fit:contain;border-radius:14px;margin:auto;display:block;">'
+                + '</div>';
+            document.body.appendChild(modal);
+            modal.querySelector('.modal-content-close').onclick = () => modal.remove();
+            modal.addEventListener('mousedown', e => { if (e.target === modal) modal.remove(); });
+        }
+
+        document.getElementById('imagesUploadHeroBtn')?.addEventListener('click', () => document.getElementById('uploadImageBtn')?.click());
+        document.getElementById('imagesTrashHeroBtn')?.addEventListener('click', () => { imagesTabMode = imagesTabMode === 'trash' ? 'main' : 'trash'; renderImagesList(); });
+
+        function setupFindReplace() {
+            const btn = document.getElementById('findInDocumentBtn');
+            if (!btn || btn.dataset.omniFindReady === 'true') return;
+            btn.dataset.omniFindReady = 'true';
+            btn.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                openFindReplaceBar();
+            }, true);
+        }
+
+        function openFindReplaceBar() {
+            const existing = document.getElementById('omniFindReplaceBar');
+            if (existing) {
+                existing.querySelector('#omniFindInput')?.focus();
+                return;
+            }
+            const bar = document.createElement('div');
+            bar.id = 'omniFindReplaceBar';
+            bar.className = 'omni-find-replace liquid-glass';
+            bar.innerHTML = '<icon>search</icon><input id="omniFindInput" type="text" placeholder="' + escapeHtml(_t('find_in_document')) + '"><input id="omniReplaceInput" type="text" placeholder="' + escapeHtml(_t('replace_with')) + '"><span id="omniFindCount" style="font-size:13px;opacity:.72;"></span><button id="omniFindPrevBtn" title="Previous"><icon>expand_less</icon></button><button id="omniFindNextBtn" title="Next"><icon>expand_more</icon></button><button id="omniReplaceBtn" title="' + escapeHtml(_t('replace')) + '"><icon>find_replace</icon></button><button id="omniReplaceAllBtn" title="' + escapeHtml(_t('replace_all')) + '"><icon>published_with_changes</icon></button><button id="omniFindCloseBtn" title="Close"><icon>close</icon></button>';
+            document.body.appendChild(bar);
+            const input = bar.querySelector('#omniFindInput');
+            const replaceInput = bar.querySelector('#omniReplaceInput');
+            const count = bar.querySelector('#omniFindCount');
+            let matches = [];
+            let index = -1;
+            const editor = () => typeof getActiveEditorSurface === 'function' ? getActiveEditorSurface() : document.getElementById('editorArea');
+            const clear = () => {
+                document.querySelectorAll('mark.find-highlight').forEach(mark => {
+                    const parent = mark.parentNode;
+                    parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                    parent.normalize();
+                });
+                matches = [];
+                index = -1;
+                count.textContent = '';
+            };
+            const highlight = () => {
+                clear();
+                const root = editor();
+                const term = input.value;
+                if (!root || !term) return;
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        return node.parentElement && !node.parentElement.closest('mark,script,style') && node.textContent.toLowerCase().includes(term.toLowerCase()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                nodes.forEach(node => {
+                    const frag = document.createDocumentFragment();
+                    let text = node.textContent;
+                    let last = 0;
+                    let match;
+                    while ((match = regex.exec(text))) {
+                        frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+                        const mark = document.createElement('mark');
+                        mark.className = 'find-highlight';
+                        mark.style.background = '#ffe06688';
+                        mark.style.color = '#110736';
+                        mark.textContent = match[0];
+                        frag.appendChild(mark);
+                        matches.push(mark);
+                        last = match.index + match[0].length;
+                    }
+                    frag.appendChild(document.createTextNode(text.slice(last)));
+                    node.parentNode.replaceChild(frag, node);
+                });
+                if (matches.length) index = 0;
+                update();
+            };
+            const update = () => {
+                matches.forEach((mark, idx) => {
+                    mark.style.background = idx === index ? '#ffe066' : '#ffe06688';
+                    mark.style.boxShadow = idx === index ? '0 0 0 2px #ffe066' : '';
+                });
+                if (matches[index]) matches[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                count.textContent = matches.length ? (index + 1) + ' / ' + matches.length : '0';
+            };
+            const replaceCurrent = () => {
+                if (!matches[index]) return;
+                const text = replaceInput.value;
+                const mark = matches[index];
+                mark.parentNode.replaceChild(document.createTextNode(text), mark);
+                const root = editor();
+                if (root) saveEditorSurfaceContent(root);
+                highlight();
+            };
+            input.addEventListener('input', highlight);
+            bar.querySelector('#omniFindNextBtn').onclick = () => { if (matches.length) { index = (index + 1) % matches.length; update(); } };
+            bar.querySelector('#omniFindPrevBtn').onclick = () => { if (matches.length) { index = (index - 1 + matches.length) % matches.length; update(); } };
+            bar.querySelector('#omniReplaceBtn').onclick = replaceCurrent;
+            bar.querySelector('#omniReplaceAllBtn').onclick = () => {
+                while (matches.length) {
+                    index = 0;
+                    replaceCurrent();
+                    if (!input.value) break;
+                }
+            };
+            bar.querySelector('#omniFindCloseBtn').onclick = () => { clear(); bar.remove(); };
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') bar.querySelector('#omniFindNextBtn').click();
+                if (e.key === 'Escape') bar.querySelector('#omniFindCloseBtn').click();
+            });
+            input.focus();
+        }
+
+        document.addEventListener('keydown', function(event) {
+            const key = event.key.toLowerCase();
+            const mod = event.ctrlKey || event.metaKey;
+            if (mod && key === 'f') {
+                event.preventDefault();
+                openFindReplaceBar();
+            }
+            if (event.ctrlKey && event.altKey && key === 'n') {
+                event.preventDefault();
+                document.getElementById('createNewDocumentBtn')?.click();
+            }
+            if (mod && event.shiftKey && key === 'b') {
+                event.preventDefault();
+                document.getElementById('documentBgColorBtn')?.click();
+            }
+            if (mod && event.altKey && key === 'i') {
+                event.preventDefault();
+                document.getElementById('insertImageBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+            }
+            if (mod && event.altKey && key === 's') {
+                event.preventDefault();
+                document.getElementById('splitScreenBtn')?.click();
+            }
+        });
+
+        function setupCustomContextMenu() {
+            document.addEventListener('contextmenu', function(event) {
+                const editor = event.target.closest && event.target.closest('.document-page-editor, .split-editor, #editorArea');
+                if (!editor) return;
+                if (localStorage.getItem('omniwrite-spellcheck') !== 'false' && !event.altKey) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                document.querySelectorAll('.omni-ctx-menu').forEach(menu => menu.remove());
+                const menu = document.createElement('div');
+                menu.className = 'omni-ctx-menu';
+                const actions = [
+                    ['zoom_in', _t('zoom_in'), () => changeDocumentZoom(editor, 0.1)],
+                    ['zoom_out', _t('zoom_out'), () => changeDocumentZoom(editor, -0.1)],
+                    ['content_cut', _t('ctx_cut'), () => document.execCommand('cut')],
+                    ['content_copy', _t('ctx_copy'), () => document.execCommand('copy')],
+                    ['content_paste', _t('ctx_paste'), async () => {
+                        try { document.execCommand('insertText', false, await navigator.clipboard.readText()); }
+                        catch(e) { document.execCommand('paste'); }
+                    }],
+                    ['format_clear', _t('ctx_clear_fmt'), () => document.execCommand('removeFormat')]
+                ];
+                actions.forEach((action, idx) => {
+                    if (idx === 2) {
+                        const sep = document.createElement('div');
+                        sep.className = 'omni-ctx-separator';
+                        menu.appendChild(sep);
+                    }
+                    const item = document.createElement('div');
+                    item.className = 'omni-ctx-item';
+                    item.innerHTML = '<icon>' + action[0] + '</icon><span>' + escapeHtml(action[1]) + '</span>';
+                    item.onclick = () => {
+                        menu.remove();
+                        action[2]();
+                    };
+                    menu.appendChild(item);
+                });
+                document.body.appendChild(menu);
+                menu.style.left = Math.min(event.clientX, window.innerWidth - 220) + 'px';
+                menu.style.top = Math.min(event.clientY, window.innerHeight - menu.offsetHeight - 12) + 'px';
+                setTimeout(() => document.addEventListener('mousedown', function close(e) {
+                    if (!menu.contains(e.target)) {
+                        menu.remove();
+                        document.removeEventListener('mousedown', close);
+                    }
+                }), 0);
+            }, true);
+        }
+
+        function changeDocumentZoom(editor, delta) {
+            const current = parseFloat(editor.dataset.zoom || '1') || 1;
+            const next = Math.max(0.6, Math.min(2.2, Math.round((current + delta) * 10) / 10));
+            editor.dataset.zoom = String(next);
+            editor.style.transformOrigin = 'top center';
+            editor.style.transform = 'scale(' + next + ')';
+            editor.style.marginBottom = ((next - 1) * editor.offsetHeight) + 'px';
+        }
+
+        function setupImageResize() {
+            let selected = null;
+            let handle = null;
+            function clear() {
+                if (selected) selected.classList.remove('omni-image-selected');
+                if (handle) handle.remove();
+                selected = null;
+                handle = null;
+            }
+            document.addEventListener('click', event => {
+                const img = event.target.closest && event.target.closest('.editor-surface img');
+                if (!img) {
+                    if (!event.target.classList.contains('omni-resize-handle')) clear();
+                    return;
+                }
+                clear();
+                selected = img;
+                selected.classList.add('omni-image-selected');
+                handle = document.createElement('div');
+                handle.className = 'omni-resize-handle';
+                document.body.appendChild(handle);
+                positionHandle();
+            });
+            function positionHandle() {
+                if (!selected || !handle) return;
+                const rect = selected.getBoundingClientRect();
+                handle.style.left = (rect.right - 7) + 'px';
+                handle.style.top = (rect.bottom - 7) + 'px';
+            }
+            window.addEventListener('scroll', positionHandle, true);
+            window.addEventListener('resize', positionHandle);
+            document.addEventListener('mousedown', event => {
+                if (!handle || event.target !== handle || !selected) return;
+                event.preventDefault();
+                const startX = event.clientX;
+                const startWidth = selected.getBoundingClientRect().width;
+                const editor = selected.closest('.editor-surface');
+                function move(e) {
+                    const width = Math.max(80, Math.min((editor?.clientWidth || 1200) - 24, startWidth + e.clientX - startX));
+                    selected.style.width = width + 'px';
+                    selected.style.height = 'auto';
+                    positionHandle();
+                }
+                function up() {
+                    document.removeEventListener('mousemove', move);
+                    document.removeEventListener('mouseup', up);
+                    if (editor) saveEditorSurfaceContent(editor);
+                }
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', up);
+            });
+        }
+
+        function forceTranslatedDefaultTitles() {
+            document.addEventListener('click', event => {
+                if (!event.target.closest || !event.target.closest('#createNewDocumentBtn')) return;
+                setTimeout(() => {
+                    const doc = documents[documents.length - 1];
+                    if (doc && (doc.title === 'Untitled Document' || !doc.title)) {
+                        doc.title = documentTitleDefault();
+                        saveDocuments();
+                        renderDocumentsList();
+                    }
+                }, 50);
+            }, true);
+        }
+
+        function getActiveLanguageCode(lang) {
+            return String(lang || localStorage.getItem('omniwrite-lang') || 'en').split('-')[0] || 'en';
+        }
+
+        function applyDocumentLanguage(lang) {
+            const code = getActiveLanguageCode(lang);
+            document.documentElement.setAttribute('lang', code);
+            document.querySelectorAll('.editor-surface, .document-page-editor, .split-editor, #editorArea').forEach(editor => {
+                editor.setAttribute('lang', code);
+                editor.dataset.documentLanguage = code;
+            });
+            const doc = currentDoc();
+            if (doc && doc.language !== code) {
+                doc.language = code;
+                doc.updatedAt = Date.now();
+                if (typeof debouncedSaveDocuments === 'function') debouncedSaveDocuments(250);
+            }
+        }
+
+        function sanitizeEditableContent(root) {
+            if (!root) return '';
+            const clone = root.cloneNode(true);
+            clone.querySelectorAll('.custom-video-controls, .omni-video-speed-menu').forEach(node => node.remove());
+            clone.querySelectorAll('.omni-video-frame').forEach(frame => {
+                const video = frame.querySelector('video');
+                if (!video) {
+                    frame.remove();
+                    return;
+                }
+                const cleanVideo = video.cloneNode(true);
+                cleanVideo.controls = true;
+                cleanVideo.setAttribute('controls', '');
+                cleanVideo.removeAttribute('contenteditable');
+                cleanVideo.classList.add('omni-native-video');
+                cleanVideo.style.display = 'block';
+                cleanVideo.style.maxWidth = '100%';
+                if (cleanVideo.style.width === '100%') cleanVideo.style.width = '';
+                cleanVideo.style.borderRadius = '8px';
+                cleanVideo.style.margin = '8px 0';
+                frame.replaceWith(cleanVideo);
+            });
+            clone.querySelectorAll('video').forEach(video => {
+                video.controls = true;
+                video.setAttribute('controls', '');
+                video.removeAttribute('contenteditable');
+                video.classList.add('omni-native-video');
+            });
+            return clone.innerHTML;
+        }
+
+        if (typeof serializeDocumentPages === 'function') {
+            serializeDocumentPages = function(docId) {
+                const column = getMainDocumentPagesColumn();
+                if (!column || !docId) return '';
+                const pages = Array.from(column.querySelectorAll('.document-page-editor[data-doc-id="' + docId + '"]'));
+                if (!pages.length) return '';
+                return pages.map(function(page, index) {
+                    return '<section class="omniwrite-page" data-page-index="' + (index + 1) + '">' + sanitizeEditableContent(page) + '</section>';
+                }).join('');
+            };
+        }
+
+        if (typeof saveEditorSurfaceContent === 'function') {
+            saveEditorSurfaceContent = function(editor) {
+                const doc = getDocumentByEditor(editor);
+                if (!doc || !editor) return;
+                const mainColumn = getMainDocumentPagesColumn();
+                if (mainColumn && mainColumn.contains(editor)) doc.content = serializeDocumentPages(doc.id);
+                else doc.content = sanitizeEditableContent(editor);
+                doc.timestamp = Date.now();
+                doc.updatedAt = Date.now();
+                debouncedSaveDocuments(140);
+            };
+        }
+
+        function formatVideoTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+            const whole = Math.floor(seconds);
+            const minutes = Math.floor(whole / 60);
+            const remainder = String(whole % 60).padStart(2, '0');
+            return minutes + ':' + remainder;
+        }
+
+        function stopVideoControlEvent(event) {
+            event.stopPropagation();
+        }
+
+        function createVideoControlButton(iconName, title) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.innerHTML = '<icon>' + iconName + '</icon>';
+            button.setAttribute('aria-label', title);
+            button.setAttribute('title', title);
+            button.contentEditable = 'false';
+            return button;
+        }
+
+        function buildCustomVideoControls(frame, video) {
+            const existing = frame.querySelector('.custom-video-controls');
+            if (existing) existing.remove();
+            const controls = document.createElement('div');
+            controls.className = 'custom-video-controls liquid-glass';
+            controls.contentEditable = 'false';
+            controls.setAttribute('data-omni-video-controls', 'true');
+
+            const playBtn = createVideoControlButton('play_arrow', _t('play') || 'Play');
+            const timeDisplay = document.createElement('span');
+            timeDisplay.className = 'video-time-display';
+            timeDisplay.textContent = '0:00 / 0:00';
+            timeDisplay.contentEditable = 'false';
+
+            const progress = document.createElement('input');
+            progress.type = 'range';
+            progress.min = '0';
+            progress.max = '1000';
+            progress.value = '0';
+            progress.setAttribute('aria-label', _t('video_progress') || 'Video progress');
+            progress.contentEditable = 'false';
+
+            const volumeBtn = createVideoControlButton('volume_up', _t('volume') || 'Volume');
+            const volume = document.createElement('input');
+            volume.className = 'video-volume-slider';
+            volume.type = 'range';
+            volume.min = '0';
+            volume.max = '1';
+            volume.step = '0.01';
+            volume.value = String(video.volume || 1);
+            volume.setAttribute('aria-label', _t('volume') || 'Volume');
+            volume.contentEditable = 'false';
+
+            const speedBtn = createVideoControlButton('speed', _t('video_speed') || 'Speed');
+            const speedMenu = document.createElement('div');
+            speedMenu.className = 'omni-video-speed-menu dropdown-wrapper liquid-glass';
+            speedMenu.contentEditable = 'false';
+            [0.5, 0.75, 1, 1.25, 1.5, 2].forEach(rate => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.textContent = rate + 'x';
+                option.contentEditable = 'false';
+                option.addEventListener('click', event => {
+                    event.stopPropagation();
+                    video.playbackRate = rate;
+                    speedMenu.classList.remove('open');
+                    speedBtn.setAttribute('aria-label', (_t('video_speed') || 'Speed') + ' ' + rate + 'x');
+                    revealVideoControls(frame);
+                });
+                speedMenu.appendChild(option);
+            });
+
+            const fullscreenBtn = createVideoControlButton('fullscreen', _t('fullscreen') || 'Fullscreen');
+            controls.append(playBtn, timeDisplay, progress, volumeBtn, volume, speedBtn, fullscreenBtn);
+            frame.append(controls, speedMenu);
+
+            controls.querySelectorAll('button, input, span').forEach(control => {
+                control.addEventListener('mousedown', stopVideoControlEvent);
+                control.addEventListener('click', stopVideoControlEvent);
+                control.addEventListener('input', stopVideoControlEvent);
+                control.addEventListener('keydown', stopVideoControlEvent);
+            });
+
+            const syncTime = () => {
+                const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+                progress.value = duration ? String(Math.round((video.currentTime / duration) * 1000)) : '0';
+                timeDisplay.textContent = formatVideoTime(video.currentTime) + ' / ' + formatVideoTime(duration);
+            };
+            const syncPlay = () => {
+                playBtn.innerHTML = '<icon>' + (video.paused ? 'play_arrow' : 'pause') + '</icon>';
+                frame.classList.toggle('video-paused', video.paused);
+            };
+            const syncVolume = () => {
+                volume.value = String(video.muted ? 0 : video.volume);
+                volumeBtn.innerHTML = '<icon>' + (video.muted || video.volume === 0 ? 'volume_off' : 'volume_up') + '</icon>';
+            };
+
+            playBtn.addEventListener('click', event => {
+                event.stopPropagation();
+                if (video.paused) video.play();
+                else video.pause();
+                revealVideoControls(frame);
+            });
+            video.addEventListener('click', event => {
+                event.stopPropagation();
+                if (video.paused) video.play();
+                else video.pause();
+                revealVideoControls(frame);
+            });
+            progress.addEventListener('input', event => {
+                event.stopPropagation();
+                const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+                if (duration) video.currentTime = (Number(progress.value) / 1000) * duration;
+                revealVideoControls(frame);
+            });
+            volumeBtn.addEventListener('click', event => {
+                event.stopPropagation();
+                video.muted = !video.muted;
+                syncVolume();
+                revealVideoControls(frame);
+            });
+            volume.addEventListener('input', event => {
+                event.stopPropagation();
+                video.volume = Number(volume.value);
+                video.muted = video.volume === 0;
+                syncVolume();
+                revealVideoControls(frame);
+            });
+            speedBtn.addEventListener('click', event => {
+                event.stopPropagation();
+                speedMenu.classList.toggle('open');
+                revealVideoControls(frame);
+            });
+            fullscreenBtn.addEventListener('click', event => {
+                event.stopPropagation();
+                if (document.fullscreenElement) document.exitFullscreen();
+                else if (frame.requestFullscreen) frame.requestFullscreen();
+                revealVideoControls(frame);
+            });
+            ['loadedmetadata', 'durationchange', 'timeupdate'].forEach(name => video.addEventListener(name, syncTime));
+            ['play', 'pause', 'ended'].forEach(name => video.addEventListener(name, syncPlay));
+            ['volumechange'].forEach(name => video.addEventListener(name, syncVolume));
+            syncTime();
+            syncPlay();
+            syncVolume();
+        }
+
+        function revealVideoControls(frame) {
+            if (!frame) return;
+            frame.classList.add('video-controls-visible');
+            clearTimeout(frame._omniVideoIdleTimer);
+            frame._omniVideoIdleTimer = setTimeout(() => {
+                const speedMenu = frame.querySelector('.omni-video-speed-menu.open');
+                const video = frame.querySelector('video');
+                if (!speedMenu && !(video && video.paused) && !frame.matches(':hover')) frame.classList.remove('video-controls-visible');
+            }, 10000);
+        }
+
+        if (typeof upgradeVideoPlayers === 'function') {
+            upgradeVideoPlayers = function(scope) {
+                const root = scope && scope.querySelectorAll ? scope : document;
+                root.querySelectorAll('.editor-surface video, #editorArea video, .split-editor video').forEach(video => {
+                    if (video.nextElementSibling && video.nextElementSibling.classList.contains('custom-video-controls')) {
+                        video.nextElementSibling.remove();
+                    }
+                    video.controls = true;
+                    video.setAttribute('controls', '');
+                    video.contentEditable = 'false';
+                    video.classList.add('omni-native-video');
+                    video.setAttribute('playsinline', '');
+                    let frame = video.closest('.omni-video-frame');
+                    if (!frame) {
+                        frame = document.createElement('figure');
+                        frame.className = 'omni-video-frame liquid-glass';
+                        frame.contentEditable = 'false';
+                        frame.setAttribute('data-omni-video-frame', 'true');
+                        video.parentNode.insertBefore(frame, video);
+                        frame.appendChild(video);
+                    }
+                    frame.classList.add('liquid-glass');
+                    frame.contentEditable = 'false';
+                    frame.setAttribute('data-omni-video-frame', 'true');
+                    video.style.display = 'block';
+                    if (video.style.width === '100%') video.style.width = '';
+                    video.style.maxWidth = '100%';
+                    video.style.borderRadius = 'inherit';
+                    video.style.margin = '0';
+                    frame.querySelectorAll('.custom-video-controls, .omni-video-speed-menu').forEach(node => node.remove());
+                });
+                root.querySelectorAll('.editor-surface > .custom-video-controls, #editorArea > .custom-video-controls, .split-editor > .custom-video-controls').forEach(node => {
+                    if (!node.closest('.omni-video-frame')) node.remove();
+                });
+            };
+        }
+
+        if (typeof insertVideoAtCaret === 'function') {
+            insertVideoAtCaret = function(dataUrl, alt = '', videoId = null) {
+                const editor = getActiveEditorSurface() || document.getElementById('editorArea');
+                if (!editor) return;
+                focusEditorSurface(editor);
+                const video = document.createElement('video');
+                video.src = dataUrl;
+                video.controls = true;
+                video.setAttribute('controls', '');
+                video.contentEditable = 'false';
+                video.className = 'omni-native-video';
+                video.style.maxWidth = '100%';
+                video.style.borderRadius = '8px';
+                video.style.margin = '8px 0';
+                if (videoId) video.setAttribute('data-omniwrite-video-id', videoId);
+                video.setAttribute('title', alt || '');
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount && editor.contains(selection.anchorNode)) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(video);
+                } else {
+                    editor.appendChild(video);
+                }
+                upgradeVideoPlayers(editor);
+                requestAnimationFrame(() => upgradeVideoPlayers(editor));
+                setTimeout(() => upgradeVideoPlayers(editor), 120);
+                saveEditorSurfaceContent(editor);
+            };
+        }
+
+        function setupVideoUpgradeObserver() {
+            const upgradeAll = () => {
+                if (typeof upgradeVideoPlayers === 'function') upgradeVideoPlayers(document);
+            };
+            upgradeAll();
+            const observer = new MutationObserver(mutations => {
+                let shouldUpgrade = false;
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType !== 1) return;
+                        if ((node.matches && node.matches('video')) || (node.querySelector && node.querySelector('video'))) {
+                            shouldUpgrade = true;
+                        }
+                    });
+                });
+                if (shouldUpgrade) requestAnimationFrame(upgradeAll);
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+
+        function setupDesktopMiniSidebar() {
+            if (typeof toggleSidebar === 'function') {
+                toggleSidebar = function() {
+                    if (window.innerWidth > 1190) {
+                        sidebarVisible = !document.body.classList.contains('omni-sidebar-collapsed');
+                        if (sidebarVisible) {
+                            document.body.classList.add('omni-sidebar-collapsed');
+                            sidebarContainer.style.display = '';
+                            sidebarVisible = false;
+                        } else {
+                            document.body.classList.remove('omni-sidebar-collapsed');
+                            sidebarContainer.style.display = '';
+                            sidebarVisible = true;
+                        }
+                    } else if (sidebarContainer.style.left === '0px') {
+                        hideSidebarOverlay();
+                    } else {
+                        showSidebarOverlay();
+                    }
+                };
+                document.querySelectorAll('#toggleSidebar').forEach(btn => {
+                    const clone = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(clone, btn);
+                    clone.addEventListener('click', toggleSidebar);
+                });
+            }
+        }
+
+        const originalApplyTranslations = typeof applyTranslations === 'function' ? applyTranslations : null;
+        if (originalApplyTranslations) {
+            applyTranslations = function(lang) {
+                originalApplyTranslations(lang);
+                applyDocumentLanguage(lang);
+                document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-title');
+                    el.setAttribute('title', _t(key));
+                });
+                renderNotes();
+                renderTrashDocuments();
+                if (document.getElementById('imagesApp')?.classList.contains('active')) renderImagesList();
+            };
+        }
+
+        setupDocumentBackgroundButton();
+        setupHandwritingButton();
+        setupSoftDeleteIntercept();
+        setupTrashControls();
+        setupNavigationExtensions();
+        setupFindReplace();
+        setupCustomContextMenu();
+        setupImageResize();
+        setupVideoUpgradeObserver();
+        forceTranslatedDefaultTitles();
+        setupDesktopMiniSidebar();
+        cleanupExpiredTrashedDocuments();
+        applyTranslations(localStorage.getItem('omniwrite-lang') || 'en');
+        if (window.location.hash === '#/notes') {
+            switchPage('notesApp');
+            renderNotes();
+        }
+        if (window.location.hash === '#/trash') {
+            switchPage('trashApp');
+            renderTrashDocuments();
+        }
+    })();
+
     </script>
 </body>
 </html>
-
 
