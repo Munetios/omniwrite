@@ -4755,6 +4755,10 @@ upgrade-insecure-requests;
     let savePending = false;
     let saveQueued = false;
     let saveTimeout = null;
+    let documentSaveSnapshots = new Map();
+    let documentStoreIds = new Set();
+    let folderSaveSnapshots = new Map();
+    let folderStoreIds = new Set();
     let _fontFamilyPickerRef = null; // persistent ref, survives DOM detach
     let _fontToolbarContext = null;
     const FONT_SIZE_STEPS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72, 96, 120];
@@ -4844,6 +4848,7 @@ upgrade-insecure-requests;
     function switchWorkspace(workspaceId) {
         if (!workspaces.some(ws => ws.id === workspaceId)) return;
         localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspaceId);
+        if (typeof DOCUMENTS_PAGE_SIZE !== 'undefined') documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
         renderWorkspacesSidebar();
         renderDocumentsList();
         renderFoldersList();
@@ -5188,41 +5193,56 @@ upgrade-insecure-requests;
         updateSavingStatus(_t('saving'));
         
         try {
-            // Calculate total content size
-            let totalSize = 0;
+            const currentIds = new Set();
+            const changedDocs = [];
+            const nextSnapshots = new Map(documentSaveSnapshots);
             for (const doc of documents) {
-                totalSize += JSON.stringify(doc).length;
+                if (!doc || !doc.id) continue;
+                currentIds.add(doc.id);
+                const serialized = JSON.stringify(doc);
+                if (documentSaveSnapshots.get(doc.id) !== serialized) {
+                    changedDocs.push({ id: doc.id, serialized });
+                }
+                nextSnapshots.set(doc.id, serialized);
             }
-            
-            // Estimate save time
-            const estimatedTime = estimateSaveTime(totalSize);
-            
-            // Pre-encrypt all documents before opening transaction (Firefox/Safari compatibility)
+
+            const deletedIds = [];
+            documentStoreIds.forEach(id => {
+                if (!currentIds.has(id)) deletedIds.push(id);
+            });
+
+            if (!changedDocs.length && !deletedIds.length) {
+                isSaved = true;
+                updateSavingStatus(_t('e2e_encrypted'));
+                return;
+            }
+
             const encryptedDocs = [];
-            for (const doc of documents) {
-                const encDoc = await encryptData(JSON.stringify(doc));
-                encryptedDocs.push({ id: doc.id, enc: encDoc });
+            for (const item of changedDocs) {
+                encryptedDocs.push({ id: item.id, enc: await encryptData(item.serialized) });
             }
-            
-            // Now write all at once in a single transaction
+
             await new Promise((resolve, reject) => {
                 const tx = db.transaction(DOC_STORE, 'readwrite');
                 const store = tx.objectStore(DOC_STORE);
-                store.clear();
                 for (const encDoc of encryptedDocs) {
                     store.put(encDoc);
+                }
+                for (const id of deletedIds) {
+                    store.delete(id);
                 }
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => reject(tx.error);
             });
-            
-            // Calculate actual save time
-            const actualSaveTime = Date.now() - saveStartTime;
-            
-            // If save was faster than estimated, add a small delay for better UX
-            const minDisplayTime = 1000; // Show "Saving..." for at least 1 second
-            if (actualSaveTime < minDisplayTime) {
-                await new Promise(resolve => setTimeout(resolve, minDisplayTime - actualSaveTime));
+
+            for (const id of deletedIds) {
+                nextSnapshots.delete(id);
+            }
+            documentSaveSnapshots = nextSnapshots;
+            documentStoreIds = currentIds;
+
+            if (Date.now() - saveStartTime > 120) {
+                await new Promise(resolve => setTimeout(resolve, 0));
             }
             
             // Mark as saved successfully
@@ -5271,6 +5291,8 @@ upgrade-insecure-requests;
     // Load all documents from IndexedDB (decrypt)
     async function loadDocuments() {
         documents = [];
+        documentSaveSnapshots = new Map();
+        documentStoreIds = new Set();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(DOC_STORE, 'readonly');
             const store = tx.objectStore(DOC_STORE);
@@ -5282,6 +5304,8 @@ upgrade-insecure-requests;
                         const doc = JSON.parse(docStr);
                         if (!doc.workspaceId) doc.workspaceId = PERSONAL_WORKSPACE_ID;
                         documents.push(doc);
+                        documentStoreIds.add(doc.id);
+                        documentSaveSnapshots.set(doc.id, JSON.stringify(doc));
                         addDocumentToList(doc);
                     } catch (e) {
                         console.error('Failed to decrypt document', item.id, e);
@@ -5306,6 +5330,8 @@ upgrade-insecure-requests;
                             workspaceId: PERSONAL_WORKSPACE_ID
                         };
                         documents.push(doc);
+                        documentStoreIds.add(doc.id);
+                        documentSaveSnapshots.set(doc.id, JSON.stringify(doc));
                         addDocumentToList(doc);
                         showToast(_t('failed_load_documents'));
                     }
@@ -5318,10 +5344,36 @@ upgrade-insecure-requests;
 
     // Save all folders to IndexedDB (encrypted)
     async function saveFolders() {
-        // First, encrypt all folder data before opening the transaction
-        const encryptedFolders = [];
         try {
+            const currentIds = new Set();
+            const changedFolders = [];
+            const nextSnapshots = new Map(folderSaveSnapshots);
             for (const folder of folders) {
+                if (!folder || !folder.id) continue;
+                currentIds.add(folder.id);
+                const normalized = {
+                    id: folder.id,
+                    name: folder.name,
+                    documentIds: folder.documentIds || [],
+                    createdAt: folder.createdAt,
+                    workspaceId: folder.workspaceId || PERSONAL_WORKSPACE_ID
+                };
+                const serialized = JSON.stringify(normalized);
+                if (folderSaveSnapshots.get(folder.id) !== serialized) {
+                    changedFolders.push(normalized);
+                }
+                nextSnapshots.set(folder.id, serialized);
+            }
+
+            const deletedIds = [];
+            folderStoreIds.forEach(id => {
+                if (!currentIds.has(id)) deletedIds.push(id);
+            });
+
+            if (!changedFolders.length && !deletedIds.length) return;
+
+            const encryptedFolders = [];
+            for (const folder of changedFolders) {
                 const encName = await encryptData(folder.name);
                 const encDocIds = await encryptData(JSON.stringify(folder.documentIds || []));
                 encryptedFolders.push({
@@ -5332,39 +5384,45 @@ upgrade-insecure-requests;
                     workspaceId: folder.workspaceId || PERSONAL_WORKSPACE_ID
                 });
             }
+            await new Promise((resolve, reject) => {
+                try {
+                    // Check if FOLDER_STORE exists
+                    if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                        console.warn('Folder store not found, skipping save');
+                        resolve();
+                        return;
+                    }
+                    const tx = db.transaction(FOLDER_STORE, 'readwrite');
+                    const store = tx.objectStore(FOLDER_STORE);
+                    for (const encrypted of encryptedFolders) {
+                        store.put(encrypted);
+                    }
+                    for (const id of deletedIds) {
+                        store.delete(id);
+                    }
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                } catch (error) {
+                    reject(error);
+                    showToast(_t('failed_save_folders'));
+                }
+            });
+            for (const id of deletedIds) {
+                nextSnapshots.delete(id);
+            }
+            folderSaveSnapshots = nextSnapshots;
+            folderStoreIds = currentIds;
         } catch (error) {
             showToast(_t('failed_save_folders'));
             throw error;
         }
-
-        return new Promise((resolve, reject) => {
-            try {
-                // Check if FOLDER_STORE exists
-                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
-                    console.warn('Folder store not found, skipping save');
-                    resolve();
-                    return;
-                }
-                const tx = db.transaction(FOLDER_STORE, 'readwrite');
-                const store = tx.objectStore(FOLDER_STORE);
-                // Clear store
-                store.clear();
-                // Store each encrypted folder synchronously
-                for (const encrypted of encryptedFolders) {
-                    store.put(encrypted);
-                }
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
-            } catch (error) {
-                reject(error);
-                showToast(_t('failed_save_folders'));
-            }
-        });
     }
 
     // Load all folders from IndexedDB (decrypt)
     async function loadFolders() {
         folders = [];
+        folderSaveSnapshots = new Map();
+        folderStoreIds = new Set();
         return new Promise((resolve, reject) => {
             // Check if FOLDER_STORE exists
             if (!db.objectStoreNames.contains(FOLDER_STORE)) {
@@ -5390,6 +5448,14 @@ upgrade-insecure-requests;
                             workspaceId: item.workspaceId || PERSONAL_WORKSPACE_ID
                         };
                         folders.push(folder);
+                        folderStoreIds.add(folder.id);
+                        folderSaveSnapshots.set(folder.id, JSON.stringify({
+                            id: folder.id,
+                            name: folder.name,
+                            documentIds: folder.documentIds || [],
+                            createdAt: folder.createdAt,
+                            workspaceId: folder.workspaceId || PERSONAL_WORKSPACE_ID
+                        }));
                     } catch (e) {
                         console.error('Failed to decrypt folder:', e);
                         showToast(_t('failed_load_folders'));
@@ -5612,6 +5678,25 @@ upgrade-insecure-requests;
         list.appendChild(el);
     }
     
+    const DOCUMENTS_PAGE_SIZE = 20;
+    let documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+
+    function createShowMoreDocumentsButton(totalCount) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sidebarnav__item liquid-glass';
+        button.style.justifyContent = 'center';
+        button.style.marginTop = '8px';
+        button.innerHTML = '<icon>expand_more</icon><div class="menu-text">Show more (' + Math.max(0, totalCount - documentsVisibleCount) + ')</div>';
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            documentsVisibleCount += DOCUMENTS_PAGE_SIZE;
+            renderDocumentsList();
+        });
+        return button;
+    }
+
     // Re-render all documents in sorted order (pinned in separate section)
     function renderDocumentsList() {
         const pinnedList = document.getElementById('pinnedDocumentsList');
@@ -5642,10 +5727,14 @@ upgrade-insecure-requests;
         
         // Render unpinned documents
         if (documentsList) {
-            unpinnedDocs.forEach(doc => {
+            const visibleDocs = unpinnedDocs.slice(0, documentsVisibleCount);
+            visibleDocs.forEach(doc => {
                 const el = createDocumentElement(doc);
                 documentsList.appendChild(el);
             });
+            if (unpinnedDocs.length > documentsVisibleCount) {
+                documentsList.appendChild(createShowMoreDocumentsButton(unpinnedDocs.length));
+            }
         }
         renderHomeDashboard();
     }
@@ -5792,34 +5881,9 @@ upgrade-insecure-requests;
         setTimeout(() => {
             setupFontPickers(doc, editorArea);
         }, 0);
-        // After setting content, resolve all omniwrite image ids to blob URLs
-        (async function resolveOmniwriteImages() {
-            const imgs = document.querySelectorAll('#editorPagesColumn .document-page-editor img[data-omniwrite-image-id], #editorArea img[data-omniwrite-image-id]');
-            for (const img of imgs) {
-                const imageId = Number(img.getAttribute('data-omniwrite-image-id'));
-                if (!isNaN(imageId)) {
-                    try {
-                        const tx = db.transaction('images', 'readonly');
-                        const store = tx.objectStore('images');
-                        const req = store.get(imageId);
-                        req.onsuccess = function() {
-                            if (req.result && req.result.file) {
-                                const url = URL.createObjectURL(req.result.file);
-                                img.src = url;
-                                window.addEventListener('beforeunload', () => URL.revokeObjectURL(url), { once: true });
-                            } else {
-                                img.alt = '[Image not found]';
-                            }
-                        };
-                        req.onerror = function() {
-                            img.alt = '[Image not found]';
-                        };
-                    } catch (e) {
-                        img.alt = '[Image not found]';
-                    }
-                }
-            }
-        })();
+        if (typeof resolveStoredDocumentImages === 'function') {
+            resolveStoredDocumentImages(document.getElementById('editorPagesColumn') || editorArea);
+        }
         
         // Resolve video files from IndexedDB
         (async function resolveOmniwriteVideos() {
@@ -5879,9 +5943,7 @@ upgrade-insecure-requests;
         
         // Save content on input (debounced to prevent race conditions)
         editorArea.oninput = function() {
-            doc.content = serializeDocumentPages(doc.id);
-            doc.timestamp = Date.now();
-            debouncedSaveDocuments(300); // Save after 300ms of no typing
+            saveEditorSurfaceContent(editorArea);
         };
         
         // --- Rich Text Formatting Toolbar Functionality ---
@@ -7998,6 +8060,7 @@ Q4: 22</textarea>
                 imgEl.src = url;
                 imgEl.alt = img.name;
                 imgEl.title = img.name;
+                setLazyImageAttributes(imgEl);
                 imgEl.style.width = '80px';
                 imgEl.style.height = '80px';
                 imgEl.style.objectFit = 'cover';
@@ -8310,6 +8373,7 @@ Q4: 22</textarea>
                 img = document.createElement('img');
                 img.setAttribute('data-omniwrite-image-id', imageId);
                 img.alt = alt || '';
+                setLazyImageAttributes(img);
                 img.style.maxWidth = '100%';
                 img.style.borderRadius = '8px';
                 img.style.margin = '8px 0';
@@ -8331,8 +8395,7 @@ Q4: 22</textarea>
                             if (req.result && req.result.file) {
                                 const blobUrl = URL.createObjectURL(req.result.file);
                                 img.src = blobUrl;
-                                // Revoke blob URL when the document is unloaded to free memory
-                                window.addEventListener('beforeunload', () => URL.revokeObjectURL(blobUrl), { once: true });
+                                img.dataset.omniBlobUrl = blobUrl;
                                 // Make image resizable via native resize handle
                                 img.style.resize = 'both';
                                 img.style.overflow = 'auto';
@@ -8362,6 +8425,7 @@ Q4: 22</textarea>
                     if (imgs.length) {
                         img = imgs[imgs.length - 1];
                         img.alt = alt || '';
+                        setLazyImageAttributes(img);
                         img.style.maxWidth = '100%';
                         img.style.borderRadius = '8px';
                         img.style.margin = '8px 0';
@@ -8371,6 +8435,7 @@ Q4: 22</textarea>
                     img = document.createElement('img');
                     img.src = url;
                     img.alt = alt || '';
+                    setLazyImageAttributes(img);
                     img.style.maxWidth = '100%';
                     img.style.borderRadius = '8px';
                     img.style.margin = '8px 0';
@@ -8505,10 +8570,9 @@ Q4: 22</textarea>
         // Patch editorArea.oninput to also save version
         const origEditorAreaOnInput = document.getElementById('editorArea').oninput;
         document.getElementById('editorArea').oninput = function () {
-            doc.content = this.innerHTML;
-            doc.timestamp = Date.now();
-            debouncedSaveDocuments(300);
-            saveDocumentVersion(doc);
+            saveEditorSurfaceContent(this);
+            clearTimeout(this._omniVersionTimer);
+            this._omniVersionTimer = setTimeout(() => saveDocumentVersion(doc), 1200);
             if (typeof origEditorAreaOnInput === 'function') origEditorAreaOnInput.call(this);
         };
 
@@ -11837,10 +11901,26 @@ Q4: 22</textarea>
             
             // Show unpinned results
             if (documentsList) {
-                unpinnedDocs.forEach(doc => {
+                const visibleDocs = unpinnedDocs.slice(0, DOCUMENTS_PAGE_SIZE);
+                visibleDocs.forEach(doc => {
                     const el = createDocumentElement(doc);
                     documentsList.appendChild(el);
                 });
+                if (unpinnedDocs.length > DOCUMENTS_PAGE_SIZE) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'sidebarnav__item liquid-glass';
+                    button.style.justifyContent = 'center';
+                    button.style.marginTop = '8px';
+                    button.innerHTML = '<icon>expand_more</icon><div class="menu-text">Show more (' + (unpinnedDocs.length - DOCUMENTS_PAGE_SIZE) + ')</div>';
+                    button.addEventListener('click', event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        documentsVisibleCount = unpinnedDocs.length;
+                        if (searchBarInput) searchBarInput.dispatchEvent(new Event('input'));
+                    });
+                    documentsList.appendChild(button);
+                }
             }
         }
     });
@@ -12316,6 +12396,84 @@ Q4: 22</textarea>
         });
     }
 
+    function setLazyImageAttributes(img) {
+        if (!img) return;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.style.maxWidth = img.style.maxWidth || '100%';
+        img.style.borderRadius = img.style.borderRadius || '8px';
+        img.style.margin = img.style.margin || '8px 0';
+    }
+
+    function dataUrlToBlob(dataUrl) {
+        const parts = String(dataUrl || '').match(/^data:([^;,]+)?(;base64)?,(.*)$/);
+        if (!parts) return null;
+        const mime = parts[1] || 'application/octet-stream';
+        const isBase64 = Boolean(parts[2]);
+        const raw = isBase64 ? atob(parts[3]) : decodeURIComponent(parts[3]);
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+    }
+
+    async function migrateDataUrlImageElement(img) {
+        const src = img && img.getAttribute('src');
+        if (!src || !src.startsWith('data:image/')) return false;
+        const blob = dataUrlToBlob(src);
+        if (!blob) return false;
+        const extension = (blob.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+        const file = new File([blob], 'omniwrite-image-' + Date.now().toString(36) + '.' + extension, { type: blob.type || 'image/png' });
+        const imageId = await addImageToDB(file);
+        img.setAttribute('data-omniwrite-image-id', imageId);
+        img.removeAttribute('src');
+        return true;
+    }
+
+    async function resolveStoredDocumentImages(root, persistDoc = true) {
+        if (!root || !root.querySelectorAll) return;
+        let migrated = false;
+        const dataImages = Array.from(root.querySelectorAll('img[src^="data:image/"]'));
+        for (const img of dataImages) {
+            try {
+                migrated = await migrateDataUrlImageElement(img) || migrated;
+            } catch (e) {
+                console.warn('Failed to migrate data URL image:', e);
+            }
+        }
+        const storedImages = Array.from(root.querySelectorAll('img[data-omniwrite-image-id]'));
+        for (const img of storedImages) {
+            setLazyImageAttributes(img);
+            const existingUrl = img.dataset.omniBlobUrl;
+            if (existingUrl) URL.revokeObjectURL(existingUrl);
+            const imageId = Number(img.getAttribute('data-omniwrite-image-id'));
+            if (!Number.isFinite(imageId)) continue;
+            try {
+                const tx = db.transaction(IMAGE_STORE, 'readonly');
+                const store = tx.objectStore(IMAGE_STORE);
+                const req = store.get(imageId);
+                req.onsuccess = function() {
+                    if (req.result && req.result.file) {
+                        const blobUrl = URL.createObjectURL(req.result.file);
+                        img.src = blobUrl;
+                        img.dataset.omniBlobUrl = blobUrl;
+                    } else {
+                        img.alt = '[Image not found]';
+                    }
+                };
+                req.onerror = function() {
+                    img.alt = '[Image not found]';
+                };
+            } catch (e) {
+                img.alt = '[Image not found]';
+            }
+        }
+        root.querySelectorAll('img').forEach(setLazyImageAttributes);
+        if (migrated && persistDoc) {
+            const editor = root.closest && root.closest(ACTIVE_EDITOR_SELECTOR) ? root.closest(ACTIVE_EDITOR_SELECTOR) : root.querySelector(ACTIVE_EDITOR_SELECTOR);
+            if (editor && typeof saveEditorSurfaceContent === 'function') saveEditorSurfaceContent(editor);
+        }
+    }
+
     async function getAllImages(storeName = IMAGE_STORE) {
         return new Promise((resolve, reject) => {
             try {
@@ -12406,7 +12564,7 @@ Q4: 22</textarea>
                 div.style.padding = '10px 16px';
                 div.style.borderRadius = '12px';
                 div.innerHTML = `
-                    <img src="${url}" alt="${img.name}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
+                    <img src="${url}" alt="${img.name}" loading="lazy" decoding="async" style="width:64px;height:64px;object-fit:cover;border-radius:8px;">
                     <div style="flex:1;">
                         <div style="font-size:16px;">${img.name}</div>
                         <div style="font-size:12px;opacity:0.7;">${new Date(img.created).toLocaleString()}</div>
@@ -12960,6 +13118,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                          <li>v1.13.2 - Fixed a performance bug when delayed typing.</li>
                     <li>v1.13.1 - Fixed a bug that font family is keep reverting to Google Sans Flex</li>
                         <li>v1.13.0 - MAJOR UPDATE: Added document background colors, handwriting insertion, Notes, Trash, image page improvements, native video controls, expanded translations, find and replace, keyboard shortcuts, and improved responsive layouts.</li>
                         <li>v1.12.4 - Added workspaces, toolbar customization, stacked toasts, print font loading, responsive mini sidebar, and improved collapsed sidebar layout.</li>
@@ -13600,6 +13759,9 @@ Q4: 22</textarea>
             const column = getMainDocumentPagesColumn();
             if (!column || !doc) return null;
             const pageHtmlList = parseDocumentPages(doc.content);
+            column.querySelectorAll('img[data-omni-blob-url]').forEach(img => {
+                try { URL.revokeObjectURL(img.dataset.omniBlobUrl); } catch(e) {}
+            });
             column.innerHTML = '';
             let firstEditor = null;
             pageHtmlList.forEach(function(pageHtml, index) {
@@ -13616,14 +13778,29 @@ Q4: 22</textarea>
             applySpellcheckSetting(localStorage.getItem('omniwrite-spellcheck') !== 'false');
             return firstEditor;
         }
-        function saveEditorSurfaceContent(editor) {
+        const editorContentSaveTimers = new WeakMap();
+        function queueEditorSurfaceContentSave(editor, delay = 260) {
             const doc = getDocumentByEditor(editor);
             if (!doc || !editor) return;
-            const mainColumn = getMainDocumentPagesColumn();
-            if (mainColumn && mainColumn.contains(editor)) doc.content = serializeDocumentPages(doc.id);
-            else doc.content = editor.innerHTML;
             doc.timestamp = Date.now();
-            debouncedSaveDocuments(140);
+            doc.updatedAt = Date.now();
+            isSaved = false;
+            const existingTimer = editorContentSaveTimers.get(editor);
+            if (existingTimer) clearTimeout(existingTimer);
+            const timer = setTimeout(() => {
+                const latestDoc = getDocumentByEditor(editor);
+                if (!latestDoc || !editor.isConnected) return;
+                const mainColumn = getMainDocumentPagesColumn();
+                if (mainColumn && mainColumn.contains(editor)) latestDoc.content = serializeDocumentPages(latestDoc.id);
+                else latestDoc.content = editor.innerHTML;
+                latestDoc.timestamp = Date.now();
+                latestDoc.updatedAt = Date.now();
+                debouncedSaveDocuments(500);
+            }, delay);
+            editorContentSaveTimers.set(editor, timer);
+        }
+        function saveEditorSurfaceContent(editor) {
+            queueEditorSurfaceContentSave(editor);
         }
         function markEditorActive(editor) {
             document.querySelectorAll(ACTIVE_EDITOR_SELECTOR).forEach(function(el) {
@@ -22223,6 +22400,21 @@ Q4: 22</textarea>
         function saveNotes(notes) {
             localStorage.setItem('omniwrite-quick-notes', JSON.stringify(notes));
         }
+        let notesSaveTimer = null;
+        let pendingNotesSave = null;
+        const NOTES_PAGE_SIZE = 20;
+        let notesVisibleCount = NOTES_PAGE_SIZE;
+        function debouncedSaveNotes(notes, delay = 350) {
+            pendingNotesSave = notes;
+            clearTimeout(notesSaveTimer);
+            notesSaveTimer = setTimeout(() => {
+                saveNotes(pendingNotesSave || notes);
+                pendingNotesSave = null;
+            }, delay);
+        }
+        window.addEventListener('beforeunload', () => {
+            if (pendingNotesSave) saveNotes(pendingNotesSave);
+        });
         function buildNoteBlockHtml(noteText) {
             return '<aside class="callout-block"><strong>' + escapeHtml(_t('notes')) + '</strong><p>' + escapeHtml(noteText).replace(/\n/g, '<br>') + '</p></aside>';
         }
@@ -22311,20 +22503,34 @@ Q4: 22</textarea>
                 list.innerHTML = '<div class="omni-note-card"><strong>' + escapeHtml(_t('empty_notes')) + '</strong></div>';
                 return;
             }
-            list.innerHTML = notes.map(note => '<div class="omni-note-card" data-note-id="' + escapeHtml(note.id) + '">'
+            const visibleNotes = notes.slice(0, notesVisibleCount);
+            list.innerHTML = visibleNotes.map(note => '<div class="omni-note-card" data-note-id="' + escapeHtml(note.id) + '">'
                 + '<textarea class="omni-note-textarea" placeholder="' + escapeHtml(_t('note_placeholder')) + '">' + escapeHtml(note.text) + '</textarea>'
                 + '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><small style="opacity:.66;">' + escapeHtml(new Date(note.updatedAt || note.createdAt).toLocaleString()) + '</small><div style="display:flex;gap:8px;"><button data-action="insert"><icon>post_add</icon>' + escapeHtml(_t('insert_note_document')) + '</button><button data-action="delete" style="background:#e74c3c;color:#fff;"><icon>delete</icon>' + escapeHtml(_t('delete_note')) + '</button></div></div>'
                 + '</div>').join('');
+            if (notes.length > notesVisibleCount) {
+                const showMore = document.createElement('button');
+                showMore.type = 'button';
+                showMore.className = 'omni-note-card liquid-glass';
+                showMore.style.textAlign = 'center';
+                showMore.innerHTML = '<icon>expand_more</icon><strong>Show more (' + (notes.length - notesVisibleCount) + ')</strong>';
+                showMore.onclick = () => {
+                    notesVisibleCount += NOTES_PAGE_SIZE;
+                    renderNotes();
+                };
+                list.appendChild(showMore);
+            }
             list.querySelectorAll('.omni-note-card').forEach(card => {
                 const noteId = card.dataset.noteId;
                 const textarea = card.querySelector('textarea');
+                if (!noteId || !textarea) return;
                 textarea.addEventListener('input', () => {
                     const next = getNotes();
                     const note = next.find(n => n.id === noteId);
                     if (note) {
                         note.text = textarea.value;
                         note.updatedAt = Date.now();
-                        saveNotes(next);
+                        debouncedSaveNotes(next);
                     }
                 });
                 card.querySelector('[data-action="insert"]').onclick = () => {
@@ -22403,7 +22609,7 @@ Q4: 22</textarea>
                     const url = URL.createObjectURL(img.file);
                     const card = document.createElement('div');
                     card.className = 'omni-image-card';
-                    card.innerHTML = '<img src="' + url + '" alt="' + escapeHtml(img.name) + '">'
+                    card.innerHTML = '<img src="' + url + '" alt="' + escapeHtml(img.name) + '" loading="lazy" decoding="async">'
                         + '<div class="omni-image-card-body"><div class="omni-image-card-title">' + escapeHtml(img.name) + '</div>'
                         + '<div class="omni-image-card-meta">' + escapeHtml(new Date(img.created).toLocaleString()) + '</div>'
                         + '<div class="omni-image-card-actions">'
@@ -22742,6 +22948,14 @@ Q4: 22</textarea>
                 video.removeAttribute('contenteditable');
                 video.classList.add('omni-native-video');
             });
+            clone.querySelectorAll('img').forEach(img => {
+                img.setAttribute('loading', 'lazy');
+                img.setAttribute('decoding', 'async');
+                img.removeAttribute('data-omni-blob-url');
+                if (img.hasAttribute('data-omniwrite-image-id') && /^(blob:|data:)/i.test(img.getAttribute('src') || '')) {
+                    img.removeAttribute('src');
+                }
+            });
             return clone.innerHTML;
         }
 
@@ -22761,12 +22975,16 @@ Q4: 22</textarea>
             saveEditorSurfaceContent = function(editor) {
                 const doc = getDocumentByEditor(editor);
                 if (!doc || !editor) return;
+                doc.timestamp = Date.now();
+                doc.updatedAt = Date.now();
+                if (typeof queueEditorSurfaceContentSave === 'function') {
+                    queueEditorSurfaceContentSave(editor, 260);
+                    return;
+                }
                 const mainColumn = getMainDocumentPagesColumn();
                 if (mainColumn && mainColumn.contains(editor)) doc.content = serializeDocumentPages(doc.id);
                 else doc.content = sanitizeEditableContent(editor);
-                doc.timestamp = Date.now();
-                doc.updatedAt = Date.now();
-                debouncedSaveDocuments(140);
+                debouncedSaveDocuments(500);
             };
         }
 
