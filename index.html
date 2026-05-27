@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
-        // Redirect unsupported browsers using feature detection (no UA sniffing)
-       // removed because of false possives
+           <script nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">
+        // Redirect to unsupported-browser.html if on Playstation browser or IE user agent
+        (function() {
+            var ua = navigator.userAgent;
+            var isPlaystation = /PlayStation/i.test(ua);
+            var isIE = /MSIE |Trident\//.test(ua);
+            if (isPlaystation || isIE) {
+                window.location.href = 'unsupported-browser.html';
+            }
+        })();
         </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
