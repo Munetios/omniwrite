@@ -3,4 +3,4 @@ Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self';
 
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
-Permissions-Policy: geolocation=(), microphone=(), camera=()
+Permissions-Policy: interest-cohort=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=(), attribution-reporting=(), identity-credentials-get=(), private-state-token-redemption=(), private-state-token-issuance=(), shared-storage=(), shared-storage-select-url=(), compute-pressure=(), idle-detection=(), ambient-light-sensor=(), battery=(), serial=(), usb=(), bluetooth=(), hid=(), window-management=(), screen-wake-lock=()
