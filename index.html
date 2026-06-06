@@ -82,7 +82,7 @@ if ('serviceWorker' in navigator) {
 <script id="munetios-protection-config" nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">window.MunetiosProtection = { ...(window.MunetiosProtection || {}), warnYouTube: false };</script>
     <meta http-equiv="Permissions-Policy" content="interest-cohort=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=(), attribution-reporting=(), identity-credentials-get=(), private-state-token-redemption=(), private-state-token-issuance=(), shared-storage=(), shared-storage-select-url=(), compute-pressure=(), idle-detection=(), ambient-light-sensor=(), battery=(), serial=(), usb=(), bluetooth=(), hid=(), window-management=(), screen-wake-lock=()">
     <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self' https://*.munetios.com;
+    default-src 'none';
     style-src 'self' https://fonts.googleapis.com https://api.munetios.com 'unsafe-inline';
     font-src 'self' https://fonts.gstatic.com https://api.munetios.com;
     script-src 'self' https://api.munetios.com https://www.munetios.com https://cdn.jsdelivr.net 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
@@ -1723,6 +1723,16 @@ if ('serviceWorker' in navigator) {
             gap: 22px;
             min-width: 100%;
         }
+        .omni-editor-fixed-width .editor-pages-column {
+            align-items: center;
+            min-width: max(100%, var(--editor-width, 100%));
+            width: max-content;
+        }
+        .omni-editor-fixed-width .document-page-shell {
+            width: var(--editor-width, 100%);
+            min-width: var(--editor-width, 100%);
+            max-width: var(--editor-width, 100%);
+        }
         .document-page-shell {
             display: flex;
             flex-direction: column;
@@ -2598,7 +2608,27 @@ if ('serviceWorker' in navigator) {
                     width: 100%;
                     min-width: 0;
                     flex-wrap: nowrap;
+                    overflow-x: hidden;
+                    overflow-y: visible;
     
+                }
+                .omni-editor-fixed-width .editor-content-area-container {
+                    overflow-x: auto;
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255, 224, 102, 0.38) rgba(255, 255, 255, 0.06);
+                    padding-bottom: 10px;
+                }
+                .omni-editor-fixed-width .editor-content-area-container::-webkit-scrollbar {
+                    height: 10px;
+                }
+                .omni-editor-fixed-width .editor-content-area-container::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.06);
+                    border-radius: 999px;
+                }
+                .omni-editor-fixed-width .editor-content-area-container::-webkit-scrollbar-thumb {
+                    background: linear-gradient(90deg, rgba(143, 92, 255, 0.78), rgba(255, 224, 102, 0.72));
+                    border-radius: 999px;
+                    border: 2px solid rgba(17, 7, 54, 0.42);
                 }
 
                 #editorArea {
@@ -6123,10 +6153,33 @@ if ('serviceWorker' in navigator) {
             );
             return dec.decode(plaintext);
         } catch (e) {
-            showToast('Failed to decrypt data');
             console.error('Decryption failed:', e);
             throw e;
         }
+    }
+
+    function clearIndexedDBStores(storeNames) {
+        if (storageUnavailable || !db || !Array.isArray(storeNames) || !storeNames.length) {
+            return Promise.resolve();
+        }
+        return new Promise((resolve, reject) => {
+            const existingStores = storeNames.filter(storeName => db.objectStoreNames.contains(storeName));
+            if (!existingStores.length) {
+                resolve();
+                return;
+            }
+            try {
+                const tx = db.transaction(existingStores, 'readwrite');
+                for (const storeName of existingStores) {
+                    tx.objectStore(storeName).clear();
+                }
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('Failed to clear IndexedDB stores'));
+                tx.onabort = () => reject(tx.error || new Error('IndexedDB clear transaction aborted'));
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     // Global translation helper — reads current lang from localStorage at call time
@@ -6325,7 +6378,9 @@ if ('serviceWorker' in navigator) {
             const store = tx.objectStore(DOC_STORE);
             const req = store.getAll();
             req.onsuccess = async function() {
-                for (const item of req.result) {
+                const items = req.result || [];
+                for (let itemIndex = 0; itemIndex < items.length; itemIndex += 1) {
+                    const item = items[itemIndex];
                     try {
                         const docStr = await decryptData(item.enc);
                         const doc = JSON.parse(docStr);
@@ -6341,27 +6396,28 @@ if ('serviceWorker' in navigator) {
                         let fallbackText = '';
                         if (item.enc && Array.isArray(item.enc.data)) {
                             // Shuffle the bytes and convert to hex string
-                            const arr = item.enc.data.slice();
+                            const arr = item.enc.data.slice(0, 2048);
                             for (let i = arr.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
                                 [arr[i], arr[j]] = [arr[j], arr[i]];
                             }
                             fallbackText = arr.map(b => String.fromCharCode(33 + (b % 94))).join('');
+                            if (item.enc.data.length > arr.length) fallbackText += '\n...';
                         } else {
                             fallbackText = '[Corrupted Document]';
                         }
                         const doc = {
                             id: item.id,
                             title: 'Corrupted Document',
-                            content: `<pre style="color:#e74c3c;word-break:break-all;">${fallbackText}</pre>`,
+                            content: `<pre style="color:#e74c3c;word-break:break-all;">${omniEscapeHtml(fallbackText)}</pre>`,
                             workspaceId: PERSONAL_WORKSPACE_ID
                         };
                         documents.push(doc);
                         documentStoreIds.add(doc.id);
                         documentSaveSnapshots.set(doc.id, JSON.stringify(doc));
                         addDocumentToList(doc);
-                        showToast(_t('failed_load_documents'));
                     }
+                    if (itemIndex > 0 && itemIndex % 10 === 0) await omniYield();
                 }
                 resolve();
             };
@@ -15120,10 +15176,11 @@ Q4: 22</textarea>
         }
         function applyEditorWidthSetting(value) {
             const editors = document.querySelectorAll(ACTIVE_EDITOR_SELECTOR);
-            function applyToEditors(widthValue, minWidthValue, maxWidthValue) {
+            function applyToEditors(widthValue, minWidthValue, maxWidthValue, fixedWidth = false) {
                 document.documentElement.style.setProperty('--editor-width', widthValue);
                 document.documentElement.style.setProperty('--editor-min-width', minWidthValue);
                 document.documentElement.style.setProperty('--editor-max-width', maxWidthValue);
+                document.documentElement.classList.toggle('omni-editor-fixed-width', fixedWidth);
                 editors.forEach(function(editor) {
                     editor.style.width = widthValue;
                     editor.style.minWidth = minWidthValue;
@@ -15135,7 +15192,7 @@ Q4: 22</textarea>
                 const customValue = parseInt(localStorage.getItem('omniwrite-editor-width-custom-value') || '1100', 10);
                 const safeValue = Math.max(320, Math.min(4000, customValue || 1100));
                 if (mode === 'fixed') {
-                    applyToEditors(safeValue + 'px', safeValue + 'px', safeValue + 'px');
+                    applyToEditors(safeValue + 'px', safeValue + 'px', safeValue + 'px', true);
                 } else {
                     applyToEditors('100%', '0px', safeValue + 'px');
                 }
@@ -23321,8 +23378,17 @@ Q4: 22</textarea>
                     ],
                     onComplete: async function() {
                         try {
-                            const tx = db.transaction(KEY_STORE, 'readwrite');
-                            tx.objectStore(KEY_STORE).delete('main');
+                            await clearIndexedDBStores([DOC_STORE, FOLDER_STORE, KEY_STORE]);
+                            documents = [];
+                            folders = [];
+                            documentSaveSnapshots = new Map();
+                            documentStoreIds = new Set();
+                            folderSaveSnapshots = new Map();
+                            folderStoreIds = new Set();
+                            const documentsListEl = document.getElementById('documentsList');
+                            if (documentsListEl) documentsListEl.innerHTML = '';
+                            const foldersListEl = document.getElementById('foldersList');
+                            if (foldersListEl) foldersListEl.innerHTML = '';
                             showToast(_t('encryption_key_reset'), { type: 'success' });
                             settingsModal.remove();
                             setTimeout(() => window.location.reload(), 1200);
