@@ -82,7 +82,7 @@ if ('serviceWorker' in navigator) {
 <script id="munetios-protection-config" nonce="erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui">window.MunetiosProtection = { ...(window.MunetiosProtection || {}), warnYouTube: false };</script>
     <meta http-equiv="Permissions-Policy" content="interest-cohort=(), browsing-topics=(), join-ad-interest-group=(), run-ad-auction=(), attribution-reporting=(), identity-credentials-get=(), private-state-token-redemption=(), private-state-token-issuance=(), shared-storage=(), shared-storage-select-url=(), compute-pressure=(), idle-detection=(), ambient-light-sensor=(), battery=(), serial=(), usb=(), bluetooth=(), hid=(), window-management=(), screen-wake-lock=()">
     <meta http-equiv="Content-Security-Policy" content="
-    default-src 'none';
+    default-src 'self' https://*.munetios.com;
     style-src 'self' https://fonts.googleapis.com https://api.munetios.com 'unsafe-inline';
     font-src 'self' https://fonts.gstatic.com https://api.munetios.com;
     script-src 'self' https://api.munetios.com https://www.munetios.com https://cdn.jsdelivr.net 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
