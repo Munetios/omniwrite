@@ -278,6 +278,37 @@ if ('serviceWorker' in navigator) {
         .workspace-rail-spacer {
             flex: 1;
         }
+        .workspace-profile-slot {
+          
+            padding: 0 13px;
+     
+        }
+        .workspace-profile-slot .workspace-top-switcher {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .workspace-profile-slot .workspace-top-trigger {
+            width: 100%;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: transparent !important;
+            border-radius: 24px !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .workspace-profile-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 700;
+        }
         .mobile-mini-nav {
             display: none;
             flex-direction: column;
@@ -382,11 +413,37 @@ if ('serviceWorker' in navigator) {
             margin: 0;
             font-size: 24px;
         }
+        .sidebar-resize-handle {
+            position: absolute;
+            top: 12px;
+            right: -5px;
+            width: 10px;
+            height: calc(100% - 24px);
+            cursor: ew-resize;
+            z-index: 100;
+            border-radius: 999px;
+            background: transparent;
+        }
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: rgba(168,85,247,0.34);
+        }
         .sidebarnav__items {
             display: flex;
             flex-direction: column;
-            padding: 8px 0;
+  
             box-sizing: border-box;
+        }
+        .sidebarnav__items--sticky {
+            position: sticky;
+            top: 0;
+            z-index: 25;
+          
+        }
+        @media (max-height: 700px) {
+            .sidebarnav__items--sticky {
+                position: static;
+            }
         }
         .sidebarnav__item {
             display: flex;
@@ -451,8 +508,7 @@ if ('serviceWorker' in navigator) {
             box-sizing: border-box;
             scrollbar-width: none; /* Chrome, Edge, Firefox, Opera, Brave */
             -ms-overflow-style: none;  /* IE and Edge Legacy */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+    
         }
         .sidebar__content::-webkit-scrollbar {
             display: none; /* Safari */
@@ -495,6 +551,35 @@ if ('serviceWorker' in navigator) {
             display: flex;
             flex-direction: column;
             gap: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .sidebar__bottom-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        #searchBtn {
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+   
+        }
+        .sidebar-more-menu {
+            display: none;
+            position: fixed;
+            min-width: 220px;
+            padding: 8px;
+            z-index: 99999;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(28, 8, 61, 0.82);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            box-shadow: 0 20px 56px rgba(0,0,0,0.36);
+        }
+        .sidebar-more-menu.open {
+            display: block;
         }
         .menu-text {
             white-space: nowrap;
@@ -1438,7 +1523,40 @@ if ('serviceWorker' in navigator) {
         }
         .main-content {
             min-width: 0;
+            flex: 1 1 auto;
             overflow: visible;
+        }
+        .document-search-results {
+            display: grid;
+            gap: 8px;
+            margin-top: 16px;
+            max-height: min(52vh, 420px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .document-search-result {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            color: inherit;
+            cursor: pointer;
+            text-align: left;
+        }
+        .document-search-result:hover {
+            background: rgba(142, 78, 255, 0.22);
+        }
+        .document-search-result strong,
+        .document-search-result small {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .navbar-container {
             width: 100%;
@@ -1451,7 +1569,7 @@ if ('serviceWorker' in navigator) {
             box-sizing: border-box;
             justify-content: space-between;
             position: fixed;
-            width: calc(100% - 315px);
+            width: calc(100% - (var(--sidebar-width) + 15px));
             padding: 0 12px;
             top: 10px;
             z-index: 999;
@@ -2058,6 +2176,7 @@ if ('serviceWorker' in navigator) {
             }
             .main-container {
                 width: auto;
+                flex-direction: column;
                 margin-left: 8px;
                 margin-right: 8px;
             }
@@ -2608,8 +2727,8 @@ if ('serviceWorker' in navigator) {
                     width: 100%;
                     min-width: 0;
                     flex-wrap: nowrap;
-                    overflow-x: hidden;
-                    overflow-y: visible;
+                   overflow-x: auto;
+    overflow-y: hidden;
     
                 }
                 .omni-editor-fixed-width .editor-content-area-container {
@@ -3146,6 +3265,8 @@ if ('serviceWorker' in navigator) {
                     pointer-events: none;
                 }
                 .app-panel.open {
+                    left: 50%;
+                    right: auto;
                     transform: translateX(-50%) scale(1);
                     opacity: 1;
                     pointer-events: auto;
@@ -3252,16 +3373,43 @@ if ('serviceWorker' in navigator) {
                     opacity: 0.65;
                     margin-bottom: 8px;
                 }
-                .app-panel-spinner {
-                    width: 36px;
-                    height: 36px;
-                    border: 3px solid rgba(255,255,255,0.15);
-                    border-top-color: #667eea;
-                    border-radius: 50%;
-                    animation: appPanelSpin 0.8s linear infinite;
+                .spinner-container {
+                    width: 65px;
+                    height: 65px;
                 }
-                @keyframes appPanelSpin {
-                    to { transform: rotate(360deg); }
+                .google-spinner {
+                    animation: rotate-spinner 2s linear infinite;
+                    width: 100%;
+                    height: 100%;
+                }
+                .spinner-circle {
+                    stroke-dasharray: 1, 200;
+                    stroke-dashoffset: 0;
+                    stroke-linecap: round;
+                    animation: dash-stretch 1.5s ease-in-out infinite, purple-cycle 6s ease-in-out infinite;
+                }
+                @keyframes rotate-spinner {
+                    100% { transform: rotate(360deg); }
+                }
+                @keyframes dash-stretch {
+                    0% {
+                        stroke-dasharray: 1, 200;
+                        stroke-dashoffset: 0;
+                    }
+                    50% {
+                        stroke-dasharray: 89, 200;
+                        stroke-dashoffset: -35;
+                    }
+                    100% {
+                        stroke-dasharray: 89, 200;
+                        stroke-dashoffset: -124;
+                    }
+                }
+                @keyframes purple-cycle {
+                    100%, 0% { stroke: #a855f7; }
+                    25% { stroke: #c084fc; }
+                    50% { stroke: #7e22ce; }
+                    75% { stroke: #d8b4fe; }
                 }
                 /* Error overlay */
                 .app-panel-error {
@@ -3840,8 +3988,8 @@ if ('serviceWorker' in navigator) {
         .workspace-current-name { display: none !important; }
         .workspace-menu {
             position: fixed;
-            top: 64px;
-            right: 18px;
+            left: 100px;
+            bottom: 18px;
             width: min(340px, calc(100vw - 28px));
             padding: 12px;
             display: none;
@@ -3854,6 +4002,16 @@ if ('serviceWorker' in navigator) {
             backdrop-filter: blur(3px);
             -webkit-backdrop-filter: blur(3px);
             box-shadow: 0 24px 70px rgba(0,0,0,0.38);
+        }
+        .workspace-profile-slot .workspace-top-trigger {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+            border: none;
+        }
+        .workspace-profile-slot .workspace-current-name {
+            display: block !important;
         }
         .workspace-menu.open {
             display: flex;
@@ -4030,36 +4188,34 @@ if ('serviceWorker' in navigator) {
                 <div class="sidebar__header">
                     <h3>OmniWrite</h3>
                     <div class="sidebar__header-right">
-                       <icon id="createBtn">add</icon> 
+                       <icon id="createBtn" tabindex="0" role="button" aria-label="add" data-omni-a11y-bound="true" data-tooltip="Nuevo">add</icon><icon id="searchBtn" tabindex="0" role="button" aria-label="add" data-omni-a11y-bound="true" data-tooltip="Search" data-i18n-title="search_documents" data-i18n-aria-label="search_documents">search</icon>
                     </div>
                 </div>
-                <div class="sidebar-scroll" id="sidebarScroll">
-                <div class="sidebarnav__items">
-                    <div class="sidebarnav__item">
+                <div class="sidebarnav__items sidebarnav__items--sticky" id="sidebarPriorityNav">
+                    <div class="sidebarnav__item" data-nav="images">
                         <icon>filter</icon>
                         <div class="menu-text" data-i18n="images">Images</div>
                     </div>
-                    <div class="sidebarnav__item">
-                        <icon>task_alt</icon>
-                        <div class="menu-text" data-i18n="tasks">Tasks</div>
-                    </div>
-                    <div class="sidebarnav__item">
+                    <div class="sidebarnav__item" data-nav="templates">
                         <icon>browse</icon>
                         <div class="menu-text business-templates-label" data-i18n="templates">Templates</div>
                     </div>
-                    <div class="sidebarnav__item">
+                </div>
+                <div class="sidebar-scroll" id="sidebarScroll">
+                <div class="sidebarnav__items" id="sidebarMainNav">
+                    <div class="sidebarnav__item" data-nav="tasks">
+                        <icon>task_alt</icon>
+                        <div class="menu-text" data-i18n="tasks">Tasks</div>
+                    </div>
+                    <div class="sidebarnav__item" data-nav="notes">
                         <icon>edit_note</icon>
                         <div class="menu-text" data-i18n="notes">Notes</div>
                     </div>
-                    <div class="sidebarnav__item">
-                        <icon>delete</icon>
-                        <div class="menu-text" data-i18n="trash">Trash</div>
+                    <div class="sidebarnav__item" data-nav="more" id="sidebarMoreBtn">
+                        <icon>more_horiz</icon>
+                        <div class="menu-text" data-i18n="more">More</div>
                     </div>
                 </div> 
-                <div class="search-bar liquid-glass" data-parent="true">
-                        <icon>search</icon>
-                        <input type="text" placeholder="Search documents" data-i18n-placeholder="search_placeholder" />
-                    </div>
                 <div class="sidebar__content">  <div class="documents--section">
                         <h4 data-i18n="pinned">Pinned</h4>
                         <div class="documents--list" id="pinnedDocumentsList">
@@ -4094,24 +4250,33 @@ if ('serviceWorker' in navigator) {
                         <icon>new_releases</icon>
                         <div class="menu-text">Try Beta</div>
                     </div>
-                    <div class="settings-item sidebarnav__item">
-                        <icon>settings</icon>
-                        <div class="menu-text" data-i18n="settings">Settings</div>
-                    </div>
-                    <div class="help-item sidebarnav__item">
-                        <icon>help</icon>
-                        <div class="menu-text" data-i18n="help">Help</div>
-                    </div>
-                    <div class="apps-menu-anchor">
-                        <div class="apps-item sidebarnav__item" id="appsMenuBtn">
-                            <icon>apps</icon>
-                            <div class="menu-text">Apps</div>
+                    <div class="sidebar__bottom-actions">
+                        <div class="settings-item sidebarnav__item">
+                            <icon>settings</icon>
+                            <div class="menu-text" data-i18n="settings">Settings</div>
                         </div>
+                        <div class="help-item sidebarnav__item" data-nav="help">
+                            <icon>help</icon>
+                            <div class="menu-text" data-i18n="help">Help</div>
+                        </div>
+                        <div class="apps-menu-anchor">
+                            <div class="apps-item sidebarnav__item" id="appsMenuBtn" data-nav="apps">
+                                <icon>apps</icon>
+                                <div class="menu-text" data-i18n="apps">Apps</div>
+                            </div>
+                        </div>
+                        <div class="sidebarnav__item" data-nav="trash" id="sidebarTrashBtn">
+                            <icon>delete</icon>
+                            <div class="menu-text" data-i18n="trash">Trash</div>
+                        </div>
+                        <div class="workspace-profile-slot" id="workspaceProfileSlot"></div>
                     </div>
                 </div>
             </div>
+            <div class="sidebar-resize-handle" id="sidebarResizeHandle" aria-hidden="true"></div>
             </div>
         </omniwrite-sidebar>
+        <div class="sidebar-more-menu liquid-glass" id="sidebarMoreMenu"></div>
         <div class="main-container">
             <div class="main-content">
                 <div id="selectArea" class="page active">
@@ -4575,7 +4740,11 @@ if ('serviceWorker' in navigator) {
         <div class="app-panel-loading" id="appPanelLoading">
             <icon id="appPanelLoadingIcon" style="font-size:44px;opacity:0.7;">language</icon>
             <div class="app-panel-loading-title" id="appPanelLoadingTitle">Loading…</div>
-            <div class="app-panel-spinner"></div>
+            <div class="spinner-container" aria-hidden="true">
+                <svg class="google-spinner" viewBox="0 0 50 50">
+                    <circle class="spinner-circle" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                </svg>
+            </div>
         </div>
         <div class="app-panel-error hidden" id="appPanelError">
             <icon style="font-size:48px;opacity:0.45;">wifi_off</icon>
@@ -5277,6 +5446,9 @@ if ('serviceWorker' in navigator) {
             "'": '&#39;'
         }[char]));
     }
+    function escapeHtml(value) {
+        return omniEscapeHtml(value);
+    }
 
     function renderBasicRetryState(containerId, messageKey, retryHandler) {
         const container = document.getElementById(containerId);
@@ -5707,23 +5879,16 @@ if ('serviceWorker' in navigator) {
     }
 
     function ensureWorkspaceTopSwitcher() {
-        document.querySelectorAll('.navbar').forEach(navbar => {
-            let target = navbar.querySelector('.navbar__right');
-            if (!target) {
-                target = document.createElement('div');
-                target.className = 'navbar__right liquid-glass';
-                target.style.padding = '6px';
-                target.style.display = 'flex';
-                target.style.alignItems = 'center';
-                target.style.gap = '8px';
-                navbar.appendChild(target);
-            }
-            if (target.querySelector('.workspace-top-switcher')) return;
+        document.querySelectorAll('.navbar .workspace-top-switcher').forEach(switcher => switcher.remove());
+        const target = document.getElementById('workspaceProfileSlot');
+        if (!target) return;
+        if (!target.querySelector('.workspace-top-switcher')) {
             const switcher = document.createElement('div');
             switcher.className = 'workspace-top-switcher';
             switcher.innerHTML = `
                 <button class="workspace-top-trigger" type="button" aria-haspopup="true" aria-expanded="false" title="${_t('workspaces')}" aria-label="${_t('workspaces')}">
                     <span class="workspace-avatar">P</span>
+                    <span class="workspace-profile-name workspace-current-name">Personal</span>
                 </button>
             `;
             target.appendChild(switcher);
@@ -5731,7 +5896,7 @@ if ('serviceWorker' in navigator) {
                 e.stopPropagation();
                 toggleWorkspaceTopMenu(this);
             });
-        });
+        }
         renderWorkspaceTopSwitcher();
     }
 
@@ -5741,6 +5906,8 @@ if ('serviceWorker' in navigator) {
             const name = activeWorkspace?.name || 'Personal';
             const avatarEl = switcher.querySelector('.workspace-avatar');
             if (avatarEl) avatarEl.textContent = getWorkspaceInitial(name);
+            const nameEl = switcher.querySelector('.workspace-profile-name');
+            if (nameEl) nameEl.textContent = name;
             const trigger = switcher.querySelector('.workspace-top-trigger');
             if (trigger) {
                 trigger.title = name;
@@ -13019,10 +13186,11 @@ Q4: 22</textarea>
         };
     });
     
-    // --- Document Search Bar Functionality ---
-    const searchBarInput = document.querySelector('.search-bar input');
-    searchBarInput.addEventListener('input', function () {
-        const query = this.value.trim().toLowerCase();
+    // --- Document Search Functionality ---
+    let sidebarDocumentSearchQuery = '';
+    function filterSidebarDocuments(query) {
+        query = String(query || '').trim().toLowerCase();
+        sidebarDocumentSearchQuery = query;
         const pinnedList = document.getElementById('pinnedDocumentsList');
         const documentsList = document.getElementById('documentsList');
         const foldersList = document.getElementById('foldersList');
@@ -13107,13 +13275,225 @@ Q4: 22</textarea>
                         event.preventDefault();
                         event.stopPropagation();
                         documentsVisibleCount = unpinnedDocs.length;
-                        if (searchBarInput) searchBarInput.dispatchEvent(new Event('input'));
+                        filterSidebarDocuments(sidebarDocumentSearchQuery);
                     });
                     documentsList.appendChild(button);
                 }
             }
         }
+    }
+    function openDocumentSearchModal() {
+        const existing = document.getElementById('documentSearchModal');
+        if (existing) existing.remove();
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'documentSearchModal';
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:620px;">
+                <span class="modal-content-close" id="closeDocumentSearchModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;">&times;</span>
+                <h2 style="display:flex;align-items:center;gap:10px;margin-top:0;"><icon>search</icon><span data-i18n="search_documents">Search documents</span></h2>
+                <input class="custom-font-input" id="documentSearchModalInput" type="search" placeholder="${_t('search_placeholder')}" data-i18n-placeholder="search_placeholder" autocomplete="off">
+                <div class="document-search-results" id="documentSearchModalResults"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const input = modal.querySelector('#documentSearchModalInput');
+        const results = modal.querySelector('#documentSearchModalResults');
+        function renderResults() {
+            const query = input.value.trim().toLowerCase();
+            filterSidebarDocuments(query);
+            const docs = query ? getWorkspaceDocuments().filter(doc => doc.title && doc.title.toLowerCase().includes(query)) : getWorkspaceDocuments();
+            const folders = query ? getWorkspaceFolders().filter(folder => folder.name && folder.name.toLowerCase().includes(query)) : [];
+            const docItems = docs.slice(0, 20).map(doc => `
+                <button class="document-search-result" type="button" data-doc-id="${doc.id}">
+                    <icon>description</icon>
+                    <span><strong>${escapeHtml(doc.title || documentTitleDefault())}</strong><small>${_t('documents_section')}</small></span>
+                </button>
+            `).join('');
+            const folderItems = folders.slice(0, 8).map(folder => `
+                <button class="document-search-result" type="button" data-folder-id="${folder.id}">
+                    <icon>folder</icon>
+                    <span><strong>${escapeHtml(folder.name || _t('folders'))}</strong><small>${(folder.documentIds || []).length} ${_t('documents_section')}</small></span>
+                </button>
+            `).join('');
+            results.innerHTML = docItems + folderItems || '<p style="padding:8px;opacity:0.65;" data-i18n="no_results">' + _t('no_results') + '</p>';
+        }
+        input.addEventListener('input', renderResults);
+        results.addEventListener('click', event => {
+            const item = event.target.closest('.document-search-result');
+            if (!item) return;
+            if (item.dataset.docId) {
+                const doc = documents.find(d => d.id === item.dataset.docId);
+                if (doc) loadDocument(doc);
+                modal.remove();
+                hideSidebarIfMobile();
+            } else if (item.dataset.folderId) {
+                toggleFolder(item.dataset.folderId);
+                modal.remove();
+            }
+        });
+        modal.querySelector('#closeDocumentSearchModal').onclick = () => modal.remove();
+        modal.addEventListener('mousedown', event => { if (event.target === modal) modal.remove(); });
+        renderResults();
+        input.focus();
+        try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
+    }
+    const sidebarSearchBtn = document.getElementById('searchBtn');
+    if (sidebarSearchBtn) sidebarSearchBtn.addEventListener('click', openDocumentSearchModal);
+    function handleSidebarNavAction(action) {
+        if (action === 'images') window.location.hash = getWorkspaceHashPrefix() + '/images';
+        else if (action === 'tasks') window.location.hash = getWorkspaceHashPrefix() + '/tasks';
+        else if (action === 'templates') window.location.hash = getWorkspaceHashPrefix() + '/templates';
+        else if (action === 'notes') { window.location.hash = '#/notes'; switchPage('notesApp'); if (typeof renderNotes === 'function') renderNotes(); }
+        else if (action === 'trash') { window.location.hash = '#/trash'; switchPage('trashApp'); if (typeof renderTrashDocuments === 'function') renderTrashDocuments(); }
+        else if (action === 'help') {
+            const helpItem = document.querySelector('.help-item');
+            if (helpItem) {
+                const previousNav = helpItem.getAttribute('data-nav');
+                helpItem.removeAttribute('data-nav');
+                helpItem.click();
+                if (previousNav) helpItem.setAttribute('data-nav', previousNav);
+            }
+        }
+        else if (action === 'apps') {
+            const appButton = document.getElementById('appsMenuBtn');
+            const anchor = appButton && appButton.getAttribute('data-overflow-hidden') !== 'true' ? appButton : document.getElementById('sidebarMoreBtn');
+            showAppsDrawerMenu(anchor);
+        }
+        else if (action === 'more') toggleSidebarMoreMenu();
+        else return;
+        if (action !== 'more' && action !== 'apps') hideSidebarIfMobile();
+    }
+    function toggleSidebarMoreMenu(forceOpen) {
+        const menu = document.getElementById('sidebarMoreMenu');
+        const btn = document.getElementById('sidebarMoreBtn');
+        if (!menu || !btn) return;
+        const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !menu.classList.contains('open');
+        if (!shouldOpen) {
+            menu.classList.remove('open');
+            return;
+        }
+        const hiddenItems = Array.from(document.querySelectorAll('.sidebarnav__item[data-overflow-hidden="true"]'));
+        menu.innerHTML = hiddenItems.map(item => {
+            const action = item.dataset.nav;
+            const icon = item.querySelector('icon')?.textContent || 'circle';
+            const label = item.querySelector('.menu-text')?.textContent || action;
+            return '<div class="sidebarnav__item" data-more-nav="' + action + '"><icon>' + icon + '</icon><div class="menu-text">' + escapeHtml(label) + '</div></div>';
+        }).join('') || '<div style="padding:12px 14px;opacity:0.65;" data-i18n="no_results">' + _t('no_results') + '</div>';
+        const rect = btn.getBoundingClientRect();
+        menu.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
+        menu.style.top = Math.max(12, rect.top - Math.min(260, menu.scrollHeight || 220) - 8) + 'px';
+        menu.classList.add('open');
+        try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
+    }
+    document.addEventListener('click', event => {
+        const moreItem = event.target.closest && event.target.closest('[data-more-nav]');
+        if (moreItem) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            document.getElementById('sidebarMoreMenu')?.classList.remove('open');
+            handleSidebarNavAction(moreItem.dataset.moreNav);
+            return;
+        }
+        const navItem = event.target.closest && event.target.closest('.sidebarnav__item[data-nav]');
+        if (!navItem) return;
+        if ((navItem.dataset.nav === 'help' || navItem.dataset.nav === 'apps') && navItem.getAttribute('data-overflow-hidden') !== 'true') return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        handleSidebarNavAction(navItem.dataset.nav);
+    }, true);
+    document.addEventListener('mousedown', event => {
+        const menu = document.getElementById('sidebarMoreMenu');
+        if (!menu || !menu.classList.contains('open')) return;
+        if (!menu.contains(event.target) && !event.target.closest('#sidebarMoreBtn')) menu.classList.remove('open');
     });
+    function updateSidebarOverflowNavigation() {
+        const alwaysVisible = new Set(['images', 'templates']);
+        const overflowPriority = ['help', 'apps', 'trash', 'tasks', 'notes'];
+        const optional = Array.from(document.querySelectorAll('.sidebarnav__item[data-nav]'))
+            .filter(item => !alwaysVisible.has(item.dataset.nav) && item.dataset.nav !== 'more')
+            .sort((a, b) => overflowPriority.indexOf(a.dataset.nav) - overflowPriority.indexOf(b.dataset.nav));
+        const moreBtn = document.getElementById('sidebarMoreBtn');
+        optional.forEach(item => {
+            item.style.display = '';
+            item.removeAttribute('data-overflow-hidden');
+        });
+        if (!moreBtn) return;
+        const sidebar = document.getElementById('sidebar');
+        const bottom = document.querySelector('.sidebar__bottom');
+        const content = document.querySelector('.sidebar__content');
+        const available = (sidebar?.clientHeight || window.innerHeight) - (bottom?.offsetHeight || 0) - (content ? Math.min(content.offsetHeight, 180) : 0) - 170;
+        let used = 0;
+        let hidden = 0;
+        optional.forEach(item => {
+            used += item.offsetHeight || 52;
+            const shouldHide = window.innerHeight < 720 && used > available;
+            if (shouldHide) {
+                item.style.display = 'none';
+                item.dataset.overflowHidden = 'true';
+                hidden += 1;
+            }
+        });
+        moreBtn.style.display = hidden ? '' : 'none';
+        if (!hidden) document.getElementById('sidebarMoreMenu')?.classList.remove('open');
+    }
+    function syncSidebarPriorityPlacement() {
+        const priorityNav = document.getElementById('sidebarPriorityNav');
+        const sidebarScroll = document.getElementById('sidebarScroll');
+        const header = document.querySelector('.sidebar__header');
+        if (!priorityNav || !sidebarScroll || !header) return;
+        if (window.innerHeight < 700) {
+            if (priorityNav.parentElement !== sidebarScroll) sidebarScroll.insertBefore(priorityNav, sidebarScroll.firstElementChild);
+        } else if (priorityNav.parentElement !== header.parentElement) {
+            header.insertAdjacentElement('afterend', priorityNav);
+        }
+    }
+    window.addEventListener('resize', updateSidebarOverflowNavigation);
+    window.addEventListener('resize', syncSidebarPriorityPlacement);
+    syncSidebarPriorityPlacement();
+    setTimeout(updateSidebarOverflowNavigation, 0);
+    function setupSidebarResize() {
+        const appShell = document.getElementById('app');
+        const sidebar = document.querySelector('.sidebar__container');
+        const handle = document.getElementById('sidebarResizeHandle');
+        if (!appShell || !sidebar || !handle || handle.dataset.ready === 'true') return;
+        handle.dataset.ready = 'true';
+        const savedWidth = parseInt(localStorage.getItem('omniwrite-sidebar-width') || '', 10);
+        if (Number.isFinite(savedWidth)) appShell.style.setProperty('--sidebar-width', Math.min(Math.max(savedWidth, 280), 820) + 'px');
+        let resizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        function applyWidth(width) {
+            const next = Math.min(Math.max(width, 280), 1020);
+            appShell.style.setProperty('--sidebar-width', next + 'px');
+
+            localStorage.setItem('omniwrite-sidebar-width', String(next));
+            updateSidebarOverflowNavigation();
+        }
+        handle.addEventListener('pointerdown', event => {
+            if (window.innerWidth <= 900) return;
+            resizing = true;
+            startX = event.clientX;
+            startWidth = sidebar.getBoundingClientRect().width;
+            handle.classList.add('dragging');
+            document.body.style.userSelect = 'none';
+            handle.setPointerCapture?.(event.pointerId);
+        });
+        handle.addEventListener('pointermove', event => {
+            if (!resizing) return;
+            applyWidth(startWidth + event.clientX - startX);
+        });
+        function stopResize(event) {
+            if (!resizing) return;
+            resizing = false;
+            handle.classList.remove('dragging');
+            document.body.style.userSelect = '';
+            if (event?.pointerId !== undefined) handle.releasePointerCapture?.(event.pointerId);
+        }
+        handle.addEventListener('pointerup', stopResize);
+        handle.addEventListener('pointercancel', stopResize);
+    }
+    setupSidebarResize();
     // Patch switchPage to render templates when needed
     (function patchTemplatesTabSwitch() {
         const origSwitchPage = switchPage;
@@ -14334,6 +14714,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                               <li>v1.14.1 - Replaced the document search bar with a modal, Reduced clutter in small screens, you can click more for Apps, help, tasks, trash, etc.</li>
                                 <li>v1.14.0 - Munetios June 4 redesign.</li>
                           <li>v1.13.2 - Fixed a performance bug when delayed typing.</li>
                     <li>v1.13.1 - Fixed a bug that font family is keep reverting to Google Sans Flex</li>
@@ -15581,6 +15962,8 @@ Q4: 22</textarea>
             _appPanelMaximized = false;
             appPanel.classList.remove('minimized', 'maximized');
             _restoreAppPanelRect();
+            appPanel.style.right = '';
+            appPanel.style.transform = 'translateX(-50%) scale(1)';
             _syncAppPanelButtons();
             appPanelIframe.src = url;
             appPanel.classList.add('open');
@@ -15970,7 +16353,8 @@ Q4: 22</textarea>
             return [
                 { id: 'supanotes', name: 'SupaNotes', url: 'https://notes.munetios.com', icon: 'edit_note' },
                 { id: 'games', name: 'Games', url: 'https://games.munetios.com', icon: 'sports_esports' },
-                { id: 'tasks', name: 'Tasks', url: 'https://calendar.munetios.com/new/tasks.html', icon: 'task_alt' }
+                { id: 'tasks', name: 'Tasks', url: 'https://calendar.munetios.com/new/tasks.html', icon: 'task_alt' },
+                { id: 'meals', name: _t('meals'), url: 'https://calendar.munetios.com/new/meals', icon: 'restaurant_menu' }
             ];
         }
         function openAppDescriptor(app, triggerEl) {
@@ -16030,9 +16414,11 @@ Q4: 22</textarea>
                 var menu = document.getElementById('appsDrawerMenu');
                 if (menu && menu.style.display === 'block') {
                     menu.style.display = 'none';
+                    this.classList.remove('active');
                     return;
                 }
                 showAppsDrawerMenu(this);
+                this.classList.add('active');
             });
         }
         document.addEventListener('mousedown', function(e) {
@@ -16043,6 +16429,7 @@ Q4: 22</textarea>
                 menu.style.display = 'none';
             }
         });
+        renderCustomAppIcons();
 
         // === CUSTOM FONT PICKER ===
         function getCustomFonts() {
@@ -17393,6 +17780,7 @@ Q4: 22</textarea>
                 'System share is not available in this browser.': 'El uso compartido del sistema no está disponible en este navegador.',
                 'System share failed.': 'Error al compartir con el sistema.',
                 'create_new': 'Nuevo',
+                              'search_documents': 'Buscar documentos',
             },
             fr: {
                 'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
@@ -17507,6 +17895,7 @@ Q4: 22</textarea>
                 'voice_label': 'Voix :',
                 'select_voice': 'Choisir une voix',
                 'speed_label': 'Vitesse :',
+                 'search_documents': 'Rechercher des documents...',
                 'images': 'Images',
                 'tasks': 'Tâches',
                 'templates': 'Modèles',
@@ -17979,6 +18368,7 @@ Q4: 22</textarea>
                 'Make a Copy': 'Kopie erstellen',
                 'Compare Documents': 'Dokumente vergleichen',
                 'Share': 'Teilen',
+                'search_documents': 'Dokumente durchsuchen...',
                 'Delete': 'Löschen',
                 'Rename Document': 'Dokument umbenennen',
                 'Version History': 'Versionsverlauf',
@@ -18553,6 +18943,7 @@ Q4: 22</textarea>
                 'Rename Document': '重命名文档',
                 'Version History': '版本历史',
                 'Table of Contents': '目录',
+                 'search_documents': '搜索文档...',
                 'No Images': '没有图片',
                 'Trash is empty': '回收站为空',
                 'View Trash': '查看回收站',
@@ -19113,6 +19504,7 @@ Q4: 22</textarea>
                 'Help': 'ヘルプ',
                 'New Document': '新規ドキュメント',
                 'New Image': '新規画像',
+                   'search_documents': 'ドキュメントを検索...',
                 'Import File': 'ファイルをインポート',
                 'Upload Image': '画像をアップロード',
                 'Download': 'ダウンロード',
@@ -19682,6 +20074,7 @@ Q4: 22</textarea>
                 'Settings': 'الإعدادات',
                 'Help': 'المساعدة',
                 'New Document': 'مستند جديد',
+                'search_documents': 'البحث في المستندات...',
                 'New Image': 'صورة جديدة',
                 'Import File': 'استيراد ملف',
                 'Upload Image': 'رفع صورة',
@@ -20267,6 +20660,7 @@ Q4: 22</textarea>
                 'Find': 'Localizar', 'Replace': 'Substituir', 'Replace All': 'Substituir Tudo',
                 'Preview': 'Visualizar', 'Bold': 'Negrito', 'Italic': 'Itálico',
                 'Underline': 'Sublinhado', 'Font Size': 'Tamanho da Fonte',
+                'search_documents': 'Buscar documentos...',
                 'Font Family': 'Fonte', 'Text Color': 'Cor do Texto',
                 'Align Left': 'Alinhar à Esquerda', 'Align Center': 'Centralizar',
                 'Align Right': 'Alinhar à Direita', 'Bullet List': 'Lista com Marcadores',
@@ -20661,6 +21055,7 @@ Q4: 22</textarea>
                 'No Images': 'Nessuna Immagine', 'Trash is empty': 'Cestino vuoto',
                 'View Trash': 'Vedi Cestino', 'Back to Images': 'Torna alle Immagini',
                 'Theme:': 'Tema:', 'Language:': 'Lingua:',
+                'search_documents': 'Cerca documenti...',
                 'Backup & Restore': 'Backup e Ripristino',
                 'Export Backup': 'Esporta Backup', 'Import Backup': 'Importa Backup',
                 'Danger Zone': 'Zona Pericolosa',
@@ -21022,6 +21417,7 @@ Q4: 22</textarea>
                 'Search documents...': '문서 검색...',
                 'reading_mode': '읽기 모드', 'play': '재생', 'pause': '일시정지',
                 'stop': '정지', 'voice_label': '음성:', 'select_voice': '음성 선택',
+                'search_documents': '문서 검색...',
                 'speed_label': '속도:', 'images': '이미지', 'tasks': '작업',
                 'templates': '템플릿', 'settings': '설정', 'help': '도움말',
                 'welcome_title': 'Munetios OmniWrite에 오신 것을 환영합니다',
@@ -21285,6 +21681,7 @@ Q4: 22</textarea>
                 'View Trash': 'ट्रैश देखें', 'Back to Images': 'छवियों पर वापस',
                 'Theme:': 'थीम:', 'Language:': 'भाषा:',
                 'Cancel': 'रद्द करें', 'Close': 'बंद करें', 'Insert': 'सम्मिलित करें',
+                  'search_documents': 'दस्तावेज़ खोजें...',
                 'Find': 'खोजें', 'Replace': 'बदलें', 'Replace All': 'सभी बदलें',
                 'Bold': 'मोटा', 'Italic': 'तिरछा', 'Underline': 'रेखांकन',
                 'Undo': 'पूर्ववत', 'Redo': 'फिर से करें',
@@ -21324,6 +21721,7 @@ Q4: 22</textarea>
                 'insert_hr': 'क्षैतिज रेखा सम्मिलित करें',
                 'indent_increase': 'इंडेंट बढ़ाएं', 'indent_decrease': 'इंडेंट घटाएं',
                 'line_spacing': 'लाइन स्पेसिंग', 'bg_color': 'टेक्स्ट पृष्ठभूमि रंग',
+                'search_documents': 'दस्तावेज़ खोजें...',
                 'justify': 'न्यायोचित', 'delete': 'हटाएं', 'cancel': 'रद्द करें',
                 'save_changes': 'परिवर्तन सहेजें', 'settings_modal_title': 'सेटिंग',
                 'sidebar_left': 'बाईं', 'sidebar_right': 'दाईं',
@@ -21537,6 +21935,7 @@ Q4: 22</textarea>
                 'New Document': 'Новый документ', 'New Image': 'Новое изображение',
                 'Import File': 'Импортировать файл', 'Upload Image': 'Загрузить изображение',
                 'Download': 'Скачать', 'Make a Copy': 'Создать копию',
+                 'search_documents': 'Поиск документов...',
                 'Compare Documents': 'Сравнить документы', 'Share': 'Поделиться',
                 'Delete': 'Удалить', 'Rename Document': 'Переименовать документ',
                 'Version History': 'История версий', 'Table of Contents': 'Оглавление',
@@ -22004,6 +22403,61 @@ Q4: 22</textarea>
                 'workspace_counts': '{documents} مستندات • {folders} مجلدات', 'customize_editor_toolbar': 'تخصيص شريط المحرر',
                 'toolbar_customization_saved': 'تم حفظ تخصيص شريط الأدوات.', 'reset': 'إعادة تعيين', 'save': 'حفظ', 'show': 'إظهار', 'hide': 'إخفاء',
                 'for_business': 'للأعمال', 'business_mode_updated': 'تم تحديث وضع الأعمال.'
+            },
+            pt: {
+                'workspaces': 'Espaços de trabalho', 'workspace': 'Espaço de trabalho', 'untitled_workspace': 'Espaço de trabalho sem título', 'add_workspace': 'Adicionar espaço de trabalho',
+                'manage_workspaces': 'Gerenciar espaços de trabalho', 'new_workspace': 'Novo espaço de trabalho', 'edit_workspace': 'Editar espaço de trabalho',
+                'workspace_name': 'Nome do espaço de trabalho', 'create_workspace': 'Criar espaço de trabalho', 'save_workspace': 'Salvar espaço de trabalho',
+                'workspace_name_required': 'Por favor, insira o nome do espaço de trabalho.', 'workspace_created': 'Espaço de trabalho criado.', 'workspace_updated': 'Espaço de trabalho atualizado.',
+                'workspace_deleted': 'Espaço de trabalho excluído.', 'failed_delete_workspace': 'Falha ao excluir o espaço de trabalho.', 'personal_workspace_no_delete': 'O espaço de trabalho pessoal não pode ser excluído.',
+                'workspaces_sidebar': 'Barra lateral de espaços de trabalho', 'show_sidebar': 'Mostrar barra lateral', 'hide_sidebar': 'Ocultar barra lateral', 'active': 'Ativo', 'open': 'Abrir', 'edit': 'Editar',
+                'workspace_counts': '{documents} documentos • {folders} pastas', 'customize_editor_toolbar': 'Personalizar barra de ferramentas do editor',
+                'toolbar_customization_saved': 'Personalização da barra de ferramentas salva.', 'reset': 'Redefinir', 'save': 'Salvar', 'show': 'Mostrar', 'hide': 'Ocultar',
+                'for_business': 'Para empresas', 'business_mode_updated': 'Modo empresarial atualizado.'
+            },
+            it: {
+                'workspaces': 'Spazi di lavoro', 'workspace': 'Spazio di lavoro', 'untitled_workspace': 'Spazio di lavoro senza titolo', 'add_workspace': 'Aggiungi spazio di lavoro',
+                'manage_workspaces': 'Gestisci spazi di lavoro', 'new_workspace': 'Nuovo spazio di lavoro', 'edit_workspace': 'Modifica spazio di lavoro',
+                'workspace_name': 'Nome dello spazio di lavoro', 'create_workspace': 'Crea spazio di lavoro', 'save_workspace': 'Salva spazio di lavoro',
+                'workspace_name_required': 'Per favore, inserisci il nome dello spazio di lavoro.', 'workspace_created': 'Spazio di lavoro creato.', 'workspace_updated': 'Spazio di lavoro aggiornato.',
+                'workspace_deleted': 'Spazio di lavoro eliminato.', 'failed_delete_workspace': 'Impossibile eliminare lo spazio di lavoro.', 'personal_workspace_no_delete': 'Lo spazio di lavoro personale non può essere eliminato.',
+                'workspaces_sidebar': 'Barra laterale degli spazi di lavoro', 'show_sidebar': 'Mostra barra laterale', 'hide_sidebar': 'Nascondi barra laterale', 'active': 'Attivo', 'open': 'Apri', 'edit': 'Modifica',
+                'workspace_counts': '{documents} documenti • {folders} cartelle', 'customize_editor_toolbar': 'Personalizza barra degli strumenti dell\'editor',
+                'toolbar_customization_saved': 'Personalizzazione della barra degli strumenti salvata.', 'reset': 'Reimposta', 'save': 'Salva', 'show': 'Mostra', 'hide': 'Nascondi',
+                'for_business': 'Per le aziende', 'business_mode_updated': 'Modalità aziendale aggiornata.'
+            },
+            ko: {
+                'workspaces': '작업 공간', 'workspace': '작업 공간', 'untitled_workspace': '제목 없는 작업 공간', 'add_workspace': '작업 공간 추가',
+                'manage_workspaces': '작업 공간 관리', 'new_workspace': '새 작업 공간', 'edit_workspace': '작업 공간 편집',
+                'workspace_name': '작업 공간 이름', 'create_workspace': '작업 공간 생성', 'save_workspace': '작업 공간 저장',
+                'workspace_name_required': '작업 공간 이름을 입력하세요.', 'workspace_created': '작업 공간이 생성되었습니다.', 'workspace_updated': '작업 공간이 업데이트되었습니다.',
+                'workspace_deleted': '작업 공간이 삭제되었습니다.', 'failed_delete_workspace': '작업 공간을 삭제할 수 없습니다.', 'personal_workspace_no_delete': '개인 작업 공간은 삭제할 수 없습니다.',
+                'workspaces_sidebar': '작업 공간 사이드바', 'show_sidebar': '사이드바 표시', 'hide_sidebar': '사이드바 숨기기', 'active': '활성', 'open': '열기', 'edit': '편집',
+                'workspace_counts': '{documents} 문서 • {folders} 폴더', 'customize_editor_toolbar': '편집기 도구 모음 사용자 정의',
+                'toolbar_customization_saved': '도구 모음 사용자 정의가 저장되었습니다.', 'reset': '재설정', 'save': '저장', 'show': '표시', 'hide': '숨기기',
+                'for_business': '기업용', 'business_mode_updated': '기업 모드가 업데이트되었습니다.'
+            },
+            hi: {
+                'workspaces': 'कार्यस्थान', 'workspace': 'कार्यस्थान', 'untitled_workspace': 'शीर्षक रहित कार्यस्थान', 'add_workspace': 'कार्यस्थान जोड़ें',
+                'manage_workspaces': 'कार्यस्थान प्रबंधित करें', 'new_workspace': 'नया कार्यस्थान', 'edit_workspace': 'कार्यस्थान संपादित करें',
+                'workspace_name': 'कार्यस्थान का नाम', 'create_workspace': 'कार्यस्थान बनाएँ', 'save_workspace': 'कार्यस्थान सहेजें',
+                'workspace_name_required': 'कृपया कार्यस्थान का नाम दर्ज करें।', 'workspace_created': 'कार्यस्थान बनाया गया।', 'workspace_updated': 'कार्यस्थान अपडेट किया गया।',
+                'workspace_deleted': 'कार्यस्थान हटाया गया।', 'failed_delete_workspace': 'कार्यस्थान हटाने में विफल।', 'personal_workspace_no_delete': 'व्यक्तिगत कार्यस्थान को हटाया नहीं जा सकता।',
+                'workspaces_sidebar': 'कार्यस्थान साइडबार', 'show_sidebar': 'साइडबार दिखाएँ', 'hide_sidebar': 'साइडबार छिपाएँ', 'active': 'सक्रिय', 'open': 'खोलें', 'edit': 'संपादित करें',
+                'workspace_counts': '{documents} दस्तावेज़ • {folders} फ़ोल्डर', 'customize_editor_toolbar': 'संपादक टूलबार अनुकूलित करें',
+                'toolbar_customization_saved': 'टूलबार अनुकूलन सहेजा गया।', 'reset': 'रीसेट', 'save': 'सहेजें', 'show': 'दिखाएँ', 'hide': 'छिपाएँ',
+                'for_business': 'व्यवसाय के लिए', 'business_mode_updated': 'व्यवसाय मोड अपडेट किया गया।'
+            },
+            ru: {
+                'workspaces': 'Рабочие пространства', 'workspace': 'Рабочее пространство', 'untitled_workspace': 'Безымянное рабочее пространство', 'add_workspace': 'Добавить рабочее пространство',
+                'manage_workspaces': 'Управление рабочими пространствами', 'new_workspace': 'Новое рабочее пространство', 'edit_workspace': 'Редактировать рабочее пространство',
+                'workspace_name': 'Название рабочего пространства', 'create_workspace': 'Создать рабочее пространство', 'save_workspace': 'Сохранить рабочее пространство',
+                'workspace_name_required': 'Пожалуйста, введите название рабочего пространства.', 'workspace_created': 'Рабочее пространство создано.', 'workspace_updated': 'Рабочее пространство обновлено.',
+                'workspace_deleted': 'Рабочее пространство удалено.', 'failed_delete_workspace': 'Не удалось удалить рабочее пространство.', 'personal_workspace_no_delete': 'Личное рабочее пространство нельзя удалить.',
+                'workspaces_sidebar': 'Боковая панель рабочих пространств', 'show_sidebar': 'Показать боковую панель', 'hide_sidebar': 'Скрыть боковую панель', 'active': 'Активно', 'open': 'Открыть', 'edit': 'Редактировать',
+                'workspace_counts': '{documents} документов • {folders} папок', 'customize_editor_toolbar': 'Настроить панель инструментов редактора',
+                'toolbar_customization_saved': 'Настройки панели инструментов сохранены.', 'reset': 'Сброс', 'save': 'Сохранить', 'show': 'Показать', 'hide': 'Скрыть',
+                'for_business': 'Для бизнеса', 'business_mode_updated': 'Режим бизнеса обновлен.'
             }
         };
         ['pt', 'it', 'ko', 'hi', 'ru'].forEach(lang => {
@@ -22207,6 +22661,10 @@ Q4: 22</textarea>
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key]) el.placeholder = dict[key];
+            });
+            document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+                const key = el.getAttribute('data-i18n-aria-label');
+                if (dict[key]) el.setAttribute('aria-label', dict[key]);
             });
             // --- Translate tooltips (data-tooltip) and virtual keyboard UI ---
             document.querySelectorAll('[data-i18n-title]').forEach(el => {
@@ -23414,6 +23872,10 @@ Q4: 22</textarea>
                 document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                     const key = el.getAttribute('data-i18n-placeholder');
                     if (dict[key]) el.placeholder = dict[key];
+                });
+                document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-aria-label');
+                    if (dict[key]) el.setAttribute('aria-label', dict[key]);
                 });
                 // Translate sidebar menu
                 document.querySelectorAll('.sidebarnav__item .menu-text').forEach(el => {
@@ -25499,6 +25961,39 @@ Q4: 22</textarea>
             });
             return clone.innerHTML;
         }
+        function insertPlainTextAtSelection(text) {
+            const selection = window.getSelection();
+            if (!selection || !selection.rangeCount) {
+                document.execCommand('insertText', false, text);
+                return;
+            }
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            const fragment = document.createDocumentFragment();
+            const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+            lines.forEach((line, index) => {
+                if (index > 0) fragment.appendChild(document.createElement('br'));
+                fragment.appendChild(document.createTextNode(line));
+            });
+            const lastNode = fragment.lastChild;
+            range.insertNode(fragment);
+            if (lastNode) range.setStartAfter(lastNode);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        document.addEventListener('paste', event => {
+            const editor = event.target && event.target.closest ? event.target.closest('.editor-surface, .document-page-editor, .split-editor, #editorArea') : null;
+            if (!editor) return;
+            const clipboard = event.clipboardData || window.clipboardData;
+            if (!clipboard) return;
+            const plainText = clipboard.getData('text/plain');
+            const htmlText = clipboard.getData('text/html');
+            if (!plainText && !htmlText) return;
+            event.preventDefault();
+            insertPlainTextAtSelection(plainText || htmlText.replace(/<[^>]*>/g, ' '));
+            if (typeof saveEditorSurfaceContent === 'function') saveEditorSurfaceContent(editor);
+        }, true);
 
         if (typeof serializeDocumentPages === 'function') {
             serializeDocumentPages = function(docId) {
@@ -26054,6 +26549,9 @@ Q4: 22</textarea>
                 'print': 'Print',
                 'preview': 'Preview',
                 'search': 'Search',
+                'search_documents': 'Search documents',
+                'more': 'More',
+                'meals': 'Meals',
                 'settings': 'Settings',
                 'help': 'Help',
                 'documents': 'Documents',
@@ -26192,6 +26690,22 @@ Q4: 22</textarea>
             };
             Object.keys(omniUiLocalePatches).forEach(lang => {
                 TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniUiLocalePatches[lang]);
+            });
+            const omniMoreLocalePatches = {
+                es: { more: 'Más', meals: 'Comidas' },
+                fr: { more: 'Plus', meals: 'Repas' },
+                de: { more: 'Mehr', meals: 'Mahlzeiten' },
+                pt: { more: 'Mais', meals: 'Refeições' },
+                it: { more: 'Altro', meals: 'Pasti' },
+                zh: { more: '更多', meals: '餐食' },
+                ja: { more: 'その他', meals: '食事' },
+                ko: { more: '더보기', meals: '식사' },
+                ar: { more: 'المزيد', meals: 'الوجبات' },
+                hi: { more: 'अधिक', meals: 'भोजन' },
+                ru: { more: 'Ещё', meals: 'Питание' }
+            };
+            Object.keys(omniMoreLocalePatches).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniMoreLocalePatches[lang]);
             });
             const omniCommonLocaleKeys = ['close','cancel','retry','loading','home','add','manage','open','edit','delete','save','insert','search','settings','help','documents','folders','images','notes','trash','tasks','templates','workspaces','document_info','saving_status','you_are_offline','online','saving','save_failed','voice_typing','voice_typing_error','virtual_keyboard','insert_emoji','insert_image','insert_video','insert_music'];
             const omniCommonLocaleRows = {
@@ -26677,4 +27191,3 @@ Q4: 22</textarea>
     </script>
 </body>
 </html>
-
