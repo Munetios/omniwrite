@@ -84,7 +84,7 @@ if ('serviceWorker' in navigator) {
     <meta http-equiv="Content-Security-Policy" content="
     default-src 'none';
     style-src 'self' https://fonts.googleapis.com https://api.munetios.com 'unsafe-inline';
-    font-src 'self' https://fonts.gstatic.com https://api.munetios.com;
+    font-src 'self' https:  https://api.munetios.com;
     script-src 'self' https://api.munetios.com https://www.munetios.com https://cdn.jsdelivr.net 'nonce-erjntgeryfheusjfhbdffeshF34YUH34yuhfuew8ufh34uidIRFEh3ui';
     media-src 'self' blob: data:;
     img-src 'self' https://*.munetios.com https://fonts.gstatic.com https://i.ytimg.com data: blob: https:;
@@ -179,6 +179,9 @@ if ('serviceWorker' in navigator) {
             100% {
             background-position: 0% 50%;
             }
+        }
+        button {
+                            font-variation-settings: 'ROND' 60 !important;
         }
         h1, h2, h3, h4, h5, h6 {
             font-variation-settings: 'ROND' 90, 'wdth' 103;
@@ -2469,8 +2472,8 @@ if ('serviceWorker' in navigator) {
             width: auto;
         }
         .font-feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 10px;
         }
         .font-feature-chip {
@@ -5431,11 +5434,148 @@ if ('serviceWorker' in navigator) {
             window.__omniLastErrorToastTime = now;
             const translated = typeof _t === 'function' ? _t(key) : fallback;
             const message = translated && translated !== key ? translated : fallback;
-            if (typeof showToast === 'function') showToast(message, { type: 'error' });
+            if (typeof showToast === 'function') {
+                showToast(message, { type: 'error' });
+            } else {
+                window.__omniPendingCoreToasts = window.__omniPendingCoreToasts || [];
+                window.__omniPendingCoreToasts.push({ message, type: 'error' });
+            }
         } catch(e) {
             console.error('Failed to show error toast:', e);
         }
     }
+
+    function flushPendingAppErrorToasts() {
+        if (typeof showToast !== 'function' || !Array.isArray(window.__omniPendingCoreToasts)) return;
+        const pending = window.__omniPendingCoreToasts.splice(0);
+        pending.forEach(item => {
+            try {
+                showToast(item.message, { type: item.type || 'error' });
+            } catch (error) {
+                console.error('Failed to show queued error toast:', error);
+            }
+        });
+    }
+
+    function createOmniMemoryStorage() {
+        const store = new Map();
+        return {
+            get length() {
+                return store.size;
+            },
+            key(index) {
+                return Array.from(store.keys())[Number(index)] || null;
+            },
+            getItem(key) {
+                const normalized = String(key);
+                return store.has(normalized) ? store.get(normalized) : null;
+            },
+            setItem(key, value) {
+                store.set(String(key), String(value));
+            },
+            removeItem(key) {
+                store.delete(String(key));
+            },
+            clear() {
+                store.clear();
+            }
+        };
+    }
+
+    function installGuardedStorageMethods(nativeStorage) {
+        try {
+            const proto = Object.getPrototypeOf(nativeStorage);
+            if (!proto || proto.__omniStorageMethodsGuarded) return;
+            const fallbackStorage = createOmniMemoryStorage();
+            const originalGetItem = proto.getItem;
+            const originalSetItem = proto.setItem;
+            const originalRemoveItem = proto.removeItem;
+            const originalClear = proto.clear;
+            const originalKey = proto.key;
+            Object.defineProperty(proto, '__omniStorageMethodsGuarded', {
+                value: true,
+                configurable: true
+            });
+            proto.getItem = function(key) {
+                try {
+                    return originalGetItem.call(this, key);
+                } catch (error) {
+                    window.__omniLocalStorageUnavailable = true;
+                    showAppErrorToast('omni_core_local_load_failed', "Couldn't load local app data. Failed to access private storage.", error);
+                    return fallbackStorage.getItem(key);
+                }
+            };
+            proto.setItem = function(key, value) {
+                try {
+                    originalSetItem.call(this, key, value);
+                } catch (error) {
+                    window.__omniLocalStorageUnavailable = true;
+                    fallbackStorage.setItem(key, value);
+                    showAppErrorToast('omni_core_local_save_failed', 'Failed to save local app data. We were unable to process private storage.', error);
+                }
+            };
+            proto.removeItem = function(key) {
+                try {
+                    originalRemoveItem.call(this, key);
+                } catch (error) {
+                    window.__omniLocalStorageUnavailable = true;
+                    fallbackStorage.removeItem(key);
+                    showAppErrorToast('omni_core_local_save_failed', 'Failed to save local app data. We were unable to process private storage.', error);
+                }
+            };
+            proto.clear = function() {
+                try {
+                    originalClear.call(this);
+                } catch (error) {
+                    window.__omniLocalStorageUnavailable = true;
+                    fallbackStorage.clear();
+                    showAppErrorToast('omni_core_local_save_failed', 'Failed to save local app data. We were unable to process private storage.', error);
+                }
+            };
+            proto.key = function(index) {
+                try {
+                    return originalKey.call(this, index);
+                } catch (error) {
+                    window.__omniLocalStorageUnavailable = true;
+                    showAppErrorToast('omni_core_local_load_failed', "Couldn't load local app data. Failed to access private storage.", error);
+                    return fallbackStorage.key(index);
+                }
+            };
+        } catch (error) {
+            console.error('Failed to guard localStorage methods:', error);
+        }
+    }
+
+    function setupOmniCoreStorageGuard() {
+        if (window.__omniCoreStorageGuardReady) return;
+        window.__omniCoreStorageGuardReady = true;
+        try {
+            const nativeStorage = window.localStorage;
+            const testKey = '__omniwrite_storage_test__';
+            nativeStorage.setItem(testKey, '1');
+            nativeStorage.getItem(testKey);
+            nativeStorage.removeItem(testKey);
+            installGuardedStorageMethods(nativeStorage);
+            window.__omniLocalStorageUnavailable = false;
+        } catch (error) {
+            window.__omniLocalStorageUnavailable = true;
+            const fallbackStorage = createOmniMemoryStorage();
+            try {
+                Object.defineProperty(window, 'localStorage', {
+                    value: fallbackStorage,
+                    configurable: true
+                });
+            } catch (defineError) {
+                try {
+                    window.localStorage = fallbackStorage;
+                } catch (assignError) {
+                    console.error('Failed to install memory localStorage fallback:', assignError);
+                }
+            }
+            showAppErrorToast('omni_core_storage_blocked', "Couldn't access browser storage. OmniWrite will keep working in memory for this session.", error);
+        }
+    }
+    setupOmniCoreStorageGuard();
 
     function omniEscapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -6212,21 +6352,30 @@ if ('serviceWorker' in navigator) {
     // Open IndexedDB and initialize stores
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onupgradeneeded = function(e) {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(DOC_STORE)) {
-                    db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+            try {
+                if (!('indexedDB' in window) || !window.indexedDB || typeof indexedDB.open !== 'function') {
+                    throw new Error('IndexedDB is not supported or is blocked');
                 }
-                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
-                    db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
-                }
-                if (!db.objectStoreNames.contains(KEY_STORE)) {
-                    db.createObjectStore(KEY_STORE, { keyPath: 'name' });
-                }
-            };
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(DOC_STORE)) {
+                        db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                        db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains(KEY_STORE)) {
+                        db.createObjectStore(KEY_STORE, { keyPath: 'name' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+                req.onblocked = () => reject(new Error('IndexedDB open was blocked'));
+            } catch (error) {
+                showAppErrorToast('omni_core_indexeddb_failed', "We couldn't able to open private document storage. Saving may not work.", error);
+                reject(error);
+            }
         });
     }
 
@@ -6412,7 +6561,7 @@ if ('serviceWorker' in navigator) {
         if (storageUnavailable || !db) {
             isSaved = false;
             updateSavingStatus(_t('storage_unavailable'));
-            showAppErrorToast('storage_save_unavailable', 'Saving is unavailable because browser storage is blocked.', new Error('IndexedDB unavailable'));
+            showAppErrorToast('storage_save_unavailable', 'Failed to save because private browser storage is unavailable.', new Error('IndexedDB unavailable'));
             return;
         }
         // If a save is already in progress, queue another save
@@ -6465,16 +6614,25 @@ if ('serviceWorker' in navigator) {
             }
 
             await new Promise((resolve, reject) => {
-                const tx = db.transaction(DOC_STORE, 'readwrite');
-                const store = tx.objectStore(DOC_STORE);
-                for (const encDoc of encryptedDocs) {
-                    store.put(encDoc);
+                try {
+                    if (!db || !db.objectStoreNames.contains(DOC_STORE)) {
+                        reject(new Error('Document store is unavailable'));
+                        return;
+                    }
+                    const tx = db.transaction(DOC_STORE, 'readwrite');
+                    const store = tx.objectStore(DOC_STORE);
+                    for (const encDoc of encryptedDocs) {
+                        store.put(encDoc);
+                    }
+                    for (const id of deletedIds) {
+                        store.delete(id);
+                    }
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error || new Error('Document save transaction failed'));
+                    tx.onabort = () => reject(tx.error || new Error('Document save transaction aborted'));
+                } catch (error) {
+                    reject(error);
                 }
-                for (const id of deletedIds) {
-                    store.delete(id);
-                }
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
             });
 
             for (const id of deletedIds) {
@@ -6541,9 +6699,23 @@ if ('serviceWorker' in navigator) {
             return;
         }
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(DOC_STORE, 'readonly');
-            const store = tx.objectStore(DOC_STORE);
-            const req = store.getAll();
+            let req;
+            try {
+                if (!db.objectStoreNames.contains(DOC_STORE)) {
+                    resolve();
+                    return;
+                }
+                const tx = db.transaction(DOC_STORE, 'readonly');
+                const store = tx.objectStore(DOC_STORE);
+                req = store.getAll();
+                tx.onerror = () => reject(tx.error || new Error('Document load transaction failed'));
+                tx.onabort = () => reject(tx.error || new Error('Document load transaction aborted'));
+            } catch (error) {
+                showAppErrorToast('omni_core_indexeddb_failed', "Couldn't load documents because private storage is blocked.", error);
+                renderDocumentLoadFailureStates();
+                reject(error);
+                return;
+            }
             req.onsuccess = async function() {
                 const items = req.result || [];
                 for (let itemIndex = 0; itemIndex < items.length; itemIndex += 1) {
@@ -6596,7 +6768,7 @@ if ('serviceWorker' in navigator) {
     async function saveFolders() {
         try {
             if (storageUnavailable || !db) {
-                showAppErrorToast('storage_save_unavailable', 'Saving is unavailable because browser storage is blocked.', new Error('IndexedDB unavailable'));
+                showAppErrorToast('storage_save_unavailable', 'Failed to save because private browser storage is unavailable.', new Error('IndexedDB unavailable'));
                 return;
             }
             const currentIds = new Set();
@@ -6685,15 +6857,24 @@ if ('serviceWorker' in navigator) {
             return;
         }
         return new Promise((resolve, reject) => {
-            // Check if FOLDER_STORE exists
-            if (!db.objectStoreNames.contains(FOLDER_STORE)) {
-                console.warn('Folder store not found, skipping load');
-                resolve();
+            let req;
+            try {
+                // Check if FOLDER_STORE exists
+                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                    console.warn('Folder store not found, skipping load');
+                    resolve();
+                    return;
+                }
+                const tx = db.transaction(FOLDER_STORE, 'readonly');
+                const store = tx.objectStore(FOLDER_STORE);
+                req = store.getAll();
+                tx.onerror = () => reject(tx.error || new Error('Folder load transaction failed'));
+                tx.onabort = () => reject(tx.error || new Error('Folder load transaction aborted'));
+            } catch (error) {
+                showAppErrorToast('failed_load_folders', 'Failed to load folders.', error);
+                reject(error);
                 return;
             }
-            const tx = db.transaction(FOLDER_STORE, 'readonly');
-            const store = tx.objectStore(FOLDER_STORE);
-            const req = store.getAll();
             req.onsuccess = async function() {
                 const items = req.result || [];
                 for (const item of items) {
@@ -6745,34 +6926,43 @@ if ('serviceWorker' in navigator) {
                 const origOpenDB = openDB;
                 openDB = function() {
                     return new Promise((resolve, reject) => {
-                        // Use a higher version to ensure upgrade happens
-                        const req = indexedDB.open(DB_NAME, 5);
-                        req.onupgradeneeded = function(e) {
-                            const db = e.target.result;
-                            if (!db.objectStoreNames.contains(DOC_STORE)) {
-                                db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+                        try {
+                            if (!('indexedDB' in window) || !window.indexedDB || typeof indexedDB.open !== 'function') {
+                                throw new Error('IndexedDB is not supported or is blocked');
                             }
-                            if (!db.objectStoreNames.contains(FOLDER_STORE)) {
-                                db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
-                            }
-                            if (!db.objectStoreNames.contains(KEY_STORE)) {
-                                db.createObjectStore(KEY_STORE, { keyPath: 'name' });
-                            }
-                            if (!db.objectStoreNames.contains('images')) {
-                                db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
-                            }
-                            if (!db.objectStoreNames.contains('trashImages')) {
-                                db.createObjectStore('trashImages', { keyPath: 'id', autoIncrement: true });
-                            }
-                            if (!db.objectStoreNames.contains('videos')) {
-                                db.createObjectStore('videos', { keyPath: 'id', autoIncrement: true });
-                            }
-                            if (!db.objectStoreNames.contains('audios')) {
-                                db.createObjectStore('audios', { keyPath: 'id', autoIncrement: true });
-                            }
-                        };
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(req.error);
+                            // Use a higher version to ensure upgrade happens
+                            const req = indexedDB.open(DB_NAME, 5);
+                            req.onupgradeneeded = function(e) {
+                                const db = e.target.result;
+                                if (!db.objectStoreNames.contains(DOC_STORE)) {
+                                    db.createObjectStore(DOC_STORE, { keyPath: 'id' });
+                                }
+                                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
+                                    db.createObjectStore(FOLDER_STORE, { keyPath: 'id' });
+                                }
+                                if (!db.objectStoreNames.contains(KEY_STORE)) {
+                                    db.createObjectStore(KEY_STORE, { keyPath: 'name' });
+                                }
+                                if (!db.objectStoreNames.contains('images')) {
+                                    db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
+                                }
+                                if (!db.objectStoreNames.contains('trashImages')) {
+                                    db.createObjectStore('trashImages', { keyPath: 'id', autoIncrement: true });
+                                }
+                                if (!db.objectStoreNames.contains('videos')) {
+                                    db.createObjectStore('videos', { keyPath: 'id', autoIncrement: true });
+                                }
+                                if (!db.objectStoreNames.contains('audios')) {
+                                    db.createObjectStore('audios', { keyPath: 'id', autoIncrement: true });
+                                }
+                            };
+                            req.onsuccess = () => resolve(req.result);
+                            req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+                            req.onblocked = () => reject(new Error('IndexedDB open was blocked'));
+                        } catch (error) {
+                            showAppErrorToast('omni_core_indexeddb_failed', "We failed to open media storage. Images and uploads may not save.", error);
+                            reject(error);
+                        }
                     });
                 };
                 window.openDBPatched = true;
@@ -8645,10 +8835,8 @@ Q4: 22</textarea>
             };
         });
         function showMusicInsertModal() {
-            // Remove existing modal if any
-            if (musicInsertModal) musicInsertModal.remove();
-
             musicInsertModal = document.createElement('div');
+            const currentMusicInsertModal = musicInsertModal;
             musicInsertModal.className = 'modal';
             musicInsertModal.innerHTML = `
             <div class="modal-content liquid-glass media-insert-modal" style="position:relative;">
@@ -8663,11 +8851,12 @@ Q4: 22</textarea>
             </div>
             `;
             document.body.appendChild(musicInsertModal);
+            currentMusicInsertModal.addEventListener('pointerdown', () => { musicInsertModal = currentMusicInsertModal; }, true);
 
             // Close modal
             musicInsertModal.querySelector('#closeMusicInsertModal').onclick = () => {
-            musicInsertModal.remove();
-            musicInsertModal = null;
+            currentMusicInsertModal.remove();
+            if (musicInsertModal === currentMusicInsertModal) musicInsertModal = null;
             };
 
             // Insert from File
@@ -8936,10 +9125,8 @@ Q4: 22</textarea>
         });
 
         function showVideoInsertModal() {
-            // Remove existing modal if any
-            if (videoInsertModal) videoInsertModal.remove();
-
             videoInsertModal = document.createElement('div');
+            const currentVideoInsertModal = videoInsertModal;
             videoInsertModal.className = 'modal';
             videoInsertModal.innerHTML = `
             <div class="modal-content liquid-glass media-insert-modal" style="position:relative;">
@@ -8955,11 +9142,12 @@ Q4: 22</textarea>
             </div>
             `;
             document.body.appendChild(videoInsertModal);
+            currentVideoInsertModal.addEventListener('pointerdown', () => { videoInsertModal = currentVideoInsertModal; }, true);
 
             // Close modal
             videoInsertModal.querySelector('#closeVideoInsertModal').onclick = () => {
-            videoInsertModal.remove();
-            videoInsertModal = null;
+            currentVideoInsertModal.remove();
+            if (videoInsertModal === currentVideoInsertModal) videoInsertModal = null;
             };
             // Insert from YouTube
             videoInsertModal.querySelector('#insertYoutubeVideoBtn').onclick = () => {
@@ -9348,10 +9536,8 @@ Q4: 22</textarea>
         });
 
         function showImageInsertModal() {
-            // Remove existing modal if any
-            if (imageInsertModal) imageInsertModal.remove();
-
             imageInsertModal = document.createElement('div');
+            const currentImageInsertModal = imageInsertModal;
             imageInsertModal.className = 'modal';
             imageInsertModal.innerHTML = `
             <div class="modal-content liquid-glass media-insert-modal" style="position:relative;">
@@ -9368,11 +9554,12 @@ Q4: 22</textarea>
             </div>
             `;
             document.body.appendChild(imageInsertModal);
+            currentImageInsertModal.addEventListener('pointerdown', () => { imageInsertModal = currentImageInsertModal; }, true);
 
             // Close modal
             imageInsertModal.querySelector('#closeImageInsertModal').onclick = () => {
-            imageInsertModal.remove();
-            imageInsertModal = null;
+            currentImageInsertModal.remove();
+            if (imageInsertModal === currentImageInsertModal) imageInsertModal = null;
             };
 
             // Insert from Library
@@ -9805,8 +9992,7 @@ Q4: 22</textarea>
                 showToast(_t('doc_locked_no_preview'), { type: 'error' });
                 return;
             }
-            // Remove any existing modal from DOM
-            document.querySelectorAll('.modal').forEach(m => m.remove());
+            // Keep existing modals open so modal workflows can stack.
             previewModal = null;
 
             // Create modal
@@ -9888,17 +10074,52 @@ Q4: 22</textarea>
         // --- Version History Functionality ---
         const versionHistoryBtn = document.getElementById('versionHistoryBtn');
         let versionHistoryModal = null;
+        window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY = window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY || 'omniwrite-version-history-auto-clear';
+
+        function getVersionHistoryAutoClearDays() {
+            const value = localStorage.getItem(window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY) || 'never';
+            if (value === 'never') return 0;
+            const days = parseInt(value, 10);
+            return Number.isFinite(days) && days > 0 ? days : 0;
+        }
+
+        function sanitizeVersionHistoryContent(content) {
+            if (typeof sanitizeEditableContent !== 'function') return content || '';
+            const temp = document.createElement('div');
+            temp.innerHTML = content || '';
+            return sanitizeEditableContent(temp);
+        }
+
+        function purgeExpiredDocumentVersions(doc) {
+            if (!doc || !Array.isArray(doc.versions)) return false;
+            const days = getVersionHistoryAutoClearDays();
+            if (!days) return false;
+            const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+            const originalLength = doc.versions.length;
+            doc.versions = doc.versions.filter(version => !version.time || version.time >= cutoff);
+            return doc.versions.length !== originalLength;
+        }
+
+        function applyVersionHistoryAutoClear() {
+            let changed = false;
+            documents.forEach(doc => {
+                if (purgeExpiredDocumentVersions(doc)) changed = true;
+            });
+            if (changed) scheduleDocumentSave();
+        }
 
         // Save document version on every change
         async function saveDocumentVersion(doc) {
             if (!doc.versions) doc.versions = [];
+            purgeExpiredDocumentVersions(doc);
+            const versionContent = sanitizeVersionHistoryContent(doc.content);
             // Only save if content changed
             if (
             !doc.versions.length ||
-            doc.versions[doc.versions.length - 1].content !== doc.content
+            doc.versions[doc.versions.length - 1].content !== versionContent
             ) {
             doc.versions.push({
-                content: doc.content,
+                content: versionContent,
                 title: doc.title,
                 time: Date.now()
             });
@@ -9929,82 +10150,144 @@ Q4: 22</textarea>
                 showToast(_t('doc_locked_no_history'), { type: 'error' });
                 return;
             }
-            // Remove any existing modal from DOM
-            document.querySelectorAll('.modal').forEach(m => m.remove());
-            versionHistoryModal = null;
-            versionHistoryModal = document.createElement('div');
-            versionHistoryModal.className = 'modal';
-            versionHistoryModal.innerHTML = `
-            <div class="modal-content" style="position:relative;max-width:800px;">
+            if (purgeExpiredDocumentVersions(historyDoc)) scheduleDocumentSave();
+            const historyModal = document.createElement('div');
+            versionHistoryModal = historyModal;
+            historyModal.className = 'modal omni-version-history-modal';
+            historyModal.dataset.documentId = historyDoc.id;
+            historyModal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:980px;">
                 <span class="modal-content-close" id="closeVersionHistoryModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
-                <h2>Version History</h2>
-                <div id="versionList" style="max-height:400px;overflow-y:auto;margin-top:18px;"></div>
-                <div id="versionPreview" style="margin-top:24px;display:none;">
-                <h3>Preview</h3>
-                <div id="versionPreviewContent" style="background:#191a2a;color:#ffe066;padding:18px;border-radius:10px;max-height:300px;overflow:auto;"></div>
-                <button id="restoreVersionBtn" style="margin-top:12px;">Restore This Version</button>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-right:28px;">
+                    <div>
+                        <h2 style="margin-bottom:6px;">${_t('version_history')}</h2>
+                        <p style="margin:0;opacity:0.72;">${_t('version_history_desc')}</p>
+                    </div>
+                    <div class="liquid-glass" style="padding:10px 14px;border-radius:18px;text-align:right;min-width:150px;">
+                        <div style="font-size:12px;opacity:0.68;">${_t('current_document')}</div>
+                        <strong id="versionHistoryDocTitle" style="display:block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></strong>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(240px,330px) minmax(0,1fr);gap:18px;margin-top:22px;">
+                    <div class="liquid-glass" style="padding:14px;border-radius:22px;min-height:360px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+                            <strong>${_t('saved_versions')}</strong>
+                            <span id="versionHistoryCount" style="font-size:12px;opacity:0.7;"></span>
+                        </div>
+                        <div id="versionList" style="max-height:440px;overflow-y:auto;display:grid;gap:10px;"></div>
+                    </div>
+                    <div class="liquid-glass" id="versionPreview" style="padding:16px;border-radius:22px;min-height:360px;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;">
+                        <div>
+                            <h3 id="versionPreviewTitle" style="margin:0 0 4px;">${_t('select_version')}</h3>
+                            <p id="versionPreviewMeta" style="margin:0;opacity:0.68;font-size:13px;">${_t('select_version_desc')}</p>
+                        </div>
+                        <div id="versionPreviewContent" style="background:rgba(9,5,18,0.45);color:inherit;padding:18px;border-radius:18px;max-height:360px;overflow:auto;border:1px solid rgba(255,255,255,0.1);"></div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+                            <button id="refreshVersionHistoryBtn" type="button"><icon>refresh</icon>${_t('refresh')}</button>
+                            <button id="restoreVersionBtn" type="button" disabled><icon>restore</icon>${_t('restore_this_version')}</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             `;
-            document.body.appendChild(versionHistoryModal);
+            document.body.appendChild(historyModal);
 
             // Close modal
-            versionHistoryModal.querySelector('#closeVersionHistoryModal').onclick = () => {
-            versionHistoryModal.remove();
-            versionHistoryModal = null;
+            historyModal.querySelector('#closeVersionHistoryModal').onclick = () => {
+            historyModal.remove();
+            if (versionHistoryModal === historyModal) versionHistoryModal = null;
             };
 
-            // Render version list
-            const versionList = versionHistoryModal.querySelector('#versionList');
-            versionList.innerHTML = '';
-            if (!historyDoc.versions || !historyDoc.versions.length) {
-            versionList.innerHTML = '<div style="margin:16px 0;">No versions saved yet.</div>';
-            return;
+            function getModalDocument() {
+                const activeId = getCurrentDocIdFromHash();
+                if (activeId) historyModal.dataset.documentId = activeId;
+                return documents.find(d => d.id === historyModal.dataset.documentId) || null;
             }
-            historyDoc.versions.forEach((ver, idx) => {
-            const div = document.createElement('div');
-            div.className = 'sidebarnav__item';
-            div.style.cursor = 'pointer';
-            div.style.marginBottom = '8px';
-            div.innerHTML = `<icon>history</icon>
-                <div class="menu-text">
-                ${ver.title || 'Untitled'}<br>
-                <span style="font-size:12px;opacity:0.7;">${new Date(ver.time).toLocaleString()}</span>
-                </div>
-                <button class="preview-btn" style="margin-left:auto;background:transparent;border:none;color:#fff;cursor:pointer;"><icon>visibility</icon></button>
-                <button class="restore-btn" style="background:transparent;border:none;color:#fff;cursor:pointer;"><icon>restore</icon></button>
-            `;
-            // Preview button
-            div.querySelector('.preview-btn').onclick = function (e) {
-                e.stopPropagation();
-                const preview = versionHistoryModal.querySelector('#versionPreview');
-                preview.style.display = 'block';
-                preview.querySelector('#versionPreviewContent').innerHTML = ver.content;
-                preview.querySelector('#restoreVersionBtn').onclick = function () {
-                historyDoc.content = ver.content;
-                const restoredEditor = typeof renderDocumentPages === 'function' ? renderDocumentPages(historyDoc) : document.getElementById('editorArea');
-                if (restoredEditor && restoredEditor.id === 'editorArea') restoredEditor.innerHTML = ver.content;
+
+            function restoreVersion(version) {
+                const doc = getModalDocument();
+                if (!doc || isEffectivelyLocked(doc)) {
+                    showToast(_t('doc_locked_no_history'), { type: 'error' });
+                    return;
+                }
+                doc.content = version.content;
+                const restoredEditor = typeof renderDocumentPages === 'function' ? renderDocumentPages(doc) : document.getElementById('editorArea');
+                if (restoredEditor && restoredEditor.id === 'editorArea') restoredEditor.innerHTML = version.content;
+                if (restoredEditor && typeof resolveStoredDocumentImages === 'function') resolveStoredDocumentImages(restoredEditor, false);
                 if (restoredEditor) markEditorActive(restoredEditor);
                 scheduleDocumentSave();
                 showToast(_t('version_restored'), { type: 'success' });
-                versionHistoryModal.remove();
-                versionHistoryModal = null;
-                };
-            };
-            // Restore button
-            div.querySelector('.restore-btn').onclick = function (e) {
-                e.stopPropagation();
-                historyDoc.content = ver.content;
-                const restoredEditor = typeof renderDocumentPages === 'function' ? renderDocumentPages(historyDoc) : document.getElementById('editorArea');
-                if (restoredEditor && restoredEditor.id === 'editorArea') restoredEditor.innerHTML = ver.content;
-                if (restoredEditor) markEditorActive(restoredEditor);
-                scheduleDocumentSave();
-                showToast(_t('version_restored'), { type: 'success' });
-                versionHistoryModal.remove();
-                versionHistoryModal = null;
-            };
-            versionList.appendChild(div);
+                historyModal.remove();
+                if (versionHistoryModal === historyModal) versionHistoryModal = null;
+            }
+
+            function renderVersionHistory(selectedIndex = -1) {
+                const doc = getModalDocument();
+                const versionList = historyModal.querySelector('#versionList');
+                const count = historyModal.querySelector('#versionHistoryCount');
+                const docTitle = historyModal.querySelector('#versionHistoryDocTitle');
+                const previewTitle = historyModal.querySelector('#versionPreviewTitle');
+                const previewMeta = historyModal.querySelector('#versionPreviewMeta');
+                const previewContent = historyModal.querySelector('#versionPreviewContent');
+                const restoreBtn = historyModal.querySelector('#restoreVersionBtn');
+                versionList.innerHTML = '';
+                restoreBtn.disabled = true;
+                restoreBtn.onclick = null;
+                if (!doc) {
+                    docTitle.textContent = _t('unknown');
+                    count.textContent = '0';
+                    previewTitle.textContent = _t('no_document_selected');
+                    previewMeta.textContent = _t('please_open_document');
+                    previewContent.innerHTML = '';
+                    return;
+                }
+                if (purgeExpiredDocumentVersions(doc)) scheduleDocumentSave();
+                const versions = Array.isArray(doc.versions) ? doc.versions.slice().reverse() : [];
+                docTitle.textContent = doc.title || _t('untitled_document');
+                count.textContent = String(versions.length);
+                if (!versions.length) {
+                    versionList.innerHTML = `<div style="padding:18px;border-radius:18px;background:rgba(255,255,255,0.04);opacity:0.78;">${_t('no_versions_saved_yet')}</div>`;
+                    previewTitle.textContent = _t('no_versions_saved_yet');
+                    previewMeta.textContent = _t('version_history_empty_desc');
+                    previewContent.innerHTML = '';
+                    return;
+                }
+                versions.forEach((ver, reverseIndex) => {
+                    const originalIndex = doc.versions.length - 1 - reverseIndex;
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'sidebarnav__item';
+                    item.style.cssText = 'width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:none;cursor:pointer;padding:12px;border-radius:16px;';
+                    item.innerHTML = `<icon>history</icon>
+                        <div class="menu-text" style="min-width:0;flex:1;">
+                            <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(ver.title || doc.title || _t('untitled_document'))}</strong>
+                            <span style="font-size:12px;opacity:0.7;">${new Date(ver.time || Date.now()).toLocaleString()}</span>
+                        </div>
+                        <icon style="font-size:18px;">chevron_right</icon>`;
+                    item.onclick = () => renderVersionHistory(originalIndex);
+                    versionList.appendChild(item);
+                });
+                const selected = selectedIndex >= 0 ? doc.versions[selectedIndex] : versions[0];
+                if (selected) {
+                    previewTitle.textContent = selected.title || doc.title || _t('untitled_document');
+                    previewMeta.textContent = (_t('saved') || 'Saved') + ' ' + new Date(selected.time || Date.now()).toLocaleString();
+                    previewContent.innerHTML = sanitizeVersionHistoryContent(selected.content);
+                    if (typeof resolveStoredDocumentImages === 'function') resolveStoredDocumentImages(previewContent, false);
+                    restoreBtn.disabled = false;
+                    restoreBtn.onclick = () => restoreVersion(selected);
+                }
+            }
+
+            historyModal.querySelector('#refreshVersionHistoryBtn').onclick = () => renderVersionHistory();
+            window.addEventListener('hashchange', function historyHashRefresh() {
+                if (!document.body.contains(historyModal)) {
+                    window.removeEventListener('hashchange', historyHashRefresh);
+                    return;
+                }
+                renderVersionHistory();
             });
+            renderVersionHistory();
+            setupModalAccessibility(historyModal);
         });
         
         // --- Find in Document Functionality ---
@@ -10588,8 +10871,7 @@ Q4: 22</textarea>
         let shareModal = null;
 
         shareDocumentBtn.addEventListener('click', function () {
-            // Remove any existing modal from DOM
-            document.querySelectorAll('.modal').forEach(m => m.remove());
+            // Keep existing modals open so modal workflows can stack.
             shareModal = null;
 
             const docId = getCurrentDocIdFromHash();
@@ -11081,6 +11363,7 @@ Q4: 22</textarea>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${doc.title}</title>
+    <link rel="stylesheet" href="https://api.munetios.com/beautiful-css/beautiful.css">
     <style>
         body {
             font-family: ${styles.fontFamily};
@@ -11146,6 +11429,7 @@ Q4: 22</textarea>
 <head>
     <meta charset='utf-8'>
     <title>${doc.title}</title>
+    <link rel="stylesheet" href="https://api.munetios.com/beautiful-css/beautiful.css">
     <style>
         body {
             font-family: ${styles.fontFamily};
@@ -11326,7 +11610,7 @@ Q4: 22</textarea>
             showToast(_t('doc_locked_no_print'), { type: 'error' });
             return;
         }
-        document.querySelectorAll('.modal').forEach(m => m.remove());
+        // Keep existing modals open so modal workflows can stack.
 
         // Build font options from picker ref
         const pickerEl = _fontFamilyPickerRef || document.getElementById('fontFamilyPicker');
@@ -11437,7 +11721,7 @@ Q4: 22</textarea>
             printWindow.document.write(`
                 <!DOCTYPE html><html><head>
                 <title>${doc.title}</title>
-                ${getPrintGoogleFontLinks()}
+                <link rel="stylesheet" href="https://api.munetios.com/beautiful-css/beautiful.css">
                 <style>
                     body { font-family: ${fontFamily}; color: ${textColor}; background: ${bgColor}; margin: 40px auto; max-width: 820px; }
                     h1,h2,h3,h4,h5,h6 { font-family: ${fontFamily}; }
@@ -11516,8 +11800,17 @@ Q4: 22</textarea>
             if (idx !== -1) {
                 documents.splice(idx, 1);
                 // Remove from IndexedDB
-                const tx = db.transaction(DOC_STORE, 'readwrite');
-                tx.objectStore(DOC_STORE).delete(docId);
+                try {
+                    if (db && !storageUnavailable && db.objectStoreNames.contains(DOC_STORE)) {
+                        const tx = db.transaction(DOC_STORE, 'readwrite');
+                        tx.objectStore(DOC_STORE).delete(docId);
+                        tx.onerror = () => showAppErrorToast('failed_save_document_deletion', 'Failed to save document deletion. We were unable to process private storage.', tx.error);
+                    } else {
+                        showAppErrorToast('failed_save_document_deletion', 'Failed to save document deletion. We were unable to process private storage.', new Error('IndexedDB unavailable'));
+                    }
+                } catch (error) {
+                    showAppErrorToast('failed_save_document_deletion', 'Failed to save document deletion. We were unable to process private storage.', error);
+                }
                 // Remove from sidebar
                 const el = document.querySelector(`.document-item[data-doc-id="${docId}"]`);
                 if (el) el.remove();
@@ -11839,17 +12132,36 @@ Q4: 22</textarea>
         }
 
         function getAdjacentFontSize(currentSize, direction) {
-            const normalized = normalizeFontSizeStep(currentSize);
-            const currentIndex = FONT_SIZE_STEPS.indexOf(normalized);
-            if (direction > 0) {
-                return FONT_SIZE_STEPS[Math.min(currentIndex + 1, FONT_SIZE_STEPS.length - 1)];
+            const numeric = Math.round(Number(currentSize) || 18);
+            return Math.max(1, Math.min(400, numeric + (direction > 0 ? 1 : -1)));
+        }
+
+        function saveEditorSelection(editorArea) {
+            const selection = window.getSelection();
+            if (!editorArea || !selection || !selection.rangeCount) return null;
+            const range = selection.getRangeAt(0);
+            const container = range.commonAncestorContainer;
+            const node = container.nodeType === 1 ? container : container.parentNode;
+            if (!node || !editorArea.contains(node)) return null;
+            return range.cloneRange();
+        }
+
+        function restoreEditorSelection(editorArea, range) {
+            if (!editorArea || !range) return false;
+            try {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                editorArea.focus({ preventScroll: true });
+                return true;
+            } catch (e) {
+                return false;
             }
-            return FONT_SIZE_STEPS[Math.max(currentIndex - 1, 0)];
         }
 
         function applyEditorFontSize(doc, editorArea, fontSizeDisplay, size) {
             if (!doc || !editorArea || !fontSizeDisplay) return;
-            const numericSize = normalizeFontSizeStep(size);
+            const numericSize = Math.max(1, Math.min(400, Math.round(Number(size) || 18)));
 
             let preservedFontFamily = '';
             const selBefore = window.getSelection();
@@ -11912,7 +12224,7 @@ Q4: 22</textarea>
 
             const computedSize = getSelectionFontSizePx(editorArea);
             if (fontSizeDisplay && computedSize) {
-                fontSizeDisplay.textContent = normalizeFontSizeStep(computedSize) + 'px';
+                fontSizeDisplay.textContent = Math.round(computedSize) + 'px';
             }
 
             let font = '';
@@ -12010,6 +12322,10 @@ Q4: 22</textarea>
             fontFamilyBtn = document.getElementById('fontFamilyBtn');
             fontSizePicker = document.getElementById('fontSizePicker');
             fontFamilyPicker = document.getElementById('fontFamilyPicker');
+            if (typeof renderFontFamilyPicker === 'function') {
+                renderFontFamilyPicker();
+                fontFamilyPicker = document.getElementById('fontFamilyPicker');
+            }
             fontSizeDisplay = document.getElementById('fontSizeDisplay');
             fontFamilyText = document.getElementById('fontFamilyText');
             if (fontFamilyPicker) _fontFamilyPickerRef = fontFamilyPicker;
@@ -12021,7 +12337,7 @@ Q4: 22</textarea>
             editorArea.style.fontFamily = savedDefaultFont;
             editorArea.style.fontFeatureSettings = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
             const currentSelectionSize = getSelectionFontSizePx(editorArea);
-            fontSizeDisplay.textContent = normalizeFontSizeStep(currentSelectionSize || parseFloat(window.getComputedStyle(editorArea).fontSize) || 18) + 'px';
+            fontSizeDisplay.textContent = Math.round(currentSelectionSize || parseFloat(window.getComputedStyle(editorArea).fontSize) || 18) + 'px';
             // Update toolbar font family display to show the default font
             if (fontFamilyPicker && fontFamilyText) {
                 const defaultFontEl = fontFamilyPicker.querySelector(`[data-font="${savedDefaultFont}"]`);
@@ -12034,7 +12350,8 @@ Q4: 22</textarea>
             // Font Size Picker
             fontSizeBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                if (document.body.contains(fontSizePicker)) {
+                fontSizePicker._savedSelection = saveEditorSelection(editorArea);
+                if (document.body.contains(fontSizePicker) && fontSizePicker.style.display === 'block') {
                     fontSizePicker.remove();
                 } else {
                     const rect = fontSizeBtn.getBoundingClientRect();
@@ -12057,6 +12374,7 @@ Q4: 22</textarea>
                 item.addEventListener('mousedown', function(e) {
                     e.preventDefault();
                     const size = Number(this.getAttribute('data-size'));
+                    restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
                     applyEditorFontSize(doc, editorArea, fontSizeDisplay, size);
                     if (document.body.contains(fontSizePicker)) fontSizePicker.remove();
                 });
@@ -12064,12 +12382,14 @@ Q4: 22</textarea>
 
             fontSizeDecreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
+                restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
                 const currentSize = getSelectionFontSizePx(editorArea) || parseFloat(fontSizeDisplay.textContent) || 18;
                 applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, -1));
             });
 
             fontSizeIncreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
+                restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
                 const currentSize = getSelectionFontSizePx(editorArea) || parseFloat(fontSizeDisplay.textContent) || 18;
                 applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, 1));
             });
@@ -12077,7 +12397,8 @@ Q4: 22</textarea>
             // Font Family Picker
             fontFamilyBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                if (document.body.contains(fontFamilyPicker)) {
+                fontFamilyPicker._savedSelection = saveEditorSelection(editorArea);
+                if (document.body.contains(fontFamilyPicker) && fontFamilyPicker.style.display === 'block') {
                     fontFamilyPicker.remove();
                 } else {
                     const rect = fontFamilyBtn.getBoundingClientRect();
@@ -12111,6 +12432,7 @@ Q4: 22</textarea>
                     if (!font) return;
                     const { doc: curDoc, editorArea: curEditor, fontFamilyText: curText } = fontFamilyPicker._ctx;
                     if (!curDoc || !curEditor) return;
+                    restoreEditorSelection(curEditor, fontFamilyPicker._savedSelection);
                     applyEditorFontFamily(curDoc, curEditor, curText, item, font);
                     if (document.body.contains(fontFamilyPicker)) fontFamilyPicker.remove();
                 });
@@ -12264,7 +12586,7 @@ Q4: 22</textarea>
 
     // Show lock/unlock modal for a document
     function showLockDocumentModal(doc) {
-        document.querySelectorAll('.modal').forEach(m => m.remove());
+        // Keep existing modals open so modal workflows can stack.
         const isLocked = !!doc.locked;
         const modal = document.createElement('div');
         modal.className = 'modal';
@@ -12411,7 +12733,7 @@ Q4: 22</textarea>
 
     // Shown when user tries to use Danger Zone while at least one document is locked
     function showLockedDangerZonePrompt() {
-        document.querySelectorAll('.modal').forEach(m => m.remove());
+        // Keep existing modals open so modal workflows can stack.
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
@@ -13351,7 +13673,7 @@ Q4: 22</textarea>
             if (helpItem) {
                 const previousNav = helpItem.getAttribute('data-nav');
                 helpItem.removeAttribute('data-nav');
-                helpItem.click();
+                helpItem.dispatchEvent(new MouseEvent('click', { bubbles: false, cancelable: true }));
                 if (previousNav) helpItem.setAttribute('data-nav', previousNav);
             }
         }
@@ -13848,9 +14170,9 @@ Q4: 22</textarea>
             } else if (action === 'documents') {
                 showSidebarOverlay();
             } else if (action === 'settings') {
-                document.querySelector('.settings-item')?.click();
+                document.querySelector('.settings-item')?.dispatchEvent(new MouseEvent('click', { bubbles: false, cancelable: true }));
             } else if (action === 'help') {
-                document.querySelector('.help-item')?.click();
+                document.querySelector('.help-item')?.dispatchEvent(new MouseEvent('click', { bubbles: false, cancelable: true }));
             }
         });
     });
@@ -14349,6 +14671,52 @@ Q4: 22</textarea>
             (preferred || content).focus();
         }, 0);
     }
+    const OMNI_FLOATING_EDGE_MARGIN = 8;
+    function isOmniFloatingWrapper(element) {
+        return element instanceof HTMLElement && (
+            element.classList.contains('dropdown-wrapper') ||
+            element.classList.contains('omni-ctx-menu') ||
+            element.classList.contains('omni-custom-palette')
+        );
+    }
+    function clampOmniFloatingWrapper(element) {
+        if (!isOmniFloatingWrapper(element)) return;
+        const styles = window.getComputedStyle(element);
+        if (styles.display === 'none' || styles.visibility === 'hidden') return;
+        const margin = OMNI_FLOATING_EDGE_MARGIN;
+        const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+        const viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        if (!viewportWidth || !viewportHeight) return;
+
+        element.style.maxWidth = 'calc(100vw - ' + (margin * 2) + 'px)';
+        element.style.maxHeight = element.style.maxHeight || 'calc(100vh - ' + (margin * 2) + 'px)';
+        if (styles.overflowY === 'visible') element.style.overflowY = 'auto';
+
+        const rect = element.getBoundingClientRect();
+        let dx = 0;
+        let dy = 0;
+        if (rect.right > viewportWidth - margin) dx = viewportWidth - margin - rect.right;
+        if (rect.left + dx < margin) dx += margin - (rect.left + dx);
+        if (rect.bottom > viewportHeight - margin) dy = viewportHeight - margin - rect.bottom;
+        if (rect.top + dy < margin) dy += margin - (rect.top + dy);
+        if (!dx && !dy) return;
+
+        const currentLeft = Number.parseFloat(element.style.left || '0');
+        const currentTop = Number.parseFloat(element.style.top || '0');
+        if (Number.isFinite(currentLeft)) element.style.left = (currentLeft + dx) + 'px';
+        if (Number.isFinite(currentTop)) element.style.top = (currentTop + dy) + 'px';
+    }
+    function scheduleOmniFloatingClamp(element) {
+        if (!isOmniFloatingWrapper(element) || element.dataset.omniClampScheduled === 'true') return;
+        element.dataset.omniClampScheduled = 'true';
+        requestAnimationFrame(() => {
+            element.dataset.omniClampScheduled = 'false';
+            clampOmniFloatingWrapper(element);
+        });
+    }
+    function clampVisibleOmniFloatingWrappers() {
+        document.querySelectorAll('.dropdown-wrapper, .omni-ctx-menu, .omni-custom-palette').forEach(scheduleOmniFloatingClamp);
+    }
     function applyAccessibilityEnhancements(root = document) {
         const scope = root.querySelectorAll ? root : document;
         scope.querySelectorAll('.toolbar').forEach(toolbar => {
@@ -14358,6 +14726,7 @@ Q4: 22</textarea>
         scope.querySelectorAll('.dropdown-wrapper').forEach(dropdown => {
             dropdown.setAttribute('role', 'menu');
             dropdown.setAttribute('aria-hidden', dropdown.style.display === 'block' ? 'false' : 'true');
+            scheduleOmniFloatingClamp(dropdown);
         });
         scope.querySelectorAll('.document-page-editor, .split-editor, #editorArea').forEach(editor => {
             editor.setAttribute('role', 'textbox');
@@ -14391,15 +14760,19 @@ Q4: 22</textarea>
                 if (mutation.target.classList.contains('dropdown-wrapper')) {
                     mutation.target.setAttribute('aria-hidden', mutation.target.style.display === 'block' ? 'false' : 'true');
                 }
+                if (isOmniFloatingWrapper(mutation.target)) scheduleOmniFloatingClamp(mutation.target);
                 return;
             }
             mutation.addedNodes.forEach(function(node) {
                 if (!(node instanceof HTMLElement)) return;
                 applyAccessibilityEnhancements(node);
+                if (isOmniFloatingWrapper(node)) scheduleOmniFloatingClamp(node);
             });
         });
     });
     omniA11yObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    window.addEventListener('resize', clampVisibleOmniFloatingWrappers);
+    window.addEventListener('scroll', clampVisibleOmniFloatingWrappers, true);
     applyAccessibilityEnhancements(document);
     // --- Upload Image Button ---
     document.getElementById('uploadImageBtn').addEventListener('click', function() {
@@ -14602,8 +14975,20 @@ Q4: 22</textarea>
          */
         function showToast(message, options = {}) {
             const msg = _t(message);
-            return showStackedToastMessage(msg, options);
+            const toast = showStackedToastMessage(msg, options);
+            if (!window.__omniFlushingPendingCoreToasts) {
+                window.__omniFlushingPendingCoreToasts = true;
+                setTimeout(() => {
+                    try {
+                        flushPendingAppErrorToasts();
+                    } finally {
+                        window.__omniFlushingPendingCoreToasts = false;
+                    }
+                }, 0);
+            }
+            return toast;
         }
+        setTimeout(flushPendingAppErrorToasts, 0);
 
         // Add custom confirm modal function
         window.showConfirm = function(message, onConfirm, onCancel) {
@@ -14679,13 +15064,38 @@ Q4: 22</textarea>
         const helpItem = document.querySelector('.help-item');
         let helpModal = null;
 
-        helpItem.addEventListener('click', function () {
-            // Remove any existing modal
-            document.querySelectorAll('.modal').forEach(m => m.remove());
-            helpModal = null;
+        function captureDocumentViewState() {
+            const hash = window.location.hash || '';
+            const match = hash.match(/^#\/profile\/([^\/]+)\/document\/(.+)$/);
+            return {
+                hash,
+                docId: match ? match[2] : null,
+                activePageId: document.querySelector('.page.active')?.id || ''
+            };
+        }
 
+        function restoreDocumentViewState(state) {
+            if (!state || !state.docId) return;
+            requestAnimationFrame(() => {
+                if (window.location.hash !== state.hash) {
+                    history.replaceState(null, '', state.hash);
+                }
+                const activePageId = document.querySelector('.page.active')?.id || '';
+                if (activePageId !== 'editorContent') {
+                    const doc = documents.find(d => d.id === state.docId);
+                    if (doc && typeof loadDocument === 'function') loadDocument(doc);
+                    else if (typeof switchPage === 'function') switchPage('editorContent');
+                }
+            });
+        }
+
+        helpItem.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const documentViewState = captureDocumentViewState();
             // Create modal
-            helpModal = document.createElement('div');
+            const currentHelpModal = document.createElement('div');
+            helpModal = currentHelpModal;
             helpModal.className = 'modal';
             helpModal.innerHTML = `
             <div class="modal-content" style="position:relative;max-width:600px;">
@@ -14714,6 +15124,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.14.2 - Improved version history, redesigned the font picker, improved languages and more</li>
                                <li>v1.14.1 - Replaced the document search bar with a modal, Reduced clutter in small screens, you can click more for Apps, help, tasks, trash, etc.</li>
                                 <li>v1.14.0 - Munetios June 4 redesign.</li>
                           <li>v1.13.2 - Fixed a performance bug when delayed typing.</li>
@@ -14759,9 +15170,10 @@ Q4: 22</textarea>
 
             // Close modal
             helpModal.querySelector('#closeHelpModal').onclick = () => {
-                helpModal.remove();
-                helpModal = null;
+                currentHelpModal.remove();
+                if (helpModal === currentHelpModal) helpModal = null;
             };
+            restoreDocumentViewState(documentViewState);
         });
         /**
          * Settings Modal Functionality
@@ -14880,10 +15292,17 @@ Q4: 22</textarea>
         
         const OMNI_TOOLBAR_CUSTOMIZATION_KEY = 'omniwrite-editor-toolbar-customization';
         const OMNI_DOCUMENT_FONT_FEATURES_KEY = 'omniwrite-document-font-features';
-        const OMNI_FONT_FEATURE_KEYS = ['ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08'];
+        const OMNI_FONT_FEATURE_GROUPS = [
+            { title: 'Stylistic Sets', keys: Array.from({ length: 20 }, (_, index) => 'ss' + String(index + 1).padStart(2, '0')) },
+            { title: 'Character Variants', keys: Array.from({ length: 20 }, (_, index) => 'cv' + String(index + 1).padStart(2, '0')) }
+        ];
+        const OMNI_FONT_FEATURE_KEYS = OMNI_FONT_FEATURE_GROUPS.flatMap(group => group.keys);
 
         function getDefaultFontFeatureState() {
-            return { ss01: true, ss02: false, ss03: false, ss04: false, ss05: false, ss06: false, ss07: false, ss08: false };
+            return OMNI_FONT_FEATURE_KEYS.reduce((state, key) => {
+                state[key] = key === 'ss01';
+                return state;
+            }, {});
         }
 
         function loadFontFeatureState(storageKey) {
@@ -15369,11 +15788,45 @@ Q4: 22</textarea>
         }
 
         function applyHeadersFooters(enabled) {
+            const activeDocId = getCurrentDocIdFromHash();
+            const activeDoc = activeDocId ? documents.find(d => d.id === activeDocId) : null;
+            if (activeDoc) {
+                activeDoc.headersFootersEnabled = !!enabled;
+                activeDoc.timestamp = Date.now();
+                activeDoc.updatedAt = Date.now();
+                scheduleDocumentSave();
+            }
             document.querySelectorAll('.document-page-shell').forEach(shell => {
                 if (enabled) shell.classList.add('headers-footers-enabled');
                 else shell.classList.remove('headers-footers-enabled');
             });
         }
+
+        function getDocumentHeadersFootersEnabled(doc) {
+            if (doc && typeof doc.headersFootersEnabled === 'boolean') return doc.headersFootersEnabled;
+            return localStorage.getItem('omniwrite-headers-footers') === 'true';
+        }
+
+        function saveDocumentHeaderFooterFromBar(bar) {
+            if (!bar) return;
+            const shell = bar.closest('.document-page-shell');
+            const editor = shell ? shell.querySelector('.document-page-editor[data-doc-id]') : null;
+            const doc = editor ? getDocumentByEditor(editor) : (getCurrentDocIdFromHash() ? documents.find(d => d.id === getCurrentDocIdFromHash()) : null);
+            if (!doc) return;
+            if (bar.getAttribute('data-role') === 'doc-header') doc.headerHtml = bar.innerHTML;
+            if (bar.getAttribute('data-role') === 'doc-footer') doc.footerHtml = bar.innerHTML;
+            doc.headersFootersEnabled = shell ? shell.classList.contains('headers-footers-enabled') : getDocumentHeadersFootersEnabled(doc);
+            doc.timestamp = Date.now();
+            doc.updatedAt = Date.now();
+            debouncedSaveDocuments(500);
+        }
+
+        document.querySelectorAll('#staticPageShell .doc-header-bar, #staticPageShell .doc-footer-bar').forEach(bar => {
+            if (!bar.dataset.omniHeaderFooterSaveBound) {
+                bar.dataset.omniHeaderFooterSaveBound = 'true';
+                bar.addEventListener('input', () => saveDocumentHeaderFooterFromBar(bar));
+            }
+        });
 
         // Apply persisted settings on load
         (function() {
@@ -15386,6 +15839,7 @@ Q4: 22</textarea>
         })();
 
         function createDocumentPageEditor(docId, pageIndex, contentHtml) {
+            const doc = docId ? documents.find(d => d.id === docId) : null;
             const shell = document.createElement('div');
             shell.className = 'document-page-shell';
 
@@ -15395,6 +15849,8 @@ Q4: 22</textarea>
             headerBar.contentEditable = 'true';
             headerBar.dataset.placeholder = _t('header_placeholder');
             headerBar.setAttribute('data-role', 'doc-header');
+            headerBar.innerHTML = doc?.headerHtml || '';
+            headerBar.addEventListener('input', () => saveDocumentHeaderFooterFromBar(headerBar));
             shell.appendChild(headerBar);
 
             // Wrapper for optional line numbers + editor
@@ -15427,10 +15883,12 @@ Q4: 22</textarea>
             footerBar.contentEditable = 'true';
             footerBar.dataset.placeholder = _t('footer_placeholder');
             footerBar.setAttribute('data-role', 'doc-footer');
+            footerBar.innerHTML = doc?.footerHtml || '';
+            footerBar.addEventListener('input', () => saveDocumentHeaderFooterFromBar(footerBar));
             shell.appendChild(footerBar);
 
             // Apply current settings
-            if (localStorage.getItem('omniwrite-headers-footers') === 'true') {
+            if (getDocumentHeadersFootersEnabled(doc)) {
                 shell.classList.add('headers-footers-enabled');
             }
             if (localStorage.getItem('omniwrite-line-numbers') === 'true') {
@@ -15879,7 +16337,11 @@ Q4: 22</textarea>
             applySpellcheckSetting(localStorage.getItem('omniwrite-spellcheck') !== 'false');
             applyBusinessMode();
             if (localStorage.getItem('omniwrite-line-numbers') === 'true') applyLineNumbers(true);
-            if (localStorage.getItem('omniwrite-headers-footers') === 'true') applyHeadersFooters(true);
+            const activeDocId = getCurrentDocIdFromHash();
+            const activeDoc = activeDocId ? documents.find(d => d.id === activeDocId) : null;
+            document.querySelectorAll('.document-page-shell').forEach(shell => {
+                shell.classList.toggle('headers-footers-enabled', getDocumentHeadersFootersEnabled(activeDoc));
+            });
         }
         document.addEventListener('focusin', function(e) {
             const editor = e.target && e.target.closest ? e.target.closest(ACTIVE_EDITOR_SELECTOR) : null;
@@ -16445,19 +16907,139 @@ Q4: 22</textarea>
             try {
                 var safeName = font.name.replace(/['"\\]/g, '');
                 if (document.querySelector('link[data-custom-font="' + safeName + '"],style[data-custom-font="' + safeName + '"]')) return;
-                if (/fonts\.googleapis\.com/i.test(font.url) || /fonts\.gstatic\.com/i.test(font.url)) {
-                    var link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = font.url;
-                    link.setAttribute('data-custom-font', safeName);
-                    document.head.appendChild(link);
-                } else {
-                    var style = document.createElement('style');
-                    style.setAttribute('data-custom-font', safeName);
-                    style.textContent = "@font-face { font-family: '" + safeName + "'; src: url('" + font.url.replace(/'/g, "\\'") + "'); }";
-                    document.head.appendChild(style);
-                }
+                var style = document.createElement('style');
+                style.setAttribute('data-custom-font', safeName);
+                style.textContent = "@font-face { font-family: '" + safeName + "'; src: url('" + font.url.replace(/'/g, "\\'") + "'); }";
+                document.head.appendChild(style);
             } catch(e) { console.warn('Failed to load custom font:', e); }
+        }
+        const OMNI_CORE_FONT_OPTIONS = [
+            { name: 'Google Sans Flex', value: "'Google Sans Flex', sans-serif" },
+            { name: 'Google Sans', value: "'Google Sans', sans-serif" },
+            { name: ' Inter', value: "Inter,  sans-serif" },
+                  { name: ' System', value: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+            { name: 'Open Sans', value: "'Open Sans', sans-serif" },
+            { name: 'Poppins', value: "'Poppins', sans-serif" },
+            { name: 'Roboto', value: "'Roboto', sans-serif" },
+            { name: 'Lexend', value: "'Lexend', sans-serif" }
+        ];
+        function escapeAttr(value) {
+            return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        }
+        function getDetectedFonts() {
+            try { return JSON.parse(localStorage.getItem('omniwrite-detected-fonts') || '[]'); }
+            catch(e) { return []; }
+        }
+        function saveDetectedFonts(fonts) {
+            try { localStorage.setItem('omniwrite-detected-fonts', JSON.stringify(fonts)); }
+            catch(e) { console.warn('Failed to save detected fonts:', e); }
+        }
+        function createFontPickerItem(fontValue, label, source) {
+            return '<div class="dropdown-item omni-font-option" data-font="' + escapeAttr(fontValue) + '" data-font-source="' + escapeAttr(source || 'core') + '">'
+                + '<div class="menu-text" style="font-family:' + escapeAttr(fontValue) + ';">' + escapeHtml(label) + '</div>'
+                + '</div>';
+        }
+        function renderFontFamilyPicker() {
+            const picker = document.getElementById('fontFamilyPicker');
+            if (!picker) return;
+            picker.style.maxHeight = '500px';
+            picker.style.overflowY = 'auto';
+            picker.style.minWidth = '280px';
+            const detectedFonts = getDetectedFonts();
+            const customFonts = getCustomFonts();
+            customFonts.forEach(loadCustomFontFace);
+            const canDetectInstalledFonts = typeof window.queryLocalFonts === 'function';
+            const coreHtml = OMNI_CORE_FONT_OPTIONS.map(font => createFontPickerItem(font.value, font.name, 'core')).join('');
+            const customHtml = customFonts.map(font => createFontPickerItem("'" + font.name.replace(/'/g, "\\'") + "', sans-serif", font.name, font.uploaded ? 'uploaded' : 'custom')).join('');
+            const detectedHtml = detectedFonts.map(name => createFontPickerItem("'" + String(name).replace(/'/g, "\\'") + "', sans-serif", name, 'installed')).join('');
+            picker.innerHTML = ''
+                + '<div class="font-picker-tools" style="position:sticky;top:0;z-index:2;padding:10px;background:rgba(17,7,54,0.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;gap:8px;">'
+                + '<input id="fontFamilySearchInput" type="search" placeholder="' + escapeAttr(_t('search_fonts')) + '" style="width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.08);color:inherit;">'
+                + '<div style="display:grid;grid-template-columns:repeat(' + (canDetectInstalledFonts ? '3' : '2') + ',minmax(0,1fr));gap:8px;">'
+                + '<button type="button" id="addCustomFontBtn"><icon>add_circle</icon><span>' + escapeHtml(_t('add_font')) + '</span></button>'
+                + '<button type="button" id="uploadFontBtn"><icon>upload_file</icon><span>' + escapeHtml(_t('upload_font')) + '</span></button>'
+                + (canDetectInstalledFonts ? '<button type="button" id="detectInstalledFontsBtn"><icon>search</icon><span>' + escapeHtml(_t('detect_installed_fonts')) + '</span></button>' : '')
+                + '</div><input type="file" id="fontUploadInput" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" style="display:none;"></div>'
+                + '<div class="font-picker-list" id="coreFontsInPicker">' + coreHtml + '</div>'
+                + '<hr style="margin:4px 8px;border-color:rgba(255,255,255,0.12);">'
+                + '<div id="customFontsInPicker">' + customHtml + '</div>'
+                + (detectedHtml ? '<hr style="margin:4px 8px;border-color:rgba(255,255,255,0.12);"><div style="padding:8px 12px;font-size:12px;opacity:.68;">' + escapeHtml(_t('installed_fonts')) + '</div><div id="detectedFontsInPicker">' + detectedHtml + '</div>' : '<div id="detectedFontsInPicker"></div>')
+                + '<div id="fontPickerEmptyState" style="display:none;padding:14px;opacity:.68;">' + escapeHtml(_t('no_fonts_found')) + '</div>';
+            setupFontPickerToolEvents(picker);
+        }
+        function filterFontFamilyPicker(picker, query) {
+            const term = String(query || '').trim().toLowerCase();
+            let visible = 0;
+            picker.querySelectorAll('.omni-font-option').forEach(item => {
+                const label = item.textContent.trim().toLowerCase();
+                const show = !term || label.includes(term);
+                item.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            const empty = picker.querySelector('#fontPickerEmptyState');
+            if (empty) empty.style.display = visible ? 'none' : 'block';
+        }
+        function setupFontPickerToolEvents(picker) {
+            const search = picker.querySelector('#fontFamilySearchInput');
+            const uploadBtn = picker.querySelector('#uploadFontBtn');
+            const uploadInput = picker.querySelector('#fontUploadInput');
+            const detectBtn = picker.querySelector('#detectInstalledFontsBtn');
+            const addBtn = picker.querySelector('#addCustomFontBtn');
+            if (search) {
+                search.addEventListener('mousedown', event => event.stopPropagation());
+                search.addEventListener('input', () => filterFontFamilyPicker(picker, search.value));
+            }
+            if (addBtn) {
+                addBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    picker.style.display = 'none';
+                    showCustomFontModal();
+                });
+            }
+            if (uploadBtn && uploadInput) {
+                uploadBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadInput.click();
+                });
+                uploadInput.addEventListener('change', function() {
+                    const file = uploadInput.files && uploadInput.files[0];
+                    if (!file) return;
+                    const cleanName = file.name.replace(/\.(ttf|otf|woff2?|)$/i, '').replace(/[^a-z0-9 _-]/gi, '').trim() || 'Uploaded Font';
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        const fonts = getCustomFonts();
+                        const uniqueName = fonts.some(font => font.name.toLowerCase() === cleanName.toLowerCase()) ? cleanName + ' ' + Date.now().toString(36) : cleanName;
+                        fonts.push({ name: uniqueName, url: reader.result, uploaded: true });
+                        saveCustomFonts(fonts);
+                        renderFontFamilyPicker();
+                        showToast(_t('font_uploaded'), { type: 'success' });
+                    };
+                    reader.onerror = function() { showToast(_t('font_upload_failed'), { type: 'error' }); };
+                    reader.readAsDataURL(file);
+                    uploadInput.value = '';
+                });
+            }
+            if (detectBtn) {
+                detectBtn.addEventListener('mousedown', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.queryLocalFonts !== 'function') {
+                        showToast(_t('installed_font_detection_unavailable'), { type: 'info' });
+                        return;
+                    }
+                    try {
+                        const fonts = await window.queryLocalFonts();
+                        const names = Array.from(new Set(fonts.map(font => font.family).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+                        saveDetectedFonts(names);
+                        renderFontFamilyPicker();
+                        showToast(_t('installed_fonts_detected'), { type: 'success' });
+                    } catch (error) {
+                        showToast(_t('installed_font_detection_unavailable'), { type: 'info' });
+                    }
+                });
+            }
         }
         window.EXTRA_GOOGLE_FONT_FAMILIES = window.EXTRA_GOOGLE_FONT_FAMILIES || [
             'Alegreya', 'Alegreya Sans', 'Alegreya Sans SC', 'Alfa Slab One', 'Amatic SC', 'Anonymous Pro', 'Archivo Narrow', 'Architects Daughter', 'Bai Jamjuree', 'Besley',
@@ -16471,52 +17053,17 @@ Q4: 22</textarea>
             'Kumbh Sans', 'Manjari', 'Marmelad', 'Nanum Gothic', 'News Cycle', 'Oranienbaum', 'Poiret One', 'Recursive', 'Rosario', 'STIX Two Text'
         ];
         function loadGoogleFontFamily(fontName) {
-            const safeName = String(fontName || '').replace(/^['"]|['"]$/g, '').trim();
-            if (!safeName || document.querySelector('link[data-google-font-family="' + safeName.replace(/"/g, '&quot;') + '"]')) return;
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(safeName).replace(/%20/g, '+') + ':wght@400;700&display=swap';
-            link.setAttribute('data-google-font-family', safeName);
-            document.head.appendChild(link);
+            return;
         }
         window.ensureFontFaceLoadedFromValue = function ensureFontFaceLoadedFromValue(fontValue) {
-            const name = String(fontValue || '').split(',')[0].replace(/['"]/g, '').trim();
-            const extraFamilies = Array.isArray(window.EXTRA_GOOGLE_FONT_FAMILIES) ? window.EXTRA_GOOGLE_FONT_FAMILIES : [];
-            if (name && extraFamilies.includes(name)) loadGoogleFontFamily(name);
+            return;
         };
         function renderExtraGoogleFontOptions() {
-            const picker = document.getElementById('fontFamilyPicker');
-            const customContainer = document.getElementById('customFontsInPicker');
-            if (!picker || !customContainer) return;
-            (window.EXTRA_GOOGLE_FONT_FAMILIES || []).forEach(function(name) {
-                if (picker.querySelector('[data-font*="' + name.replace(/"/g, '\\"') + '"]')) return;
-                const item = document.createElement('div');
-                item.className = 'dropdown-item';
-                item.setAttribute('data-font', "'" + name.replace(/'/g, "\\'") + "', sans-serif");
-                item.innerHTML = '<div class="menu-text" style="font-family:\'' + name.replace(/'/g, "\\'") + '\', sans-serif;">' + name + '</div>';
-                picker.insertBefore(item, customContainer.previousElementSibling || customContainer);
-            });
+            renderFontFamilyPicker();
         }
         function renderCustomFontOptions() {
-            var container = document.getElementById('customFontsInPicker');
-            if (!container) return;
-            container.innerHTML = '';
-            getCustomFonts().forEach(function(font) {
-                if (font.url) loadCustomFontFace(font);
-                var item = document.createElement('div');
-                item.className = 'dropdown-item';
-                item.setAttribute('data-font', "'" + font.name + "', sans-serif");
-                item.innerHTML = '<div class="menu-text" style="font-family:\'' + font.name.replace(/'/g,"\\'") + '\',sans-serif;">' + font.name.replace(/</g,'&lt;') + '</div>';
-                container.appendChild(item);
-            });
+            renderFontFamilyPicker();
         }
-        document.getElementById('addCustomFontBtn').addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var picker = document.getElementById('fontFamilyPicker');
-            if (picker) picker.style.display = 'none';
-            showCustomFontModal();
-        });
         function showCustomFontModal() {
             var existing = document.getElementById('customFontModal');
             if (existing) existing.remove();
@@ -16531,7 +17078,7 @@ Q4: 22</textarea>
                 + '<input class="custom-font-input" id="customFontNameInput" type="text" placeholder="e.g. My Custom Font" maxlength="60">'
                 + '</div><div style="margin-top:14px;">'
                 + '<label style="display:block;margin-bottom:4px;font-size:14px;opacity:0.8;">' + _t('font_url_label') + '</label>'
-                + '<input class="custom-font-input" id="customFontUrlInput" type="url" placeholder="https://fonts.googleapis.com/css?family=...">'
+                + '<input class="custom-font-input" id="customFontUrlInput" type="url" placeholder="https://example.com/font.woff2">'
                 + '<p style="font-size:12px;opacity:0.5;margin:4px 0 0;">' + _t('font_url_hint') + '</p>'
                 + '</div><div id="customFontPreview" style="margin-top:14px;padding:10px 14px;background:rgba(255,255,255,0.05);border-radius:10px;font-size:18px;min-height:40px;"></div>'
                 + '<div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">'
@@ -16565,9 +17112,9 @@ Q4: 22</textarea>
                 }
                 fonts.push({ name: name, url: url });
                 saveCustomFonts(fonts);
+                renderFontFamilyPicker();
                 modal.remove();
                 showToast(_t('font_added'), { type: 'success' });
-                setTimeout(function() { location.reload(); }, 600);
             });
         }
         renderExtraGoogleFontOptions();
@@ -16874,10 +17421,10 @@ Q4: 22</textarea>
                 'transparency_updated': 'Transparency setting updated.',
                 'compact_mode_updated': 'Compact mode updated.',
                 'backup_exported': 'Backup exported.',
-                'failed_export_backup': 'Failed to export backup. Please try again.',
+                'failed_export_backup': 'We were unable to process your export request at this time. Please try again later.',
                 'backup_imported': 'Backup imported.',
-                'failed_import_backup': 'Failed to import backup.',
-                'failed_read_backup': 'Failed to read backup file.',
+                'failed_import_backup': 'We were unable to process your import request at this time. Please try again later.',
+                'failed_read_backup': 'We were unable to process your import request at this time. Please try again later.',
                 'incorrect_code_reset_key': 'Incorrect confirmation code. Please type RESET KEY.',
                 'encryption_key_reset': 'Encryption key reset. Existing documents are now unreadable.',
                 'failed_reset_key': 'Failed to reset encryption key. Please try again.',
@@ -16892,8 +17439,18 @@ Q4: 22</textarea>
                 'settings_update_failed': 'We were unable to process updating your settings. Please try again later.',
                 'lock_document_request_failed': 'We were unable to process your request right now. Please try again later.',
                 'app_unexpected_error': 'We were unable to process an unexpected error. Please try again.',
-                'storage_unavailable': 'Browser storage is blocked. You can keep using the app, but saving will not work.',
-                'storage_save_unavailable': 'Saving is unavailable because browser storage is blocked.',
+                'unexpected_app_error': 'We were unable to process an unexpected error. Please try again.',
+                'unexpected_async_error': 'We were unable to process a background action. Please try again.',
+                'background_save_failed': 'We were unable to process saving changes in the background.',
+                'background_folder_save_failed': 'We were unable to process saving folder changes in the background.',
+                'omni_core_storage_blocked': "Couldn't access browser storage. OmniWrite will keep working in memory for this session.",
+                'omni_core_indexeddb_failed': "We couldn't able to open private document storage. Saving may not work.",
+                'omni_core_local_save_failed': 'Failed to save local app data. We were unable to process private storage.',
+                'omni_core_local_load_failed': "Couldn't load local app data. Failed to access private storage.",
+                'failed_clear_private_storage': 'We failed to clear private storage. We were unable to process the reset fully.',
+                'failed_save_document_deletion': 'Failed to save document deletion. We were unable to process private storage.',
+                'storage_unavailable': 'We were unable to process private browser storage. You can keep using the app, but saving will not work.',
+                'storage_save_unavailable': 'Failed to save because private browser storage is unavailable.',
                 'failed_save_folders': 'Failed to save folders. Please try again.',
                 'failed_load_folders': 'Failed to load folders.',
                 'failed_init_app': 'Failed to initialize the app. Please refresh the page.',
@@ -17003,8 +17560,18 @@ Q4: 22</textarea>
                 'custom_font_modal_title': 'Add Custom Font',
                 'font_name_label': 'Font Name',
                 'font_url_label': 'Font URL (optional)',
-                'font_url_hint': 'Enter a Google Fonts CSS URL or a direct font file URL.',
+                'font_url_hint': 'Enter a direct font file URL such as WOFF2, WOFF, TTF, or OTF.',
                 'add_custom_font': 'Add Font',
+                'add_font': 'Add Font',
+                'search_fonts': 'Search fonts',
+                'upload_font': 'Upload Font',
+                'detect_installed_fonts': 'Detect Installed',
+                'installed_fonts': 'Installed Fonts',
+                'no_fonts_found': 'No fonts found.',
+                'font_uploaded': 'Font uploaded.',
+                'font_upload_failed': 'Font upload failed.',
+                'installed_fonts_detected': 'Installed fonts detected.',
+                'installed_font_detection_unavailable': 'Installed font detection is not available.',
                 'font_name_required': 'Please enter a font name.',
                 'font_already_exists': 'A font with this name already exists.',
                 'font_added': 'Custom font added.',
@@ -17184,7 +17751,7 @@ Q4: 22</textarea>
                 'move_down': 'Move down',
                 // --- Font feature settings ---
                 'document_font_stylistic_sets': 'Document font stylistic sets',
-                'document_font_stylistic_sets_desc': 'Toggle ss01 through ss08 for document text. ss01 is on by default.',
+                'document_font_stylistic_sets_desc': 'Toggle ss01-ss20 and cv01-cv20 for document text. ss01 is on by default.',
                 // --- Business/settings extras ---
                 'for_business': 'For Business',
                 'for_business_desc': 'Rename the workspace, enable business mode, and choose a local background image.',
@@ -17781,6 +18348,16 @@ Q4: 22</textarea>
                 'System share failed.': 'Error al compartir con el sistema.',
                 'create_new': 'Nuevo',
                               'search_documents': 'Buscar documentos',
+                                     'add_font': 'Agregar fuente',
+                'search_fonts': 'Buscar fuentes',
+                'upload_font': 'Subir Fuente',
+                'detect_installed_fonts': 'Detectar Instaladas',
+                'installed_fonts': 'Fuentes Instaladas',
+                'no_fonts_found': 'No se encontraron fuentes.',
+                'font_uploaded': 'Fuente subida.',
+                'font_upload_failed': 'Error al subir la fuente.',
+                'installed_fonts_detected': 'Fuentes instaladas detectadas.',
+                'installed_font_detection_unavailable': 'La detección de fuentes instaladas no está disponible.'
             },
             fr: {
                 'Welcome to Munetios OmniWrite': 'Bienvenue sur Munetios OmniWrite',
@@ -18501,7 +19078,7 @@ Q4: 22</textarea>
                 // --- Editor more options ---
                 'pin_document': 'Dokument anheften',
                 'unpin_document': 'Dokument lösen',
-                // --- Create options ---
+                // --- Create options ---No pinned documents
                 'new_folder': 'Neuer Ordner',
                 // --- Folder options ---
                 'edit_folder': 'Ordner bearbeiten',
@@ -22314,7 +22891,7 @@ Q4: 22</textarea>
                 'customize_editor_toolbar': 'Personalizar barra del editor', 'customize_editor_toolbar_desc': 'Muestra, oculta, arrastra, reordena e inserta líneas verticales.',
                 'toolbar_customization_saved': 'Personalización de barra guardada.', 'insert_vertical_line': 'Insertar línea vertical', 'vertical_line': 'Línea vertical',
                 'reset': 'Restablecer', 'save': 'Guardar', 'show': 'Mostrar', 'hide': 'Ocultar', 'move_up': 'Subir', 'move_down': 'Bajar',
-                'document_font_stylistic_sets': 'Conjuntos estilísticos de fuente', 'document_font_stylistic_sets_desc': 'Activa ss01 a ss08 para el texto del documento. ss01 está activo por defecto.',
+                'document_font_stylistic_sets': 'Conjuntos estilísticos de fuente', 'document_font_stylistic_sets_desc': 'Activa ss01-ss20 y cv01-cv20 para el texto del documento. ss01 está activo por defecto.',
                 'for_business': 'Para empresas', 'for_business_desc': 'Renombra el espacio, activa modo empresarial y elige una imagen local.',
                 'business_mode_updated': 'Modo empresarial actualizado.', 'business_mode_modal_desc': 'Adapta OmniWrite para equipos, propuestas, clientes y espacios profesionales.',
                 'business_main_title': 'Título principal', 'business_title_placeholder': 'Tu espacio empresarial', 'business_subtitle': 'Subtítulo',
@@ -22847,13 +23424,13 @@ Q4: 22</textarea>
         try { applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true'); } catch(e) {}
         try { applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true'); } catch(e) {}
         
-        settingsItem.addEventListener('click', function () {
-            // Remove any existing modal
-            document.querySelectorAll('.modal').forEach(m => m.remove());
-            settingsModal = null;
-
+        settingsItem.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const documentViewState = captureDocumentViewState();
             // Create modal
-            settingsModal = document.createElement('div');
+            const currentSettingsModal = document.createElement('div');
+            settingsModal = currentSettingsModal;
             settingsModal.className = 'modal';
             settingsModal.innerHTML = `
             <div class="modal-content" style="position:relative;max-width:1209px;max-height:84vh;overflow-y:auto;">
@@ -22982,12 +23559,22 @@ Q4: 22</textarea>
                                 </div>
                                 <label class="setting-toggle"><input type="checkbox" id="headersFootersToggle"><span class="setting-toggle-track"></span></label>
                             </div>
-                            <div class="settings-row" style="align-items:start;">
+                            <div class="settings-row" id="documentFontFeaturesRow" style="align-items:start;display:flex;flex-direction:column;gap:12px;">
                                 <div class="settings-row-info">
                                     <div class="settings-row-title">${_t('document_font_stylistic_sets')}</div>
                                     <div class="settings-row-subtitle">${_t('document_font_stylistic_sets_desc')}</div>
                                 </div>
-                                <div class="font-feature-grid" id="documentFontFeatureGrid"></div>
+                                <button id="documentFontFeaturesToggleBtn" type="button" class="settings-select-btn" aria-expanded="false"><icon>expand_more</icon><span>${_t('open')}</span></button>
+                                <div id="documentFontFeaturesPanel" style="display:none;width:100%;">
+                                    <div class="font-feature-grid" id="documentFontFeatureGrid"></div>
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('version_history_auto_clear')}</div>
+                                    <div class="settings-row-subtitle">${_t('version_history_auto_clear_desc')}</div>
+                                </div>
+                                <button id="versionHistoryAutoClearBtn" class="settings-select-btn"></button>
                             </div>
                         </div>
                     </div>
@@ -23013,14 +23600,18 @@ Q4: 22</textarea>
             </div>
             `;
             document.body.appendChild(settingsModal);
+            restoreDocumentViewState(documentViewState);
+            const activateSettingsModalInstance = () => { settingsModal = currentSettingsModal; };
+            currentSettingsModal.addEventListener('pointerdown', activateSettingsModalInstance, true);
+            currentSettingsModal.addEventListener('focusin', activateSettingsModalInstance, true);
             settingsModal.addEventListener('pointerdown', markSettingsInteractionActive, true);
             settingsModal.addEventListener('change', markSettingsInteractionActive, true);
             settingsModal.addEventListener('input', markSettingsInteractionActive, true);
 
             // Close modal
             settingsModal.querySelector('#closeSettingsModal').onclick = () => {
-                settingsModal.remove();
-                settingsModal = null;
+                currentSettingsModal.remove();
+                if (settingsModal === currentSettingsModal) settingsModal = null;
             };
             settingsModal.querySelectorAll('.settings-sidebar-item').forEach(item => {
                 item.onclick = function() {
@@ -23419,13 +24010,59 @@ Q4: 22</textarea>
 
             // Headers & footers toggle
             const headersFootersToggle = settingsModal.querySelector('#headersFootersToggle');
-            headersFootersToggle.checked = localStorage.getItem('omniwrite-headers-footers') === 'true';
+            const settingsDocId = getCurrentDocIdFromHash();
+            const settingsDoc = settingsDocId ? documents.find(d => d.id === settingsDocId) : null;
+            headersFootersToggle.checked = getDocumentHeadersFootersEnabled(settingsDoc);
             headersFootersToggle.onchange = function() {
                 const enabled = this.checked;
                 localStorage.setItem('omniwrite-headers-footers', enabled);
                 applyHeadersFooters(enabled);
                 showToast(_t('headers_footers_updated'), { type: 'success' });
             };
+
+            const versionHistoryAutoClearBtn = settingsModal.querySelector('#versionHistoryAutoClearBtn');
+            const versionHistoryAutoClearOptions = [
+                { value: 'never', label: _t('auto_clear_never') },
+                { value: '7', label: _t('auto_clear_7_days') },
+                { value: '30', label: _t('auto_clear_30_days') },
+                { value: '90', label: _t('auto_clear_90_days') }
+            ];
+            window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY = window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY || 'omniwrite-version-history-auto-clear';
+            const currentVersionHistoryAutoClear = localStorage.getItem(window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY) || 'never';
+            setSettingsButtonLabel(versionHistoryAutoClearBtn, (versionHistoryAutoClearOptions.find(o => o.value === currentVersionHistoryAutoClear) || versionHistoryAutoClearOptions[0]).label);
+            const versionHistoryAutoClearDropdown = document.createElement('div');
+            versionHistoryAutoClearDropdown.className = 'dropdown-wrapper liquid-glass';
+            versionHistoryAutoClearDropdown.style.cssText = 'position:absolute;min-width:220px;display:none;z-index:1000000;';
+            versionHistoryAutoClearDropdown.innerHTML = versionHistoryAutoClearOptions.map(option => `<div class="dropdown-item" data-value="${option.value}">${option.label}</div>`).join('');
+            document.body.appendChild(versionHistoryAutoClearDropdown);
+            versionHistoryAutoClearBtn.onclick = function(e) {
+                e.preventDefault();
+                const rect = versionHistoryAutoClearBtn.getBoundingClientRect();
+                versionHistoryAutoClearDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                versionHistoryAutoClearDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                versionHistoryAutoClearDropdown.style.display = versionHistoryAutoClearDropdown.style.display === 'block' ? 'none' : 'block';
+            };
+            versionHistoryAutoClearDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.onclick = function() {
+                    const value = this.getAttribute('data-value') || 'never';
+                    localStorage.setItem(window.OMNI_VERSION_HISTORY_AUTO_CLEAR_KEY, value);
+                    setSettingsButtonLabel(versionHistoryAutoClearBtn, this.textContent);
+                    versionHistoryAutoClearDropdown.style.display = 'none';
+                    if (typeof window.applyVersionHistoryAutoClear === 'function') {
+                        window.applyVersionHistoryAutoClear();
+                    }
+                    showToast(_t('version_history_auto_clear_updated'), { type: 'success' });
+                };
+            });
+            document.addEventListener('mousedown', function(e) {
+                if (
+                    versionHistoryAutoClearDropdown.style.display === 'block' &&
+                    !versionHistoryAutoClearDropdown.contains(e.target) &&
+                    !versionHistoryAutoClearBtn.contains(e.target)
+                ) {
+                    versionHistoryAutoClearDropdown.style.display = 'none';
+                }
+            });
 
             // Default Document Font select logic
             const defaultFontBtn = settingsModal.querySelector('#defaultFontBtn');
@@ -23488,14 +24125,21 @@ Q4: 22</textarea>
             function renderFontFeatureToggles(grid, storageKey) {
                 if (!grid) return;
                 const state = loadFontFeatureState(storageKey);
-                grid.innerHTML = OMNI_FONT_FEATURE_KEYS.map(key => `
-                    <label class="font-feature-chip">
-                        <span>${key}</span>
-                        <span class="setting-toggle">
-                            <input type="checkbox" data-feature="${key}" ${state[key] ? 'checked' : ''}>
-                            <span class="setting-toggle-track"></span>
-                        </span>
-                    </label>
+                grid.innerHTML = OMNI_FONT_FEATURE_GROUPS.map(group => `
+                    <div class="font-feature-group" style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="font-weight:700;opacity:0.82;">${group.title}</div>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            ${group.keys.map(key => `
+                                <label class="font-feature-chip">
+                                    <span>${key}</span>
+                                    <span class="setting-toggle">
+                                        <input type="checkbox" data-feature="${key}" ${state[key] ? 'checked' : ''}>
+                                        <span class="setting-toggle-track"></span>
+                                    </span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
                 `).join('');
                 grid.querySelectorAll('input[data-feature]').forEach(input => {
                     input.onchange = function() {
@@ -23508,6 +24152,29 @@ Q4: 22</textarea>
             }
 
             renderFontFeatureToggles(settingsModal.querySelector('#documentFontFeatureGrid'), OMNI_DOCUMENT_FONT_FEATURES_KEY);
+            const documentFontFeaturesToggleBtn = settingsModal.querySelector('#documentFontFeaturesToggleBtn');
+            const documentFontFeaturesPanel = settingsModal.querySelector('#documentFontFeaturesPanel');
+            const documentFontFeaturesRow = settingsModal.querySelector('#documentFontFeaturesRow');
+            function setDocumentFontFeaturesOpen(open) {
+                if (!documentFontFeaturesToggleBtn || !documentFontFeaturesPanel) return;
+                documentFontFeaturesPanel.style.display = open ? 'block' : 'none';
+                documentFontFeaturesToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                documentFontFeaturesToggleBtn.innerHTML = '<icon>' + (open ? 'expand_less' : 'expand_more') + '</icon><span>' + _t(open ? 'close' : 'open') + '</span>';
+            }
+            if (documentFontFeaturesToggleBtn) {
+                documentFontFeaturesToggleBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDocumentFontFeaturesOpen(this.getAttribute('aria-expanded') !== 'true');
+                };
+            }
+            if (documentFontFeaturesRow) {
+                documentFontFeaturesRow.onclick = function(e) {
+                    if (e.target.closest('input, label, button')) return;
+                    setDocumentFontFeaturesOpen(documentFontFeaturesToggleBtn?.getAttribute('aria-expanded') !== 'true');
+                };
+            }
+            setDocumentFontFeaturesOpen(false);
             settingsModal.querySelector('#customizeToolbarBtn').onclick = function(e) {
                 e.preventDefault();
                 openToolbarCustomizerModal();
@@ -23770,8 +24437,8 @@ Q4: 22</textarea>
                 showConfirm(_t('delete_all_custom_fonts_confirm'), function() {
                     localStorage.removeItem('omniwrite-custom-fonts');
                     showToast(_t('all_custom_fonts_deleted'), { type: 'success' });
-                    settingsModal.remove();
-                    settingsModal = null;
+                    currentSettingsModal.remove();
+                    if (settingsModal === currentSettingsModal) settingsModal = null;
                     setTimeout(function() { location.reload(); }, 600);
                 });
             };
@@ -24039,23 +24706,11 @@ Q4: 22</textarea>
                         localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
                         localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
                         const storesToClear = ['documents', 'folders', 'cryptoKey', 'images', 'trashImages', 'videos', 'audios'];
-                        const clearPromises = [];
-                        for (const storeName of storesToClear) {
-                            if (db.objectStoreNames.contains(storeName)) {
-                                clearPromises.push(new Promise((res, rej) => {
-                                    try {
-                                        const tx = db.transaction(storeName, 'readwrite');
-                                        tx.objectStore(storeName).clear();
-                                        tx.oncomplete = () => res();
-                                        tx.onerror = () => rej(tx.error);
-                                    } catch (e) {
-                                        console.warn('Could not clear store:', storeName, e);
-                                        res();
-                                    }
-                                }));
-                            }
+                        try {
+                            await clearIndexedDBStores(storesToClear);
+                        } catch (error) {
+                            showAppErrorToast('failed_clear_private_storage', 'We failed to clear private storage. We were unable to process the reset fully.', error);
                         }
-                        await Promise.all(clearPromises);
                         document.getElementById('documentsList').innerHTML = '';
                         const foldersListEl = document.getElementById('foldersList');
                         if (foldersListEl) foldersListEl.innerHTML = '';
@@ -26517,6 +27172,16 @@ Q4: 22</textarea>
                 'voice_privacy_warning': 'Voice Privacy Warning',
                 'chrome_voice_privacy_body': 'Chrome speech recognition may send audio to Google for processing. Continue only if you accept this browser behavior.',
                 'start_voice_typing': 'Start Voice Typing',
+                'unexpected_app_error': 'We were unable to process an unexpected error. Please try again.',
+                'unexpected_async_error': 'We were unable to process a background action. Please try again.',
+                'background_save_failed': 'We were unable to process saving changes in the background.',
+                'background_folder_save_failed': 'We were unable to process saving folder changes in the background.',
+                'omni_core_storage_blocked': "Couldn't access browser storage. OmniWrite will keep working in memory for this session.",
+                'omni_core_indexeddb_failed': "We couldn't able to open private document storage. Saving may not work.",
+                'omni_core_local_save_failed': 'Failed to save local app data. We were unable to process private storage.',
+                'omni_core_local_load_failed': "Couldn't load local app data. Failed to access private storage.",
+                'failed_clear_private_storage': 'We failed to clear private storage. We were unable to process the reset fully.',
+                'failed_save_document_deletion': 'Failed to save document deletion. We were unable to process private storage.',
                 'choose_from_library_desc': 'Use an image already saved in OmniWrite.',
                 'upload_file_desc': 'Add a local file and save it privately.',
                 'insert_from_url_desc': 'Paste a direct secure media URL.',
@@ -26587,6 +27252,23 @@ Q4: 22</textarea>
                 'find_in_document': 'Find in document',
                 'more_options': 'More Options',
                 'version_history': 'Version History',
+                'version_history_desc': 'Review saved snapshots for the current document and restore a previous draft.',
+                'current_document': 'Current Document',
+                'saved_versions': 'Saved Versions',
+                'select_version': 'Select a version',
+                'select_version_desc': 'Choose a saved snapshot to preview it here.',
+                'restore_this_version': 'Restore This Version',
+                'no_versions_saved_yet': 'No versions saved yet.',
+                'version_history_empty_desc': 'Start editing this document and OmniWrite will save version snapshots automatically.',
+                'version_history_auto_clear': 'Auto clear version history',
+                'version_history_auto_clear_desc': 'Remove old saved snapshots automatically. Default is never.',
+                'version_history_auto_clear_updated': 'Version history auto clear updated.',
+                'auto_clear_never': 'Never',
+                'auto_clear_7_days': 'After 7 days',
+                'auto_clear_30_days': 'After 30 days',
+                'auto_clear_90_days': 'After 90 days',
+                'refresh': 'Refresh',
+                'no_document_selected': 'No document selected',
                 'split_screen': 'Split Screen',
                 'rename_document': 'Rename Document',
                 'pin_document': 'Pin Document',
@@ -26670,7 +27352,17 @@ Q4: 22</textarea>
                 'untitled_document': 'Untitled Document',
                 'no_images_title': 'No Images',
                 'failed_load_images_short': 'Failed to load images.',
-                'replace_with': 'Replace with'
+                'replace_with': 'Replace with',
+                'add_font': 'Add Font',
+                'search_fonts': 'Search fonts',
+                'upload_font': 'Upload Font',
+                'detect_installed_fonts': 'Detect Installed',
+                'installed_fonts': 'Installed Fonts',
+                'no_fonts_found': 'No fonts found.',
+                'font_uploaded': 'Font uploaded.',
+            'font_upload_failed': 'Couldn\'t upload a font. Please try again',
+                'installed_fonts_detected': 'Installed fonts detected.',
+                'installed_font_detection_unavailable': 'Installed font detection is not available.'
             };
             Object.keys(TRANSLATIONS).forEach(lang => {
                 TRANSLATIONS[lang] = Object.assign({}, omniUiKeys, TRANSLATIONS[lang] || {});
@@ -26690,6 +27382,22 @@ Q4: 22</textarea>
             };
             Object.keys(omniUiLocalePatches).forEach(lang => {
                 TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniUiLocalePatches[lang]);
+            });
+            const omniVersionHistoryLocalePatches = {
+                es: { version_history_desc:'Revisa instantáneas guardadas del documento actual y restaura un borrador anterior.', current_document:'Documento actual', saved_versions:'Versiones guardadas', select_version:'Selecciona una versión', select_version_desc:'Elige una instantánea guardada para previsualizarla aquí.', restore_this_version:'Restaurar esta versión', no_versions_saved_yet:'No hay versiones guardadas aún.', version_history_empty_desc:'Empieza a editar este documento y OmniWrite guardará instantáneas automáticamente.', version_history_auto_clear:'Borrar historial automáticamente', version_history_auto_clear_desc:'Elimina instantáneas guardadas antiguas automáticamente. El valor predeterminado es nunca.', version_history_auto_clear_updated:'Borrado automático del historial actualizado.', auto_clear_never:'Nunca', auto_clear_7_days:'Después de 7 días', auto_clear_30_days:'Después de 30 días', auto_clear_90_days:'Después de 90 días', refresh:'Actualizar', no_document_selected:'No hay documento seleccionado' },
+                fr: { version_history_desc:'Consultez les instantanés enregistrés du document actuel et restaurez un brouillon précédent.', current_document:'Document actuel', saved_versions:'Versions enregistrées', select_version:'Sélectionner une version', select_version_desc:'Choisissez un instantané enregistré pour le prévisualiser ici.', restore_this_version:'Restaurer cette version', no_versions_saved_yet:'Aucune version enregistrée.', version_history_empty_desc:'Commencez à modifier ce document et OmniWrite enregistrera automatiquement des instantanés.', version_history_auto_clear:'Effacer automatiquement l’historique', version_history_auto_clear_desc:'Supprime automatiquement les anciens instantanés enregistrés. La valeur par défaut est jamais.', version_history_auto_clear_updated:'Effacement automatique de l’historique mis à jour.', auto_clear_never:'Jamais', auto_clear_7_days:'Après 7 jours', auto_clear_30_days:'Après 30 jours', auto_clear_90_days:'Après 90 jours', refresh:'Actualiser', no_document_selected:'Aucun document sélectionné' },
+                de: { version_history_desc:'Prüfe gespeicherte Momentaufnahmen des aktuellen Dokuments und stelle einen früheren Entwurf wieder her.', current_document:'Aktuelles Dokument', saved_versions:'Gespeicherte Versionen', select_version:'Version auswählen', select_version_desc:'Wähle eine gespeicherte Momentaufnahme aus, um sie hier anzuzeigen.', restore_this_version:'Diese Version wiederherstellen', no_versions_saved_yet:'Noch keine Versionen gespeichert.', version_history_empty_desc:'Beginne mit der Bearbeitung dieses Dokuments und OmniWrite speichert automatisch Versionsstände.', version_history_auto_clear:'Versionsverlauf automatisch löschen', version_history_auto_clear_desc:'Alte gespeicherte Momentaufnahmen automatisch entfernen. Standard ist nie.', version_history_auto_clear_updated:'Automatisches Löschen des Versionsverlaufs aktualisiert.', auto_clear_never:'Nie', auto_clear_7_days:'Nach 7 Tagen', auto_clear_30_days:'Nach 30 Tagen', auto_clear_90_days:'Nach 90 Tagen', refresh:'Aktualisieren', no_document_selected:'Kein Dokument ausgewählt' },
+                pt: { version_history_desc:'Revise instantâneos salvos do documento atual e restaure um rascunho anterior.', current_document:'Documento atual', saved_versions:'Versões salvas', select_version:'Selecionar versão', select_version_desc:'Escolha um instantâneo salvo para visualizar aqui.', restore_this_version:'Restaurar esta versão', no_versions_saved_yet:'Nenhuma versão salva ainda.', version_history_empty_desc:'Comece a editar este documento e o OmniWrite salvará instantâneos automaticamente.', version_history_auto_clear:'Limpar histórico automaticamente', version_history_auto_clear_desc:'Remove instantâneos antigos automaticamente. O padrão é nunca.', version_history_auto_clear_updated:'Limpeza automática do histórico atualizada.', auto_clear_never:'Nunca', auto_clear_7_days:'Após 7 dias', auto_clear_30_days:'Após 30 dias', auto_clear_90_days:'Após 90 dias', refresh:'Atualizar', no_document_selected:'Nenhum documento selecionado' },
+                it: { version_history_desc:'Rivedi gli snapshot salvati del documento corrente e ripristina una bozza precedente.', current_document:'Documento corrente', saved_versions:'Versioni salvate', select_version:'Seleziona una versione', select_version_desc:'Scegli uno snapshot salvato per visualizzarlo qui.', restore_this_version:'Ripristina questa versione', no_versions_saved_yet:'Nessuna versione salvata.', version_history_empty_desc:'Inizia a modificare questo documento e OmniWrite salverà automaticamente gli snapshot.', version_history_auto_clear:'Cancella cronologia automaticamente', version_history_auto_clear_desc:'Rimuovi automaticamente i vecchi snapshot salvati. Il valore predefinito è mai.', version_history_auto_clear_updated:'Cancellazione automatica della cronologia aggiornata.', auto_clear_never:'Mai', auto_clear_7_days:'Dopo 7 giorni', auto_clear_30_days:'Dopo 30 giorni', auto_clear_90_days:'Dopo 90 giorni', refresh:'Aggiorna', no_document_selected:'Nessun documento selezionato' },
+                zh: { version_history_desc:'查看当前文档的已保存快照并恢复以前的草稿。', current_document:'当前文档', saved_versions:'已保存版本', select_version:'选择版本', select_version_desc:'选择一个已保存快照在这里预览。', restore_this_version:'恢复此版本', no_versions_saved_yet:'尚未保存任何版本。', version_history_empty_desc:'开始编辑此文档后，OmniWrite 会自动保存版本快照。', version_history_auto_clear:'自动清除版本历史', version_history_auto_clear_desc:'自动删除旧的已保存快照。默认值为从不。', version_history_auto_clear_updated:'版本历史自动清除已更新。', auto_clear_never:'从不', auto_clear_7_days:'7 天后', auto_clear_30_days:'30 天后', auto_clear_90_days:'90 天后', refresh:'刷新', no_document_selected:'未选择文档' },
+                ja: { version_history_desc:'現在の文書の保存済みスナップショットを確認し、以前の下書きを復元します。', current_document:'現在の文書', saved_versions:'保存済みバージョン', select_version:'バージョンを選択', select_version_desc:'保存済みスナップショットを選んでここでプレビューします。', restore_this_version:'このバージョンを復元', no_versions_saved_yet:'バージョンはまだ保存されていません。', version_history_empty_desc:'この文書を編集すると、OmniWrite が自動的にバージョンスナップショットを保存します。', version_history_auto_clear:'バージョン履歴を自動消去', version_history_auto_clear_desc:'古い保存済みスナップショットを自動的に削除します。既定は「しない」です。', version_history_auto_clear_updated:'バージョン履歴の自動消去を更新しました。', auto_clear_never:'しない', auto_clear_7_days:'7日後', auto_clear_30_days:'30日後', auto_clear_90_days:'90日後', refresh:'更新', no_document_selected:'文書が選択されていません' },
+                ko: { version_history_desc:'현재 문서의 저장된 스냅샷을 검토하고 이전 초안을 복원합니다.', current_document:'현재 문서', saved_versions:'저장된 버전', select_version:'버전 선택', select_version_desc:'저장된 스냅샷을 선택해 여기에서 미리 봅니다.', restore_this_version:'이 버전 복원', no_versions_saved_yet:'저장된 버전이 없습니다.', version_history_empty_desc:'이 문서 편집을 시작하면 OmniWrite가 버전 스냅샷을 자동으로 저장합니다.', version_history_auto_clear:'버전 기록 자동 삭제', version_history_auto_clear_desc:'오래된 저장 스냅샷을 자동으로 제거합니다. 기본값은 안 함입니다.', version_history_auto_clear_updated:'버전 기록 자동 삭제가 업데이트되었습니다.', auto_clear_never:'안 함', auto_clear_7_days:'7일 후', auto_clear_30_days:'30일 후', auto_clear_90_days:'90일 후', refresh:'새로 고침', no_document_selected:'선택된 문서 없음' },
+                ar: { version_history_desc:'راجع اللقطات المحفوظة للمستند الحالي واستعد مسودة سابقة.', current_document:'المستند الحالي', saved_versions:'الإصدارات المحفوظة', select_version:'اختر إصدارًا', select_version_desc:'اختر لقطة محفوظة لمعاينتها هنا.', restore_this_version:'استعادة هذا الإصدار', no_versions_saved_yet:'لم يتم حفظ أي إصدارات بعد.', version_history_empty_desc:'ابدأ تحرير هذا المستند وسيحفظ OmniWrite لقطات الإصدارات تلقائيًا.', version_history_auto_clear:'مسح سجل الإصدارات تلقائيًا', version_history_auto_clear_desc:'إزالة اللقطات المحفوظة القديمة تلقائيًا. الافتراضي هو أبدًا.', version_history_auto_clear_updated:'تم تحديث المسح التلقائي لسجل الإصدارات.', auto_clear_never:'أبدًا', auto_clear_7_days:'بعد 7 أيام', auto_clear_30_days:'بعد 30 يومًا', auto_clear_90_days:'بعد 90 يومًا', refresh:'تحديث', no_document_selected:'لم يتم اختيار مستند' },
+                hi: { version_history_desc:'मौजूदा दस्तावेज़ के सहेजे गए स्नैपशॉट देखें और पिछला ड्राफ्ट पुनर्स्थापित करें।', current_document:'मौजूदा दस्तावेज़', saved_versions:'सहेजे गए संस्करण', select_version:'संस्करण चुनें', select_version_desc:'यहां पूर्वावलोकन करने के लिए सहेजा गया स्नैपशॉट चुनें।', restore_this_version:'यह संस्करण पुनर्स्थापित करें', no_versions_saved_yet:'अभी कोई संस्करण सहेजा नहीं गया।', version_history_empty_desc:'इस दस्तावेज़ को संपादित करना शुरू करें और OmniWrite अपने आप संस्करण स्नैपशॉट सहेजेगा।', version_history_auto_clear:'संस्करण इतिहास अपने आप साफ करें', version_history_auto_clear_desc:'पुराने सहेजे गए स्नैपशॉट अपने आप हटाएं। डिफ़ॉल्ट कभी नहीं है।', version_history_auto_clear_updated:'संस्करण इतिहास ऑटो क्लियर अपडेट हुआ।', auto_clear_never:'कभी नहीं', auto_clear_7_days:'7 दिन बाद', auto_clear_30_days:'30 दिन बाद', auto_clear_90_days:'90 दिन बाद', refresh:'रीफ़्रेश', no_document_selected:'कोई दस्तावेज़ चयनित नहीं' },
+                ru: { version_history_desc:'Просмотрите сохраненные снимки текущего документа и восстановите предыдущий черновик.', current_document:'Текущий документ', saved_versions:'Сохраненные версии', select_version:'Выберите версию', select_version_desc:'Выберите сохраненный снимок для предпросмотра здесь.', restore_this_version:'Восстановить эту версию', no_versions_saved_yet:'Версии еще не сохранены.', version_history_empty_desc:'Начните редактировать этот документ, и OmniWrite будет автоматически сохранять снимки версий.', version_history_auto_clear:'Автоматически очищать историю версий', version_history_auto_clear_desc:'Автоматически удалять старые сохраненные снимки. По умолчанию никогда.', version_history_auto_clear_updated:'Автоочистка истории версий обновлена.', auto_clear_never:'Никогда', auto_clear_7_days:'Через 7 дней', auto_clear_30_days:'Через 30 дней', auto_clear_90_days:'Через 90 дней', refresh:'Обновить', no_document_selected:'Документ не выбран' }
+            };
+            Object.keys(omniVersionHistoryLocalePatches).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniVersionHistoryLocalePatches[lang]);
             });
             const omniMoreLocalePatches = {
                 es: { more: 'Más', meals: 'Comidas' },
@@ -27153,6 +27861,61 @@ Q4: 22</textarea>
             Object.keys(TRANSLATIONS).forEach(lang => {
                 const base = (OMNI_LOCALE_FALLBACKS && OMNI_LOCALE_FALLBACKS[lang]) || String(lang).split('-')[0];
                 TRANSLATIONS[lang] = Object.assign({}, omniResilienceLocalePatches.en, TRANSLATIONS[lang] || {}, omniResilienceLocalePatches[base] || omniResilienceLocalePatches[lang] || {});
+            });
+            const omniCoreStorageLocaleKeys = ['storage_unavailable','storage_save_unavailable','omni_core_storage_blocked','omni_core_indexeddb_failed','omni_core_local_save_failed','omni_core_local_load_failed','failed_clear_private_storage','failed_save_document_deletion'];
+            const omniCoreStorageLocaleRows = {
+                en: ['We were unable to process private browser storage. You can keep using the app, but saving will not work.','Failed to save because private browser storage is unavailable.',"Couldn't access browser storage. OmniWrite will keep working in memory for this session.","We couldn't able to open private document storage. Saving may not work.",'Failed to save local app data. We were unable to process private storage.',"Couldn't load local app data. Failed to access private storage.",'We failed to clear private storage. We were unable to process the reset fully.','Failed to save document deletion. We were unable to process private storage.'],
+                es: ['No pudimos procesar el almacenamiento privado del navegador. Puedes seguir usando la app, pero guardar no funcionará.','Error al guardar porque el almacenamiento privado del navegador no está disponible.','No se pudo acceder al almacenamiento del navegador. OmniWrite seguirá funcionando en memoria durante esta sesión.','No pudimos abrir el almacenamiento privado de documentos. Es posible que guardar no funcione.','Error al guardar los datos locales de la app. No pudimos procesar el almacenamiento privado.','No se pudieron cargar los datos locales de la app. Error al acceder al almacenamiento privado.','No pudimos borrar el almacenamiento privado. No pudimos procesar el restablecimiento por completo.','Error al guardar la eliminación del documento. No pudimos procesar el almacenamiento privado.'],
+                fr: ['Impossible de traiter le stockage privé du navigateur. Vous pouvez continuer à utiliser l’application, mais l’enregistrement ne fonctionnera pas.','Échec de l’enregistrement, car le stockage privé du navigateur est indisponible.','Impossible d’accéder au stockage du navigateur. OmniWrite continuera en mémoire pour cette session.','Impossible d’ouvrir le stockage privé des documents. L’enregistrement peut ne pas fonctionner.','Échec de l’enregistrement des données locales de l’application. Impossible de traiter le stockage privé.','Impossible de charger les données locales de l’application. Échec de l’accès au stockage privé.','Échec de l’effacement du stockage privé. Impossible de terminer la réinitialisation.','Échec de l’enregistrement de la suppression du document. Impossible de traiter le stockage privé.'],
+                de: ['Der private Browserspeicher konnte nicht verarbeitet werden. Sie können die App weiter nutzen, aber Speichern funktioniert nicht.','Speichern fehlgeschlagen, weil privater Browserspeicher nicht verfügbar ist.','Auf den Browserspeicher konnte nicht zugegriffen werden. OmniWrite läuft in dieser Sitzung im Speicher weiter.','Der private Dokumentspeicher konnte nicht geöffnet werden. Speichern funktioniert möglicherweise nicht.','Lokale App-Daten konnten nicht gespeichert werden. Privater Speicher konnte nicht verarbeitet werden.','Lokale App-Daten konnten nicht geladen werden. Zugriff auf privaten Speicher fehlgeschlagen.','Privater Speicher konnte nicht gelöscht werden. Das Zurücksetzen wurde nicht vollständig verarbeitet.','Dokumentlöschung konnte nicht gespeichert werden. Privater Speicher konnte nicht verarbeitet werden.'],
+                pt: ['Não foi possível processar o armazenamento privado do navegador. Você pode continuar usando o app, mas salvar não funcionará.','Falha ao salvar porque o armazenamento privado do navegador está indisponível.','Não foi possível acessar o armazenamento do navegador. O OmniWrite continuará em memória nesta sessão.','Não foi possível abrir o armazenamento privado de documentos. O salvamento pode não funcionar.','Falha ao salvar dados locais do app. Não foi possível processar o armazenamento privado.','Não foi possível carregar dados locais do app. Falha ao acessar o armazenamento privado.','Falha ao limpar o armazenamento privado. Não foi possível concluir a redefinição.','Falha ao salvar a exclusão do documento. Não foi possível processar o armazenamento privado.'],
+                it: ['Impossibile elaborare l’archiviazione privata del browser. Puoi continuare a usare l’app, ma il salvataggio non funzionerà.','Salvataggio non riuscito perché l’archiviazione privata del browser non è disponibile.','Impossibile accedere all’archiviazione del browser. OmniWrite continuerà in memoria per questa sessione.','Impossibile aprire l’archiviazione privata dei documenti. Il salvataggio potrebbe non funzionare.','Salvataggio dei dati locali dell’app non riuscito. Impossibile elaborare l’archiviazione privata.','Impossibile caricare i dati locali dell’app. Accesso all’archiviazione privata non riuscito.','Impossibile cancellare l’archiviazione privata. Ripristino non completato.','Impossibile salvare l’eliminazione del documento. Impossibile elaborare l’archiviazione privata.'],
+                zh: ['无法处理浏览器私有存储。你仍可继续使用应用，但保存将无法工作。','保存失败，因为浏览器私有存储不可用。','无法访问浏览器存储。OmniWrite 将在本次会话中使用内存继续运行。','无法打开私有文档存储。保存可能无法工作。','保存本地应用数据失败。无法处理私有存储。','无法加载本地应用数据。访问私有存储失败。','清除私有存储失败。无法完整处理重置。','保存文档删除失败。无法处理私有存储。'],
+                ja: ['ブラウザーのプライベートストレージを処理できませんでした。アプリは使えますが、保存は機能しません。','ブラウザーのプライベートストレージを利用できないため保存に失敗しました。','ブラウザーのストレージにアクセスできませんでした。このセッションでは OmniWrite はメモリ上で動作します。','プライベート文書ストレージを開けませんでした。保存できない場合があります。','ローカルアプリデータの保存に失敗しました。プライベートストレージを処理できませんでした。','ローカルアプリデータを読み込めませんでした。プライベートストレージへのアクセスに失敗しました。','プライベートストレージの消去に失敗しました。リセットを完全に処理できませんでした。','文書削除の保存に失敗しました。プライベートストレージを処理できませんでした。'],
+                ko: ['브라우저 비공개 저장소를 처리하지 못했습니다. 앱은 계속 사용할 수 있지만 저장은 작동하지 않습니다.','브라우저 비공개 저장소를 사용할 수 없어 저장하지 못했습니다.','브라우저 저장소에 접근하지 못했습니다. 이 세션에서는 OmniWrite가 메모리에서 계속 작동합니다.','비공개 문서 저장소를 열지 못했습니다. 저장이 작동하지 않을 수 있습니다.','로컬 앱 데이터를 저장하지 못했습니다. 비공개 저장소를 처리하지 못했습니다.','로컬 앱 데이터를 불러오지 못했습니다. 비공개 저장소 접근에 실패했습니다.','비공개 저장소를 지우지 못했습니다. 재설정을 완전히 처리하지 못했습니다.','문서 삭제 저장에 실패했습니다. 비공개 저장소를 처리하지 못했습니다.'],
+                ar: ['تعذر معالجة التخزين الخاص للمتصفح. يمكنك متابعة استخدام التطبيق، لكن الحفظ لن يعمل.','فشل الحفظ لأن التخزين الخاص للمتصفح غير متاح.','تعذر الوصول إلى تخزين المتصفح. سيستمر OmniWrite في الذاكرة لهذه الجلسة.','تعذر فتح تخزين المستندات الخاص. قد لا يعمل الحفظ.','فشل حفظ بيانات التطبيق المحلية. تعذر معالجة التخزين الخاص.','تعذر تحميل بيانات التطبيق المحلية. فشل الوصول إلى التخزين الخاص.','فشل مسح التخزين الخاص. تعذرت معالجة إعادة التعيين بالكامل.','فشل حفظ حذف المستند. تعذرت معالجة التخزين الخاص.'],
+                hi: ['निजी ब्राउज़र स्टोरेज प्रोसेस नहीं हो सका। आप ऐप इस्तेमाल कर सकते हैं, लेकिन सेव काम नहीं करेगा।','सेव विफल हुआ क्योंकि निजी ब्राउज़र स्टोरेज उपलब्ध नहीं है।','ब्राउज़र स्टोरेज तक पहुंच नहीं हो सकी। इस सत्र में OmniWrite मेमोरी में चलता रहेगा।','निजी दस्तावेज़ स्टोरेज नहीं खुल सका। सेव काम नहीं कर सकता।','स्थानीय ऐप डेटा सेव नहीं हो सका। निजी स्टोरेज प्रोसेस नहीं हो सका।','स्थानीय ऐप डेटा लोड नहीं हो सका। निजी स्टोरेज तक पहुंच विफल हुई।','निजी स्टोरेज साफ़ नहीं हो सका। रीसेट पूरी तरह प्रोसेस नहीं हो सका।','दस्तावेज़ हटाना सेव नहीं हो सका। निजी स्टोरेज प्रोसेस नहीं हो सका।'],
+                ru: ['Не удалось обработать приватное хранилище браузера. Приложением можно пользоваться, но сохранение не будет работать.','Не удалось сохранить, потому что приватное хранилище браузера недоступно.','Не удалось получить доступ к хранилищу браузера. OmniWrite продолжит работать в памяти в этой сессии.','Не удалось открыть приватное хранилище документов. Сохранение может не работать.','Не удалось сохранить локальные данные приложения. Приватное хранилище не удалось обработать.','Не удалось загрузить локальные данные приложения. Доступ к приватному хранилищу не удался.','Не удалось очистить приватное хранилище. Сброс не был обработан полностью.','Не удалось сохранить удаление документа. Приватное хранилище не удалось обработать.'],
+                nl: ['Privéopslag van de browser kon niet worden verwerkt. Je kunt de app blijven gebruiken, maar opslaan werkt niet.','Opslaan mislukt omdat privéopslag van de browser niet beschikbaar is.','Kon geen toegang krijgen tot browseropslag. OmniWrite blijft deze sessie in het geheugen werken.','Privéopslag voor documenten kon niet worden geopend. Opslaan werkt mogelijk niet.','Lokale appgegevens opslaan mislukt. Privéopslag kon niet worden verwerkt.','Lokale appgegevens konden niet worden geladen. Toegang tot privéopslag mislukt.','Privéopslag wissen mislukt. De reset kon niet volledig worden verwerkt.','Documentverwijdering opslaan mislukt. Privéopslag kon niet worden verwerkt.'],
+                bn: ['ব্যক্তিগত ব্রাউজার স্টোরেজ প্রক্রিয়া করা যায়নি। আপনি অ্যাপ ব্যবহার করতে পারবেন, কিন্তু সংরক্ষণ কাজ করবে না।','ব্যক্তিগত ব্রাউজার স্টোরেজ অনুপলব্ধ থাকায় সংরক্ষণ ব্যর্থ হয়েছে।','ব্রাউজার স্টোরেজে প্রবেশ করা যায়নি। এই সেশনে OmniWrite মেমরিতে চলবে।','ব্যক্তিগত ডকুমেন্ট স্টোরেজ খোলা যায়নি। সংরক্ষণ কাজ নাও করতে পারে।','স্থানীয় অ্যাপ ডেটা সংরক্ষণ ব্যর্থ হয়েছে। ব্যক্তিগত স্টোরেজ প্রক্রিয়া করা যায়নি।','স্থানীয় অ্যাপ ডেটা লোড করা যায়নি। ব্যক্তিগত স্টোরেজে প্রবেশ ব্যর্থ হয়েছে।','ব্যক্তিগত স্টোরেজ পরিষ্কার ব্যর্থ হয়েছে। রিসেট সম্পূর্ণ প্রক্রিয়া করা যায়নি।','ডকুমেন্ট মুছে ফেলা সংরক্ষণ ব্যর্থ হয়েছে। ব্যক্তিগত স্টোরেজ প্রক্রিয়া করা যায়নি।'],
+                pa: ['ਨਿੱਜੀ ਬ੍ਰਾਊਜ਼ਰ ਸਟੋਰੇਜ ਪ੍ਰਕਿਰਿਆ ਨਹੀਂ ਹੋ ਸਕੀ। ਤੁਸੀਂ ਐਪ ਵਰਤ ਸਕਦੇ ਹੋ, ਪਰ ਸੇਵ ਕੰਮ ਨਹੀਂ ਕਰੇਗਾ।','ਸੇਵ ਅਸਫਲ ਹੋਇਆ ਕਿਉਂਕਿ ਨਿੱਜੀ ਬ੍ਰਾਊਜ਼ਰ ਸਟੋਰੇਜ ਉਪਲਬਧ ਨਹੀਂ।','ਬ੍ਰਾਊਜ਼ਰ ਸਟੋਰੇਜ ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ। OmniWrite ਇਸ ਸੈਸ਼ਨ ਵਿੱਚ ਮੈਮੋਰੀ ਵਿੱਚ ਚੱਲੇਗਾ।','ਨਿੱਜੀ ਦਸਤਾਵੇਜ਼ ਸਟੋਰੇਜ ਨਹੀਂ ਖੁੱਲ੍ਹੀ। ਸੇਵ ਕੰਮ ਨਹੀਂ ਕਰ ਸਕਦਾ।','ਸਥਾਨਕ ਐਪ ਡੇਟਾ ਸੇਵ ਨਹੀਂ ਹੋਇਆ। ਨਿੱਜੀ ਸਟੋਰੇਜ ਪ੍ਰਕਿਰਿਆ ਨਹੀਂ ਹੋ ਸਕੀ।','ਸਥਾਨਕ ਐਪ ਡੇਟਾ ਲੋਡ ਨਹੀਂ ਹੋਇਆ। ਨਿੱਜੀ ਸਟੋਰੇਜ ਤੱਕ ਪਹੁੰਚ ਅਸਫਲ ਰਹੀ।','ਨਿੱਜੀ ਸਟੋਰੇਜ ਸਾਫ਼ ਨਹੀਂ ਹੋਈ। ਰੀਸੈਟ ਪੂਰੀ ਤਰ੍ਹਾਂ ਪ੍ਰਕਿਰਿਆ ਨਹੀਂ ਹੋ ਸਕਿਆ।','ਦਸਤਾਵੇਜ਼ ਹਟਾਉਣਾ ਸੇਵ ਨਹੀਂ ਹੋਇਆ। ਨਿੱਜੀ ਸਟੋਰੇਜ ਪ੍ਰਕਿਰਿਆ ਨਹੀਂ ਹੋ ਸਕੀ।'],
+                tr: ['Özel tarayıcı depolaması işlenemedi. Uygulamayı kullanabilirsiniz, ancak kaydetme çalışmayacak.','Özel tarayıcı depolaması kullanılamadığı için kaydetme başarısız oldu.','Tarayıcı depolamasına erişilemedi. OmniWrite bu oturumda bellekte çalışmaya devam edecek.','Özel belge depolaması açılamadı. Kaydetme çalışmayabilir.','Yerel uygulama verileri kaydedilemedi. Özel depolama işlenemedi.','Yerel uygulama verileri yüklenemedi. Özel depolamaya erişim başarısız oldu.','Özel depolama temizlenemedi. Sıfırlama tam olarak işlenemedi.','Belge silme kaydedilemedi. Özel depolama işlenemedi.'],
+                pl: ['Nie udało się przetworzyć prywatnej pamięci przeglądarki. Możesz dalej używać aplikacji, ale zapisywanie nie będzie działać.','Nie udało się zapisać, ponieważ prywatna pamięć przeglądarki jest niedostępna.','Nie udało się uzyskać dostępu do pamięci przeglądarki. OmniWrite będzie działać w pamięci w tej sesji.','Nie udało się otworzyć prywatnej pamięci dokumentów. Zapisywanie może nie działać.','Nie udało się zapisać lokalnych danych aplikacji. Prywatna pamięć nie została przetworzona.','Nie udało się wczytać lokalnych danych aplikacji. Dostęp do prywatnej pamięci nie powiódł się.','Nie udało się wyczyścić prywatnej pamięci. Reset nie został w pełni przetworzony.','Nie udało się zapisać usunięcia dokumentu. Prywatna pamięć nie została przetworzona.'],
+                sv: ['Privat webbläsarlagring kunde inte behandlas. Du kan fortsätta använda appen, men sparande fungerar inte.','Det gick inte att spara eftersom privat webbläsarlagring inte är tillgänglig.','Kunde inte komma åt webbläsarlagring. OmniWrite fortsätter i minnet under den här sessionen.','Kunde inte öppna privat dokumentlagring. Sparande kanske inte fungerar.','Det gick inte att spara lokala appdata. Privat lagring kunde inte behandlas.','Kunde inte läsa lokala appdata. Åtkomst till privat lagring misslyckades.','Det gick inte att rensa privat lagring. Återställningen kunde inte behandlas helt.','Det gick inte att spara dokumentborttagningen. Privat lagring kunde inte behandlas.'],
+                no: ['Privat nettleserlagring kunne ikke behandles. Du kan fortsette å bruke appen, men lagring vil ikke fungere.','Kunne ikke lagre fordi privat nettleserlagring ikke er tilgjengelig.','Kunne ikke få tilgang til nettleserlagring. OmniWrite fortsetter i minnet i denne økten.','Kunne ikke åpne privat dokumentlagring. Lagring fungerer kanskje ikke.','Kunne ikke lagre lokale appdata. Privat lagring kunne ikke behandles.','Kunne ikke laste lokale appdata. Tilgang til privat lagring mislyktes.','Kunne ikke tømme privat lagring. Tilbakestillingen ble ikke behandlet helt.','Kunne ikke lagre dokumentsletting. Privat lagring kunne ikke behandles.'],
+                da: ['Privat browserlager kunne ikke behandles. Du kan fortsætte med at bruge appen, men lagring virker ikke.','Kunne ikke gemme, fordi privat browserlager ikke er tilgængeligt.','Kunne ikke få adgang til browserlager. OmniWrite fortsætter i hukommelsen i denne session.','Kunne ikke åbne privat dokumentlager. Lagring virker muligvis ikke.','Kunne ikke gemme lokale appdata. Privat lager kunne ikke behandles.','Kunne ikke indlæse lokale appdata. Adgang til privat lager mislykkedes.','Kunne ikke rydde privat lager. Nulstillingen blev ikke behandlet fuldt ud.','Kunne ikke gemme dokumentsletning. Privat lager kunne ikke behandles.'],
+                fi: ['Yksityistä selaintallennusta ei voitu käsitellä. Voit jatkaa sovelluksen käyttöä, mutta tallennus ei toimi.','Tallennus epäonnistui, koska yksityinen selaintallennus ei ole käytettävissä.','Selaintallennukseen ei päästy. OmniWrite jatkaa muistissa tämän istunnon ajan.','Yksityistä asiakirjatallennusta ei voitu avata. Tallennus ei ehkä toimi.','Paikallisia sovellustietoja ei voitu tallentaa. Yksityistä tallennusta ei voitu käsitellä.','Paikallisia sovellustietoja ei voitu ladata. Yksityisen tallennuksen käyttö epäonnistui.','Yksityistä tallennusta ei voitu tyhjentää. Palautusta ei voitu käsitellä kokonaan.','Asiakirjan poiston tallennus epäonnistui. Yksityistä tallennusta ei voitu käsitellä.'],
+                cs: ['Soukromé úložiště prohlížeče se nepodařilo zpracovat. Aplikaci můžete dál používat, ale ukládání nebude fungovat.','Uložení selhalo, protože soukromé úložiště prohlížeče není dostupné.','Nepodařilo se získat přístup k úložišti prohlížeče. OmniWrite bude v této relaci pokračovat v paměti.','Nepodařilo se otevřít soukromé úložiště dokumentů. Ukládání nemusí fungovat.','Nepodařilo se uložit místní data aplikace. Soukromé úložiště se nepodařilo zpracovat.','Nepodařilo se načíst místní data aplikace. Přístup k soukromému úložišti selhal.','Nepodařilo se vymazat soukromé úložiště. Reset nebyl zpracován úplně.','Nepodařilo se uložit odstranění dokumentu. Soukromé úložiště se nepodařilo zpracovat.'],
+                sk: ['Súkromné úložisko prehliadača sa nepodarilo spracovať. Aplikáciu môžete ďalej používať, ale ukladanie nebude fungovať.','Uloženie zlyhalo, pretože súkromné úložisko prehliadača nie je dostupné.','Nepodarilo sa získať prístup k úložisku prehliadača. OmniWrite bude v tejto relácii pokračovať v pamäti.','Nepodarilo sa otvoriť súkromné úložisko dokumentov. Ukladanie nemusí fungovať.','Nepodarilo sa uložiť miestne údaje aplikácie. Súkromné úložisko sa nepodarilo spracovať.','Nepodarilo sa načítať miestne údaje aplikácie. Prístup k súkromnému úložisku zlyhal.','Nepodarilo sa vymazať súkromné úložisko. Reset nebol úplne spracovaný.','Nepodarilo sa uložiť odstránenie dokumentu. Súkromné úložisko sa nepodarilo spracovať.'],
+                hu: ['A böngésző privát tárhelyét nem sikerült feldolgozni. Az alkalmazást tovább használhatja, de a mentés nem fog működni.','A mentés sikertelen, mert a böngésző privát tárhelye nem érhető el.','Nem sikerült elérni a böngésző tárhelyét. Az OmniWrite ebben a munkamenetben memóriában fut tovább.','Nem sikerült megnyitni a privát dokumentumtárhelyet. A mentés lehet, hogy nem működik.','A helyi alkalmazásadatok mentése sikertelen. A privát tárhely nem dolgozható fel.','A helyi alkalmazásadatok betöltése sikertelen. A privát tárhely elérése nem sikerült.','A privát tárhely törlése sikertelen. A visszaállítás nem lett teljesen feldolgozva.','A dokumentumtörlés mentése sikertelen. A privát tárhely nem dolgozható fel.'],
+                ro: ['Stocarea privată a browserului nu a putut fi procesată. Poți continua să folosești aplicația, dar salvarea nu va funcționa.','Salvarea a eșuat deoarece stocarea privată a browserului nu este disponibilă.','Nu s-a putut accesa stocarea browserului. OmniWrite va continua în memorie pentru această sesiune.','Nu s-a putut deschide stocarea privată a documentelor. Salvarea poate să nu funcționeze.','Salvarea datelor locale ale aplicației a eșuat. Stocarea privată nu a putut fi procesată.','Datele locale ale aplicației nu au putut fi încărcate. Accesul la stocarea privată a eșuat.','Ștergerea stocării private a eșuat. Resetarea nu a putut fi procesată complet.','Salvarea ștergerii documentului a eșuat. Stocarea privată nu a putut fi procesată.'],
+                uk: ['Не вдалося обробити приватне сховище браузера. Ви можете користуватися застосунком, але збереження не працюватиме.','Не вдалося зберегти, бо приватне сховище браузера недоступне.','Не вдалося отримати доступ до сховища браузера. OmniWrite продовжить працювати в пам’яті цього сеансу.','Не вдалося відкрити приватне сховище документів. Збереження може не працювати.','Не вдалося зберегти локальні дані застосунку. Приватне сховище не вдалося обробити.','Не вдалося завантажити локальні дані застосунку. Доступ до приватного сховища не вдався.','Не вдалося очистити приватне сховище. Скидання не було повністю оброблено.','Не вдалося зберегти видалення документа. Приватне сховище не вдалося обробити.'],
+                el: ['Δεν ήταν δυνατή η επεξεργασία της ιδιωτικής αποθήκευσης του προγράμματος περιήγησης. Μπορείτε να συνεχίσετε να χρησιμοποιείτε την εφαρμογή, αλλά η αποθήκευση δεν θα λειτουργεί.','Η αποθήκευση απέτυχε επειδή η ιδιωτική αποθήκευση του προγράμματος περιήγησης δεν είναι διαθέσιμη.','Δεν ήταν δυνατή η πρόσβαση στην αποθήκευση του προγράμματος περιήγησης. Το OmniWrite θα συνεχίσει στη μνήμη για αυτήν τη συνεδρία.','Δεν ήταν δυνατό το άνοιγμα της ιδιωτικής αποθήκευσης εγγράφων. Η αποθήκευση μπορεί να μη λειτουργεί.','Η αποθήκευση τοπικών δεδομένων εφαρμογής απέτυχε. Η ιδιωτική αποθήκευση δεν ήταν δυνατό να επεξεργαστεί.','Δεν ήταν δυνατή η φόρτωση τοπικών δεδομένων εφαρμογής. Η πρόσβαση στην ιδιωτική αποθήκευση απέτυχε.','Η εκκαθάριση της ιδιωτικής αποθήκευσης απέτυχε. Η επαναφορά δεν ολοκληρώθηκε.','Η αποθήκευση της διαγραφής εγγράφου απέτυχε. Η ιδιωτική αποθήκευση δεν ήταν δυνατό να επεξεργαστεί.'],
+                he: ['לא ניתן היה לעבד את האחסון הפרטי של הדפדפן. אפשר להמשיך להשתמש באפליקציה, אך השמירה לא תפעל.','השמירה נכשלה כי האחסון הפרטי של הדפדפן אינו זמין.','לא ניתן היה לגשת לאחסון הדפדפן. OmniWrite ימשיך לפעול בזיכרון עבור ההפעלה הזו.','לא ניתן היה לפתוח את אחסון המסמכים הפרטי. ייתכן שהשמירה לא תפעל.','שמירת נתוני האפליקציה המקומיים נכשלה. לא ניתן היה לעבד את האחסון הפרטי.','לא ניתן היה לטעון נתוני אפליקציה מקומיים. הגישה לאחסון הפרטי נכשלה.','ניקוי האחסון הפרטי נכשל. האיפוס לא עובד במלואו.','שמירת מחיקת המסמך נכשלה. לא ניתן היה לעבד את האחסון הפרטי.'],
+                th: ['ไม่สามารถประมวลผลพื้นที่จัดเก็บส่วนตัวของเบราว์เซอร์ได้ คุณยังใช้แอปต่อได้ แต่การบันทึกจะไม่ทำงาน','บันทึกล้มเหลวเพราะพื้นที่จัดเก็บส่วนตัวของเบราว์เซอร์ไม่พร้อมใช้งาน','ไม่สามารถเข้าถึงพื้นที่จัดเก็บของเบราว์เซอร์ได้ OmniWrite จะทำงานในหน่วยความจำสำหรับเซสชันนี้','ไม่สามารถเปิดพื้นที่จัดเก็บเอกสารส่วนตัวได้ การบันทึกอาจไม่ทำงาน','บันทึกข้อมูลแอปในเครื่องล้มเหลว ไม่สามารถประมวลผลพื้นที่จัดเก็บส่วนตัวได้','ไม่สามารถโหลดข้อมูลแอปในเครื่องได้ การเข้าถึงพื้นที่จัดเก็บส่วนตัวล้มเหลว','ล้างพื้นที่จัดเก็บส่วนตัวล้มเหลว ไม่สามารถประมวลผลการรีเซ็ตได้ครบถ้วน','บันทึกการลบเอกสารล้มเหลว ไม่สามารถประมวลผลพื้นที่จัดเก็บส่วนตัวได้'],
+                vi: ['Không thể xử lý bộ nhớ riêng tư của trình duyệt. Bạn vẫn có thể dùng ứng dụng, nhưng lưu sẽ không hoạt động.','Không lưu được vì bộ nhớ riêng tư của trình duyệt không khả dụng.','Không thể truy cập bộ nhớ trình duyệt. OmniWrite sẽ tiếp tục chạy trong bộ nhớ cho phiên này.','Không thể mở bộ nhớ tài liệu riêng tư. Việc lưu có thể không hoạt động.','Không lưu được dữ liệu ứng dụng cục bộ. Không thể xử lý bộ nhớ riêng tư.','Không thể tải dữ liệu ứng dụng cục bộ. Truy cập bộ nhớ riêng tư thất bại.','Không xóa được bộ nhớ riêng tư. Không thể xử lý đặt lại hoàn toàn.','Không lưu được thao tác xóa tài liệu. Không thể xử lý bộ nhớ riêng tư.'],
+                id: ['Tidak dapat memproses penyimpanan pribadi browser. Anda tetap dapat memakai aplikasi, tetapi penyimpanan tidak akan berfungsi.','Gagal menyimpan karena penyimpanan pribadi browser tidak tersedia.','Tidak dapat mengakses penyimpanan browser. OmniWrite akan tetap berjalan di memori untuk sesi ini.','Tidak dapat membuka penyimpanan dokumen pribadi. Penyimpanan mungkin tidak berfungsi.','Gagal menyimpan data aplikasi lokal. Penyimpanan pribadi tidak dapat diproses.','Tidak dapat memuat data aplikasi lokal. Akses ke penyimpanan pribadi gagal.','Gagal menghapus penyimpanan pribadi. Reset tidak dapat diproses sepenuhnya.','Gagal menyimpan penghapusan dokumen. Penyimpanan pribadi tidak dapat diproses.'],
+                ms: ['Tidak dapat memproses storan peribadi pelayar. Anda masih boleh menggunakan app, tetapi simpanan tidak akan berfungsi.','Gagal menyimpan kerana storan peribadi pelayar tidak tersedia.','Tidak dapat mengakses storan pelayar. OmniWrite akan terus berjalan dalam memori untuk sesi ini.','Tidak dapat membuka storan dokumen peribadi. Simpanan mungkin tidak berfungsi.','Gagal menyimpan data app setempat. Storan peribadi tidak dapat diproses.','Tidak dapat memuatkan data app setempat. Akses kepada storan peribadi gagal.','Gagal mengosongkan storan peribadi. Tetapan semula tidak dapat diproses sepenuhnya.','Gagal menyimpan pemadaman dokumen. Storan peribadi tidak dapat diproses.'],
+                fa: ['پردازش ذخیره‌سازی خصوصی مرورگر ممکن نشد. می‌توانید از برنامه استفاده کنید، اما ذخیره‌سازی کار نخواهد کرد.','ذخیره‌سازی ناموفق بود چون ذخیره‌سازی خصوصی مرورگر در دسترس نیست.','دسترسی به ذخیره‌سازی مرورگر ممکن نشد. OmniWrite در این نشست در حافظه ادامه می‌دهد.','باز کردن ذخیره‌سازی خصوصی سند ممکن نشد. ذخیره ممکن است کار نکند.','ذخیره داده‌های محلی برنامه ناموفق بود. ذخیره‌سازی خصوصی پردازش نشد.','بارگیری داده‌های محلی برنامه ممکن نشد. دسترسی به ذخیره‌سازی خصوصی ناموفق بود.','پاک کردن ذخیره‌سازی خصوصی ناموفق بود. بازنشانی کامل پردازش نشد.','ذخیره حذف سند ناموفق بود. ذخیره‌سازی خصوصی پردازش نشد.'],
+                ur: ['براؤزر کی نجی اسٹوریج پر کارروائی نہیں ہو سکی۔ آپ ایپ استعمال کر سکتے ہیں، لیکن محفوظ کرنا کام نہیں کرے گا۔','محفوظ کرنے میں ناکامی کیونکہ براؤزر کی نجی اسٹوریج دستیاب نہیں۔','براؤزر اسٹوریج تک رسائی نہیں ہو سکی۔ OmniWrite اس سیشن میں میموری میں چلتا رہے گا۔','نجی دستاویز اسٹوریج نہیں کھل سکی۔ محفوظ کرنا کام نہیں کر سکتا۔','مقامی ایپ ڈیٹا محفوظ نہیں ہو سکا۔ نجی اسٹوریج پر کارروائی نہیں ہو سکی۔','مقامی ایپ ڈیٹا لوڈ نہیں ہو سکا۔ نجی اسٹوریج تک رسائی ناکام ہوئی۔','نجی اسٹوریج صاف نہیں ہو سکی۔ ری سیٹ مکمل طور پر کارروائی نہیں ہو سکا۔','دستاویز حذف کرنا محفوظ نہیں ہو سکا۔ نجی اسٹوریج پر کارروائی نہیں ہو سکی۔'],
+                ta: ['உலாவியின் தனியார் சேமிப்பகத்தை செயலாக்க முடியவில்லை. பயன்பாட்டை தொடரலாம், ஆனால் சேமிப்பு இயங்காது.','உலாவியின் தனியார் சேமிப்பகம் கிடைக்காததால் சேமிக்க முடியவில்லை.','உலாவி சேமிப்பகத்தை அணுக முடியவில்லை. இந்த அமர்வில் OmniWrite நினைவகத்தில் தொடரும்.','தனியார் ஆவண சேமிப்பகத்தை திறக்க முடியவில்லை. சேமிப்பு இயங்காமல் இருக்கலாம்.','உள்ளூர் பயன்பாட்டு தரவை சேமிக்க முடியவில்லை. தனியார் சேமிப்பகத்தை செயலாக்க முடியவில்லை.','உள்ளூர் பயன்பாட்டு தரவை ஏற்ற முடியவில்லை. தனியார் சேமிப்பக அணுகல் தோல்வியடைந்தது.','தனியார் சேமிப்பகத்தை அழிக்க முடியவில்லை. மீட்டமைப்பு முழுமையாக செயலாக்கப்படவில்லை.','ஆவண நீக்கத்தை சேமிக்க முடியவில்லை. தனியார் சேமிப்பகத்தை செயலாக்க முடியவில்லை.'],
+                te: ['బ్రౌజర్ ప్రైవేట్ నిల్వను ప్రాసెస్ చేయలేకపోయాం. మీరు యాప్‌ను కొనసాగించవచ్చు, కానీ సేవ్ పని చేయదు.','బ్రౌజర్ ప్రైవేట్ నిల్వ అందుబాటులో లేక సేవ్ విఫలమైంది.','బ్రౌజర్ నిల్వను యాక్సెస్ చేయలేకపోయాం. ఈ సెషన్‌లో OmniWrite మెమరీలో కొనసాగుతుంది.','ప్రైవేట్ పత్ర నిల్వ తెరవలేకపోయాం. సేవ్ పని చేయకపోవచ్చు.','స్థానిక యాప్ డేటా సేవ్ చేయలేకపోయాం. ప్రైవేట్ నిల్వను ప్రాసెస్ చేయలేకపోయాం.','స్థానిక యాప్ డేటా లోడ్ చేయలేకపోయాం. ప్రైవేట్ నిల్వ యాక్సెస్ విఫలమైంది.','ప్రైవేట్ నిల్వను క్లియర్ చేయలేకపోయాం. రీసెట్ పూర్తిగా ప్రాసెస్ కాలేదు.','పత్రం తొలగింపును సేవ్ చేయలేకపోయాం. ప్రైవేట్ నిల్వను ప్రాసెస్ చేయలేకపోయాం.'],
+                mr: ['ब्राउझरचे खाजगी स्टोरेज प्रक्रिया करता आले नाही. तुम्ही अॅप वापरू शकता, पण सेव्ह काम करणार नाही.','खाजगी ब्राउझर स्टोरेज उपलब्ध नसल्यामुळे सेव्ह अयशस्वी.','ब्राउझर स्टोरेजमध्ये प्रवेश करता आला नाही. या सत्रात OmniWrite मेमरीमध्ये चालू राहील.','खाजगी दस्तऐवज स्टोरेज उघडता आले नाही. सेव्ह काम करणार नाही.','स्थानिक अॅप डेटा सेव्ह करता आला नाही. खाजगी स्टोरेज प्रक्रिया करता आले नाही.','स्थानिक अॅप डेटा लोड करता आला नाही. खाजगी स्टोरेज प्रवेश अयशस्वी.','खाजगी स्टोरेज साफ करता आले नाही. रीसेट पूर्णपणे प्रक्रिया झाला नाही.','दस्तऐवज हटवणे सेव्ह करता आले नाही. खाजगी स्टोरेज प्रक्रिया करता आले नाही.'],
+                sw: ['Haikuwezekana kuchakata hifadhi ya faragha ya kivinjari. Unaweza kuendelea kutumia app, lakini kuhifadhi hakutafanya kazi.','Imeshindikana kuhifadhi kwa sababu hifadhi ya faragha ya kivinjari haipatikani.','Haikuwezekana kufikia hifadhi ya kivinjari. OmniWrite itaendelea kwenye kumbukumbu kwa kipindi hiki.','Haikuwezekana kufungua hifadhi ya faragha ya hati. Kuhifadhi huenda kusifanye kazi.','Imeshindikana kuhifadhi data ya ndani ya app. Hifadhi ya faragha haikuweza kuchakatwa.','Haikuwezekana kupakia data ya ndani ya app. Ufikiaji wa hifadhi ya faragha umeshindikana.','Imeshindikana kufuta hifadhi ya faragha. Uwekaji upya haukuchakatwa kikamilifu.','Imeshindikana kuhifadhi ufutaji wa hati. Hifadhi ya faragha haikuweza kuchakatwa.'],
+                af: ['Privaat blaaierberging kon nie verwerk word nie. Jy kan die app bly gebruik, maar stoor sal nie werk nie.','Stoor het misluk omdat privaat blaaierberging nie beskikbaar is nie.','Kon nie toegang tot blaaierberging kry nie. OmniWrite sal vir hierdie sessie in geheue aanhou werk.','Kon nie privaat dokumentberging oopmaak nie. Stoor werk dalk nie.','Kon plaaslike appdata nie stoor nie. Privaat berging kon nie verwerk word nie.','Kon plaaslike appdata nie laai nie. Toegang tot privaat berging het misluk.','Kon privaat berging nie skoonmaak nie. Die herstel is nie volledig verwerk nie.','Kon dokumentverwydering nie stoor nie. Privaat berging kon nie verwerk word nie.'],
+                ca: ['No s’ha pogut processar l’emmagatzematge privat del navegador. Pots continuar usant l’app, però el desament no funcionarà.','No s’ha pogut desar perquè l’emmagatzematge privat del navegador no està disponible.','No s’ha pogut accedir a l’emmagatzematge del navegador. OmniWrite continuarà en memòria durant aquesta sessió.','No s’ha pogut obrir l’emmagatzematge privat de documents. El desament pot no funcionar.','No s’han pogut desar les dades locals de l’app. No s’ha pogut processar l’emmagatzematge privat.','No s’han pogut carregar les dades locals de l’app. Ha fallat l’accés a l’emmagatzematge privat.','No s’ha pogut esborrar l’emmagatzematge privat. No s’ha pogut processar completament el restabliment.','No s’ha pogut desar l’eliminació del document. No s’ha pogut processar l’emmagatzematge privat.'],
+                hr: ['Privatna pohrana preglednika nije se mogla obraditi. Možete nastaviti koristiti aplikaciju, ali spremanje neće raditi.','Spremanje nije uspjelo jer privatna pohrana preglednika nije dostupna.','Nije moguće pristupiti pohrani preglednika. OmniWrite će nastaviti raditi u memoriji tijekom ove sesije.','Privatna pohrana dokumenata nije se mogla otvoriti. Spremanje možda neće raditi.','Spremanje lokalnih podataka aplikacije nije uspjelo. Privatna pohrana nije se mogla obraditi.','Lokalni podaci aplikacije nisu se mogli učitati. Pristup privatnoj pohrani nije uspio.','Brisanje privatne pohrane nije uspjelo. Resetiranje nije u potpunosti obrađeno.','Spremanje brisanja dokumenta nije uspjelo. Privatna pohrana nije se mogla obraditi.'],
+                bg: ['Личното хранилище на браузъра не можа да бъде обработено. Можете да използвате приложението, но запазването няма да работи.','Запазването не бе успешно, защото личното хранилище на браузъра не е достъпно.','Неуспешен достъп до хранилището на браузъра. OmniWrite ще продължи в паметта за тази сесия.','Личното хранилище за документи не можа да се отвори. Запазването може да не работи.','Неуспешно запазване на локални данни на приложението. Личното хранилище не можа да бъде обработено.','Локалните данни на приложението не можаха да се заредят. Достъпът до личното хранилище не бе успешен.','Изчистването на личното хранилище не бе успешно. Нулирането не бе обработено напълно.','Запазването на изтриването на документа не бе успешно. Личното хранилище не можа да бъде обработено.'],
+                lt: ['Nepavyko apdoroti privačios naršyklės saugyklos. Galite toliau naudoti programą, bet išsaugojimas neveiks.','Nepavyko išsaugoti, nes privati naršyklės saugykla nepasiekiama.','Nepavyko pasiekti naršyklės saugyklos. Šioje sesijoje OmniWrite veiks atmintyje.','Nepavyko atidaryti privačios dokumentų saugyklos. Išsaugojimas gali neveikti.','Nepavyko išsaugoti vietinių programos duomenų. Privati saugykla nebuvo apdorota.','Nepavyko įkelti vietinių programos duomenų. Prieiga prie privačios saugyklos nepavyko.','Nepavyko išvalyti privačios saugyklos. Atstatymas nebuvo visiškai apdorotas.','Nepavyko išsaugoti dokumento ištrynimo. Privati saugykla nebuvo apdorota.'],
+                lv: ['Neizdevās apstrādāt pārlūka privāto krātuvi. Varat turpināt lietot lietotni, bet saglabāšana nedarbosies.','Saglabāšana neizdevās, jo pārlūka privātā krātuve nav pieejama.','Neizdevās piekļūt pārlūka krātuvei. OmniWrite šajā sesijā turpinās darboties atmiņā.','Neizdevās atvērt privāto dokumentu krātuvi. Saglabāšana var nedarboties.','Neizdevās saglabāt vietējos lietotnes datus. Privāto krātuvi neizdevās apstrādāt.','Neizdevās ielādēt vietējos lietotnes datus. Piekļuve privātajai krātuvei neizdevās.','Neizdevās notīrīt privāto krātuvi. Atiestatīšana netika pilnībā apstrādāta.','Neizdevās saglabāt dokumenta dzēšanu. Privāto krātuvi neizdevās apstrādāt.'],
+                et: ['Privaatset brauseri salvestusruumi ei saanud töödelda. Saate rakendust edasi kasutada, kuid salvestamine ei tööta.','Salvestamine nurjus, sest privaatne brauseri salvestusruum pole saadaval.','Brauseri salvestusruumile ei pääsenud juurde. OmniWrite jätkab selles seansis mälus.','Privaatset dokumendisalvestust ei saanud avada. Salvestamine ei pruugi töötada.','Kohalikke rakenduse andmeid ei saanud salvestada. Privaatset salvestusruumi ei saanud töödelda.','Kohalikke rakenduse andmeid ei saanud laadida. Juurdepääs privaatsele salvestusruumile nurjus.','Privaatset salvestusruumi ei saanud tühjendada. Lähtestamist ei töödeldud täielikult.','Dokumendi kustutamist ei saanud salvestada. Privaatset salvestusruumi ei saanud töödelda.'],
+                sl: ['Zasebne shrambe brskalnika ni bilo mogoče obdelati. Aplikacijo lahko še naprej uporabljate, vendar shranjevanje ne bo delovalo.','Shranjevanje ni uspelo, ker zasebna shramba brskalnika ni na voljo.','Dostop do shrambe brskalnika ni uspel. OmniWrite bo v tej seji deloval v pomnilniku.','Zasebne shrambe dokumentov ni bilo mogoče odpreti. Shranjevanje morda ne bo delovalo.','Lokalnih podatkov aplikacije ni bilo mogoče shraniti. Zasebne shrambe ni bilo mogoče obdelati.','Lokalnih podatkov aplikacije ni bilo mogoče naložiti. Dostop do zasebne shrambe ni uspel.','Zasebne shrambe ni bilo mogoče počistiti. Ponastavitev ni bila v celoti obdelana.','Brisanja dokumenta ni bilo mogoče shraniti. Zasebne shrambe ni bilo mogoče obdelati.'],
+                sr: ['Приватно складиште прегледача није могло да се обради. Можете наставити да користите апликацију, али чување неће радити.','Чување није успело јер приватно складиште прегледача није доступно.','Није могућ приступ складишту прегледача. OmniWrite ће у овој сесији наставити у меморији.','Није могуће отворити приватно складиште докумената. Чување можда неће радити.','Чување локалних података апликације није успело. Приватно складиште није могло да се обради.','Локални подаци апликације нису могли да се учитају. Приступ приватном складишту није успео.','Брисање приватног складишта није успело. Ресетовање није у потпуности обрађено.','Чување брисања документа није успело. Приватно складиште није могло да се обради.']
+            };
+            Object.entries(omniCoreStorageLocaleRows).forEach(([lang, values]) => {
+                const patch = {};
+                omniCoreStorageLocaleKeys.forEach((key, index) => { patch[key] = values[index]; });
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, patch);
             });
             Object.keys(TRANSLATIONS).forEach(lang => {
                 if (TRANSLATIONS[lang].clipboard_read_failed) TRANSLATIONS[lang].ctx_paste_md_error = TRANSLATIONS[lang].clipboard_read_failed;
