@@ -5801,9 +5801,48 @@ if ('serviceWorker' in navigator) {
     }
 
     function isCurrentWorkspaceWritable(toastKey = 'workspace_not_found') {
-        if (!isUnknownWorkspaceActive()) return true;
-        showToast(_t(toastKey), { type: 'error' });
+        if (isUnknownWorkspaceActive()) {
+            showToast(_t(toastKey), { type: 'error' });
+            return false;
+        }
+        const workspace = getActiveWorkspace();
+        if (isWorkspaceLocked(workspace)) {
+            showToast(_t('workspace_locked_requires_unlock'), { type: 'error' });
+            showWorkspaceLockModal(workspace);
+            return false;
+        }
+        return true;
+    }
+
+    function isWorkspaceReadable(workspaceId = getActiveWorkspaceId(), showPrompt = false) {
+        if (workspaceId === UNKNOWN_WORKSPACE_ID || isUnknownWorkspaceActive()) return false;
+        const workspace = workspaces.find(ws => ws.id === workspaceId);
+        if (!workspace) return false;
+        if (!isWorkspaceLocked(workspace)) return true;
+        if (showPrompt) {
+            showToast(_t('workspace_locked_requires_unlock'), { type: 'error' });
+            showWorkspaceLockModal(workspace);
+        }
         return false;
+    }
+
+    function clearLockedWorkspaceDocumentView(workspaceId = getActiveWorkspaceId()) {
+        const activeDocId = getCurrentDocIdFromHash();
+        const activeDoc = activeDocId ? documents.find(doc => doc.id === activeDocId) : null;
+        if (activeDoc && (activeDoc.workspaceId || PERSONAL_WORKSPACE_ID) !== workspaceId) return;
+        clearUnknownDocumentContext();
+        window.location.hash = '';
+        const titleDiv = document.getElementById('documentTitle');
+        if (titleDiv) titleDiv.textContent = _t('locked');
+        document.title = 'Munetios OmniWrite';
+        const column = typeof getMainDocumentPagesColumn === 'function' ? getMainDocumentPagesColumn() : null;
+        if (column) column.innerHTML = '';
+        const editorArea = document.getElementById('editorArea');
+        if (editorArea) {
+            editorArea.innerHTML = '';
+            editorArea.setAttribute('contenteditable', 'false');
+        }
+        if (typeof switchPage === 'function') switchPage('selectArea');
     }
 
     function requireKnownDocument(doc = null, toastKey = 'document_not_found') {
@@ -5901,12 +5940,12 @@ if ('serviceWorker' in navigator) {
     }
 
     function getWorkspaceDocuments(workspaceId = getActiveWorkspaceId()) {
-        if (workspaceId === UNKNOWN_WORKSPACE_ID || isUnknownWorkspaceActive()) return [];
+        if (!isWorkspaceReadable(workspaceId)) return [];
         return documents.filter(doc => (doc.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
     }
 
     function getWorkspaceFolders(workspaceId = getActiveWorkspaceId()) {
-        if (workspaceId === UNKNOWN_WORKSPACE_ID || isUnknownWorkspaceActive()) return [];
+        if (!isWorkspaceReadable(workspaceId)) return [];
         return folders.filter(folder => (folder.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
     }
 
@@ -6083,6 +6122,10 @@ if ('serviceWorker' in navigator) {
                 sessionUnlockedWorkspaces.add(workspace.id);
                 modal.remove();
                 renderWorkspacesSidebar();
+                renderDocumentsList();
+                renderFoldersList();
+                if (document.getElementById('notesApp')?.classList.contains('active') && typeof renderNotes === 'function') renderNotes();
+                if (document.getElementById('imagesApp')?.classList.contains('active') && typeof renderImagesList === 'function') renderImagesList();
                 showToast(_t('workspace_unlocked'), { type: 'success' });
                 if (typeof onUnlocked === 'function') onUnlocked();
                 return;
@@ -6094,9 +6137,12 @@ if ('serviceWorker' in navigator) {
             workspace.locked = true;
             workspace.lockPassphraseHash = await hashPassphrase(pw);
             workspace.updatedAt = Date.now();
-            sessionUnlockedWorkspaces.add(workspace.id);
+            sessionUnlockedWorkspaces.delete(workspace.id);
             saveWorkspaces();
             renderWorkspacesSidebar();
+            renderDocumentsList();
+            renderFoldersList();
+            clearLockedWorkspaceDocumentView(workspace.id);
             modal.remove();
             showToast(_t('workspace_locked'), { type: 'success' });
         };
@@ -7399,14 +7445,19 @@ if ('serviceWorker' in navigator) {
             setUnknownDocumentContext(docId);
             return;
         }
+        const docWorkspaceId = doc.workspaceId || PERSONAL_WORKSPACE_ID;
+        if (!isWorkspaceReadable(docWorkspaceId, true)) {
+            clearUnknownDocumentContext();
+            return;
+        }
         clearUnknownDocumentContext();
-        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
-            localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
+        if (docWorkspaceId !== getActiveWorkspaceId()) {
+            localStorage.setItem(ACTIVE_WORKSPACE_KEY, docWorkspaceId);
             renderWorkspacesSidebar();
             renderDocumentsList();
             renderFoldersList();
         }
-        const ws = workspaces.find(w => w.id === (doc.workspaceId || PERSONAL_WORKSPACE_ID)) || getActiveWorkspace();
+        const ws = workspaces.find(w => w.id === docWorkspaceId) || getActiveWorkspace();
         window.location.hash = '#/profile/' + getWorkspaceSlug(ws.name) + '/document/' + docId;
         // Save title on blur or enter
         const editable = document.getElementById('editableTitle');
@@ -7446,7 +7497,8 @@ if ('serviceWorker' in navigator) {
 
     // Add document to sidebar list
     function addDocumentToList(doc) {
-        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) return;
+        const docWorkspaceId = doc.workspaceId || PERSONAL_WORKSPACE_ID;
+        if (docWorkspaceId !== getActiveWorkspaceId() || !isWorkspaceReadable(docWorkspaceId)) return;
         const list = document.getElementById('documentsList');
         if (!list) return;
         const el = createDocumentElement(doc);
@@ -7629,9 +7681,14 @@ if ('serviceWorker' in navigator) {
             setUnknownDocumentContext(docId);
             return;
         }
+        const docWorkspaceId = doc.workspaceId || PERSONAL_WORKSPACE_ID;
+        if (!isWorkspaceReadable(docWorkspaceId, true)) {
+            clearUnknownDocumentContext();
+            return;
+        }
         clearUnknownDocumentContext();
-        if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
-            localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
+        if (docWorkspaceId !== getActiveWorkspaceId()) {
+            localStorage.setItem(ACTIVE_WORKSPACE_KEY, docWorkspaceId);
             renderWorkspacesSidebar();
             renderDocumentsList();
             renderFoldersList();
@@ -7641,7 +7698,7 @@ if ('serviceWorker' in navigator) {
             exitSplitView();
         }
         // Update hash only if not already set
-        const expectedHash = '#/profile/' + getWorkspaceSlug((workspaces.find(w => w.id === (doc.workspaceId || PERSONAL_WORKSPACE_ID)) || getActiveWorkspace()).name) + '/document/' + docId;
+        const expectedHash = '#/profile/' + getWorkspaceSlug((workspaces.find(w => w.id === docWorkspaceId) || getActiveWorkspace()).name) + '/document/' + docId;
         if (window.location.hash !== expectedHash) {
             window.location.hash = expectedHash;
             return; // Let hashchange handler do the rest
@@ -15116,10 +15173,14 @@ Q4: 22</textarea>
         }
     }
 
-    function renderImagesList() {
-        const imagesList = document.getElementById('imagesList');
-        imagesList.innerHTML = 'Loading...';
-        const storeName = imagesTabMode === 'main' ? IMAGE_STORE : TRASH_STORE;
+        function renderImagesList() {
+            const imagesList = document.getElementById('imagesList');
+            if (!isWorkspaceReadable(getActiveWorkspaceId())) {
+                imagesList.innerHTML = '<p style="opacity:0.6;padding:12px;">' + _t('workspace_locked_requires_unlock') + '</p>';
+                return;
+            }
+            imagesList.innerHTML = 'Loading...';
+            const storeName = imagesTabMode === 'main' ? IMAGE_STORE : TRASH_STORE;
         getAllImages(storeName).then(images => {
             if (!images.length) {
                 imagesList.innerHTML = imagesTabMode === 'main' ? 'No Images' : 'Trash is empty';
@@ -16576,6 +16637,14 @@ Q4: 22</textarea>
         function renderDocumentPages(doc) {
             const column = getMainDocumentPagesColumn();
             if (!column || !doc) return null;
+            const docWorkspaceId = doc.workspaceId || PERSONAL_WORKSPACE_ID;
+            if (!isWorkspaceReadable(docWorkspaceId, true)) {
+                column.querySelectorAll('img[data-omni-blob-url]').forEach(img => {
+                    try { URL.revokeObjectURL(img.dataset.omniBlobUrl); } catch(e) {}
+                });
+                column.innerHTML = '<div class="document-page-shell"><div class="document-page-editor editor-surface" style="display:flex;align-items:center;justify-content:center;min-height:320px;text-align:center;opacity:.78;" contenteditable="false"><div><icon>lock</icon><p>' + htmlEscape(_t('workspace_locked_requires_unlock')) + '</p></div></div></div>';
+                return column.querySelector('.document-page-editor');
+            }
             const pageHtmlList = parseDocumentPages(doc.content);
             column.querySelectorAll('img[data-omni-blob-url]').forEach(img => {
                 try { URL.revokeObjectURL(img.dataset.omniBlobUrl); } catch(e) {}
@@ -26041,6 +26110,7 @@ Q4: 22</textarea>
                 workspace_locked: 'Workspace locked.',
                 workspace_unlocked: 'Workspace unlocked.',
                 workspace_lock_removed: 'Workspace lock removed.',
+                workspace_locked_requires_unlock: 'Unlock this workspace to load its documents, folders, images, and notes.',
                 importing_pdf: 'Importing PDF...',
                 failed_import_pdf: 'Failed to import PDF.',
                 media_export_warning_title: "Media won't be included",
@@ -26127,6 +26197,7 @@ Q4: 22</textarea>
                 workspace_locked: 'Espacio bloqueado.',
                 workspace_unlocked: 'Espacio desbloqueado.',
                 workspace_lock_removed: 'Bloqueo del espacio quitado.',
+                workspace_locked_requires_unlock: 'Desbloquea este espacio para cargar sus documentos, carpetas, imágenes y notas.',
                 importing_pdf: 'Importando PDF...',
                 failed_import_pdf: 'Error al importar PDF.',
                 media_export_warning_title: 'Los medios no se incluirán',
@@ -26165,9 +26236,21 @@ Q4: 22</textarea>
                 hi: { importing_pdf:'PDF आयात हो रहा है...', failed_import_pdf:'PDF आयात करने में विफल।', media_export_warning_title:'मीडिया शामिल नहीं होगा', media_export_warning_body:'{format} डाउनलोड में एम्बेड किए गए वीडियो या संगीत शामिल नहीं हो सकते। क्या इन मीडिया फ़ाइलों के बिना दस्तावेज़ डाउनलोड जारी रखें?', continue_download:'डाउनलोड जारी रखें' },
                 ru: { importing_pdf:'Импорт PDF...', failed_import_pdf:'Ошибка импорта PDF.', media_export_warning_title:'Медиа не будет включено', media_export_warning_body:'Загрузки {format} не могут включать встроенное видео или музыку. Продолжить загрузку документа без этих медиафайлов?', continue_download:'Продолжить загрузку' }
             };
+            const LOCKED_WORKSPACE_READ_TRANSLATIONS = {
+                fr: { workspace_locked_requires_unlock:'Déverrouillez cet espace pour charger ses documents, dossiers, images et notes.' },
+                de: { workspace_locked_requires_unlock:'Entsperre diesen Arbeitsbereich, um Dokumente, Ordner, Bilder und Notizen zu laden.' },
+                pt: { workspace_locked_requires_unlock:'Desbloqueie este espaço para carregar documentos, pastas, imagens e notas.' },
+                it: { workspace_locked_requires_unlock:'Sblocca questo spazio per caricare documenti, cartelle, immagini e note.' },
+                zh: { workspace_locked_requires_unlock:'解锁此工作区以加载其文档、文件夹、图片和笔记。' },
+                ja: { workspace_locked_requires_unlock:'文書、フォルダー、画像、ノートを読み込むには、このワークスペースをロック解除してください。' },
+                ko: { workspace_locked_requires_unlock:'문서, 폴더, 이미지, 메모를 불러오려면 이 작업공간의 잠금을 해제하세요.' },
+                ar: { workspace_locked_requires_unlock:'افتح مساحة العمل هذه لتحميل المستندات والمجلدات والصور والملاحظات.' },
+                hi: { workspace_locked_requires_unlock:'दस्तावेज़, फ़ोल्डर, छवियां और नोट्स लोड करने के लिए इस कार्यस्थान को अनलॉक करें।' },
+                ru: { workspace_locked_requires_unlock:'Разблокируйте эту рабочую область, чтобы загрузить документы, папки, изображения и заметки.' }
+            };
             Object.keys(TRANSLATIONS).forEach(lang => {
                 const base = String(lang || '').split('-')[0];
-                TRANSLATIONS[lang] = Object.assign({}, NEW_TRANSLATIONS.en, TRANSLATIONS[lang] || {}, WORKSPACE_LOCK_TRANSLATIONS[base] || WORKSPACE_LOCK_TRANSLATIONS[lang] || {}, MEDIA_EXPORT_TRANSLATIONS[base] || MEDIA_EXPORT_TRANSLATIONS[lang] || {});
+                TRANSLATIONS[lang] = Object.assign({}, NEW_TRANSLATIONS.en, TRANSLATIONS[lang] || {}, WORKSPACE_LOCK_TRANSLATIONS[base] || WORKSPACE_LOCK_TRANSLATIONS[lang] || {}, MEDIA_EXPORT_TRANSLATIONS[base] || MEDIA_EXPORT_TRANSLATIONS[lang] || {}, LOCKED_WORKSPACE_READ_TRANSLATIONS[base] || LOCKED_WORKSPACE_READ_TRANSLATIONS[lang] || {});
             });
         }
         const originalTranslateHelper = typeof _t === 'function' ? _t : null;
@@ -26785,7 +26868,7 @@ Q4: 22</textarea>
         }
 
         function getNotes() {
-            if (isUnknownWorkspaceActive()) return null;
+            if (isUnknownWorkspaceActive() || !isWorkspaceReadable(getActiveWorkspaceId())) return null;
             const workspaceId = getActiveWorkspaceId();
             const scopedKey = 'omniwrite-quick-notes-' + workspaceId;
             try {
@@ -27015,6 +27098,10 @@ Q4: 22</textarea>
             const imagesList = document.getElementById('imagesList');
             if (!imagesList || typeof getAllImages !== 'function') return;
             imagesList.className = 'omni-images-grid';
+            if (!isWorkspaceReadable(getActiveWorkspaceId())) {
+                imagesList.innerHTML = '<div class="omni-image-card"><div class="omni-image-card-body"><strong>' + escapeHtml(_t('workspace_locked_requires_unlock')) + '</strong></div></div>';
+                return;
+            }
             imagesList.innerHTML = '<div class="omni-image-card"><div class="omni-image-card-body">' + escapeHtml(_t('loading_images')) + '</div></div>';
             const storeName = imagesTabMode === 'main' ? IMAGE_STORE : TRASH_STORE;
             const title = document.getElementById('imagesPageTitle');
