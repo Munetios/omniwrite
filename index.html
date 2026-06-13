@@ -104,21 +104,21 @@ if ('serviceWorker' in navigator) {
               font-feature-settings: 'ss01' 1, 'liga' 0 !important; 
         }
         html, button, input, select, textarea {
-            font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif;
+            font-family: 'Google Sans Flex';
             font-feature-settings: 'ss01' 1, 'liga' 0;
             box-sizing: border-box;
         }
         video::-webkit-media-controls-time-remaining-display{
-                        font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+                        font-family: 'Google Sans Flex' !important;
         }
         video::-internal-media-controls-overflow-menu-list-item {
-                                    font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+                                    font-family: 'Google Sans Flex' !important;
         }
         video::-webkit-media-controls-current-time-display  {
-                               font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+                               font-family: 'Google Sans Flex' !important;
         }
         video::-internal-media-controls-overflow-menu-list-item {
-                      font-family: 'Google Sans Flex', 'Google Sans', 'Noto Sans', 'Segoe UI', 'Arial', sans-serif !important;
+                      font-family: 'Google Sans Flex' !important;
         }
         
         video::-internal-media-controls-overflow-menu-list {
@@ -129,8 +129,18 @@ if ('serviceWorker' in navigator) {
         }
         /* to change the font for native video controls */
         @font-face {
+            font-family: 'Google Sans Flex';
+            src: url('https://api.munetios.com/fonts/google-sans-flex/googlesansflex.ttf') format('truetype');
+            font-weight: 1 1000;
+            font-style: normal;
+            font-display: block;
+        }
+        @font-face {
             font-family: Roboto-Regular;
             src: url('https://api.munetios.com/fonts/google-sans-flex/googlesansflex.ttf') format('truetype');
+            font-weight: 1 1000;
+            font-style: normal;
+            font-display: block;
         }
         input,
         textarea,
@@ -157,7 +167,7 @@ if ('serviceWorker' in navigator) {
         }
         
         body {
-            font-family: 'Google Sans Flex', sans-serif;
+            font-family: 'Google Sans Flex';
             font-feature-settings: 'ss01' 1, 'liga' 0;
             margin: 0;
             padding: 0;
@@ -205,7 +215,9 @@ if ('serviceWorker' in navigator) {
             width: var(--sidebar-width);
             flex: 0 0 var(--sidebar-width);
             box-sizing: border-box;
-            transition: flex-basis 0.25s ease, width 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+            overflow: hidden;
+            transform-origin: left center;
+            transition: flex-basis 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
         }
         .workspaces-sidebar {
             width: var(--workspace-rail-width);
@@ -362,9 +374,11 @@ if ('serviceWorker' in navigator) {
             align-items: center;
         }
         body.omni-sidebar-collapsed .sidebar__container {
-            display: none !important;
             width: 0;
             flex-basis: 0;
+            opacity: 0;
+            transform: translateX(-12px) scaleX(0.98);
+            pointer-events: none;
         }
         body.omni-sidebar-collapsed .workspaces-sidebar {
             display: flex !important;
@@ -4790,8 +4804,8 @@ if ('serviceWorker' in navigator) {
                               <div class="dropdown-item" data-size="120"><div class="menu-text" style="font-size:120px;">120 px</div></div>
                     </div>
 <div class="dropdown-wrapper liquid-glass" id="fontFamilyPicker">
-    <div class="dropdown-item" data-font="'Google Sans Flex', sans-serif">
-            <div class="menu-text" style="font-family: 'Google Sans Flex', sans-serif;">Google Sans Flex</div>
+    <div class="dropdown-item" data-font="'Google Sans Flex'">
+            <div class="menu-text" style="font-family: 'Google Sans Flex';">Google Sans Flex</div>
         </div>
         <div class="dropdown-item" data-font="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif">
             <div class="menu-text" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;">System</div>
@@ -5387,8 +5401,13 @@ if ('serviceWorker' in navigator) {
     const ACTIVE_WORKSPACE_KEY = 'omniwrite-active-workspace';
     const WORKSPACES_HIDDEN_KEY = 'omniwrite-workspaces-sidebar-hidden';
     const PERSONAL_WORKSPACE_ID = 'workspace-personal';
+    const UNKNOWN_WORKSPACE_ID = 'workspace-unknown';
     const DOCUMENT_ID_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const DOCUMENT_ID_FIRST_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let unknownWorkspaceContext = null;
+    let unknownDocumentContext = null;
+    let workspacesLoaded = false;
+    const sessionUnlockedWorkspaces = new Set();
 
     function createDocumentId(length = 72) {
         const safeLength = Math.max(6, Math.min(72, Number(length) || 72));
@@ -5714,6 +5733,22 @@ if ('serviceWorker' in navigator) {
     }
     setupInstantButtonFeedback();
 
+    document.addEventListener('click', function guardUnknownRouteActions(event) {
+        if (!isUnknownWorkspaceActive() && !isUnknownDocumentActive()) return;
+        const actionTarget = event.target.closest?.(
+            '#createOptions, #createNewDocumentBtn, #createNewFolderBtn, #createImportFileBtn, #createNewImageBtn, #uploadImageBtn, #newQuickNoteBtn, #editorMoreOptions, .toolbar-item, #editorArea, .document-page-editor, .split-editor, #addFolderBtn, #addPageBtn'
+        );
+        if (!actionTarget) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (isUnknownWorkspaceActive()) {
+            const noteTarget = actionTarget.closest?.('#newQuickNoteBtn, #notesApp');
+            showToast(_t(noteTarget ? 'failed_create_note' : 'workspace_not_found'), { type: 'error' });
+        } else {
+            showToast(_t('document_not_found'), { type: 'error' });
+        }
+    }, true);
+
     function createWorkspaceId() {
         return 'workspace-' + (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2, 9));
     }
@@ -5726,7 +5761,65 @@ if ('serviceWorker' in navigator) {
         return normalizeWorkspaceName(name).slice(0, 1).toUpperCase();
     }
 
+    function getUnknownWorkspace() {
+        return { id: UNKNOWN_WORKSPACE_ID, name: _t('unknown_workspace_name') || 'Unknown', virtual: true };
+    }
+
+    function isUnknownWorkspaceActive() {
+        return !!unknownWorkspaceContext;
+    }
+
+    function isUnknownDocumentActive() {
+        return !!unknownDocumentContext;
+    }
+
+    function setUnknownWorkspaceContext(slug) {
+        unknownWorkspaceContext = { slug: String(slug || ''), at: Date.now() };
+        unknownDocumentContext = null;
+        renderWorkspacesSidebar();
+        renderDocumentsList();
+        renderFoldersList();
+        if (document.getElementById('notesApp')?.classList.contains('active') && typeof renderNotes === 'function') renderNotes();
+        if (document.getElementById('imagesApp')?.classList.contains('active') && typeof renderImagesList === 'function') renderImagesList();
+        showToast(_t('workspace_not_found'), { type: 'error' });
+    }
+
+    function clearUnknownWorkspaceContext() {
+        unknownWorkspaceContext = null;
+    }
+
+    function setUnknownDocumentContext(docId) {
+        unknownDocumentContext = { id: String(docId || ''), at: Date.now() };
+        showToast(_t('document_not_found'), { type: 'error' });
+        const titleDiv = document.getElementById('documentTitle');
+        if (titleDiv) titleDiv.textContent = _t('unknown_document_name');
+        document.title = (_t('unknown_document_name') || 'Unknown Document') + ' — Munetios OmniWrite';
+    }
+
+    function clearUnknownDocumentContext() {
+        unknownDocumentContext = null;
+    }
+
+    function isCurrentWorkspaceWritable(toastKey = 'workspace_not_found') {
+        if (!isUnknownWorkspaceActive()) return true;
+        showToast(_t(toastKey), { type: 'error' });
+        return false;
+    }
+
+    function requireKnownDocument(doc = null, toastKey = 'document_not_found') {
+        if (doc && !isUnknownDocumentActive()) return true;
+        showToast(_t(toastKey), { type: 'error' });
+        return false;
+    }
+
+    function isWorkspaceLocked(workspace) {
+        return !!(workspace && workspace.locked && workspace.lockPassphraseHash && !sessionUnlockedWorkspaces.has(workspace.id));
+    }
+
     function loadWorkspaces() {
+        workspacesLoaded = false;
+        clearUnknownWorkspaceContext();
+        clearUnknownDocumentContext();
         try {
             const stored = JSON.parse(localStorage.getItem(WORKSPACES_KEY) || '[]');
             workspaces = Array.isArray(stored) ? stored.filter(ws => ws && ws.id && ws.name) : [];
@@ -5734,13 +5827,18 @@ if ('serviceWorker' in navigator) {
             workspaces = [];
         }
         if (!workspaces.some(ws => ws.id === PERSONAL_WORKSPACE_ID)) {
-            workspaces.unshift({ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: true });
+            workspaces.unshift({ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: false });
+        } else {
+            const personal = workspaces.find(ws => ws.id === PERSONAL_WORKSPACE_ID);
+            if (personal && personal.locked && !personal.lockPassphraseHash) personal.locked = false;
         }
         if (!localStorage.getItem(ACTIVE_WORKSPACE_KEY) || !workspaces.some(ws => ws.id === localStorage.getItem(ACTIVE_WORKSPACE_KEY))) {
             localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
         }
+        localStorage.setItem(WORKSPACES_HIDDEN_KEY, 'false');
         saveWorkspaces();
         applyWorkspacesSidebarVisibility();
+        workspacesLoaded = true;
     }
 
     function saveWorkspaces() {
@@ -5748,11 +5846,13 @@ if ('serviceWorker' in navigator) {
     }
 
     function getActiveWorkspaceId() {
+        if (isUnknownWorkspaceActive()) return UNKNOWN_WORKSPACE_ID;
         const stored = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
         return workspaces.some(ws => ws.id === stored) ? stored : PERSONAL_WORKSPACE_ID;
     }
 
     function getActiveWorkspace() {
+        if (isUnknownWorkspaceActive()) return getUnknownWorkspace();
         return workspaces.find(ws => ws.id === getActiveWorkspaceId()) || workspaces[0] || { id: PERSONAL_WORKSPACE_ID, name: 'Personal' };
     }
 
@@ -5779,25 +5879,39 @@ if ('serviceWorker' in navigator) {
 
     function resolveWorkspaceFromSlug(slug) {
         if (!slug) return null;
-        const decoded = decodeURIComponent(slug).toLowerCase().replace(/-/g, ' ');
-        return workspaces.find(ws => ws.name.trim().toLowerCase() === decoded) || null;
+        const rawSlug = String(slug || '').trim();
+        let decoded = rawSlug;
+        try {
+            decoded = decodeURIComponent(rawSlug);
+        } catch(e) {}
+        const normalizedDecoded = decoded.toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+        const normalizedRawSlug = rawSlug.toLowerCase();
+        return workspaces.find(ws => {
+            const name = String(ws.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            return getWorkspaceSlug(ws.name).toLowerCase() === normalizedRawSlug || name === normalizedDecoded;
+        }) || null;
     }
 
     function assignCurrentWorkspace(record) {
+        if (!isCurrentWorkspaceWritable('failed_save_documents')) {
+            throw new Error('Unknown workspace');
+        }
         if (!record.workspaceId) record.workspaceId = getActiveWorkspaceId();
         return record;
     }
 
     function getWorkspaceDocuments(workspaceId = getActiveWorkspaceId()) {
+        if (workspaceId === UNKNOWN_WORKSPACE_ID || isUnknownWorkspaceActive()) return [];
         return documents.filter(doc => (doc.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
     }
 
     function getWorkspaceFolders(workspaceId = getActiveWorkspaceId()) {
+        if (workspaceId === UNKNOWN_WORKSPACE_ID || isUnknownWorkspaceActive()) return [];
         return folders.filter(folder => (folder.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId);
     }
 
     function applyWorkspacesSidebarVisibility() {
-        document.body.classList.toggle('omni-workspaces-hidden', localStorage.getItem(WORKSPACES_HIDDEN_KEY) === 'true');
+        document.body.classList.remove('omni-workspaces-hidden');
     }
 
     function renderWorkspacesSidebar() {
@@ -5821,13 +5935,25 @@ if ('serviceWorker' in navigator) {
     }
 
     function switchWorkspace(workspaceId) {
-        if (!workspaces.some(ws => ws.id === workspaceId)) return;
+        clearUnknownWorkspaceContext();
+        clearUnknownDocumentContext();
+        const targetWorkspace = workspaces.find(ws => ws.id === workspaceId);
+        if (!targetWorkspace) {
+            showToast(_t('workspace_not_found'), { type: 'error' });
+            return;
+        }
+        if (isWorkspaceLocked(targetWorkspace)) {
+            showWorkspaceLockModal(targetWorkspace, () => switchWorkspace(workspaceId));
+            return;
+        }
         localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspaceId);
         if (typeof DOCUMENTS_PAGE_SIZE !== 'undefined') documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
         renderWorkspacesSidebar();
         renderWorkspaceTopSwitcher();
         renderDocumentsList();
         renderFoldersList();
+        if (document.getElementById('notesApp')?.classList.contains('active') && typeof renderNotes === 'function') renderNotes();
+        if (document.getElementById('imagesApp')?.classList.contains('active') && typeof renderImagesList === 'function') renderImagesList();
         const currentDocId = getCurrentDocIdFromHash();
         const currentDoc = currentDocId ? documents.find(doc => doc.id === currentDocId) : null;
         if (currentDoc && (currentDoc.workspaceId || PERSONAL_WORKSPACE_ID) !== workspaceId) {
@@ -5901,6 +6027,93 @@ if ('serviceWorker' in navigator) {
         });
     }
 
+    function showWorkspaceLockModal(workspace, onUnlocked = null) {
+        if (!workspace) return;
+        document.getElementById('workspaceLockModal')?.remove();
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'workspaceLockModal';
+        const isLocked = isWorkspaceLocked(workspace);
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:460px;">
+                <span class="modal-content-close" id="closeWorkspaceLockModal" style="position:absolute;top:14px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                <h2 style="display:flex;align-items:center;gap:10px;"><icon>${isLocked ? 'lock_open' : 'lock'}</icon>${isLocked ? _t('unlock_workspace') : _t('lock_workspace')}</h2>
+                <p style="opacity:.78;line-height:1.55;">${isLocked ? _t('unlock_workspace_desc') : _t('lock_workspace_desc')}</p>
+                <label style="display:grid;gap:8px;margin-top:16px;">
+                    <span>${_t('lock_passphrase_label')}</span>
+                    <input id="workspacePassphraseInput" type="password" autocomplete="${isLocked ? 'current-password' : 'new-password'}" placeholder="${isLocked ? _t('unlock_passphrase_placeholder') : _t('lock_passphrase_placeholder')}">
+                </label>
+                ${isLocked ? '' : `
+                    <label style="display:grid;gap:8px;margin-top:14px;">
+                        <span>${_t('lock_passphrase_confirm_label')}</span>
+                        <input id="workspacePassphraseConfirmInput" type="password" autocomplete="new-password" placeholder="${_t('lock_passphrase_confirm_placeholder')}">
+                    </label>
+                `}
+                <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+                    <button id="confirmWorkspaceLockBtn" style="flex:1;background:#8f5cff;color:#fff;"><icon>${isLocked ? 'lock_open' : 'lock'}</icon>${isLocked ? _t('unlock_workspace_btn') : _t('lock_workspace_btn')}</button>
+                    ${workspace.locked ? `<button id="removeWorkspaceLockBtn" style="flex:1;"><icon>lock_reset</icon>${_t('remove_workspace_lock')}</button>` : ''}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const passInput = modal.querySelector('#workspacePassphraseInput');
+        setTimeout(() => passInput?.focus(), 50);
+        modal.querySelector('#closeWorkspaceLockModal').onclick = () => modal.remove();
+        modal.addEventListener('mousedown', e => { if (e.target === modal) modal.remove(); });
+
+        async function verifyPassphrase() {
+            const pw = passInput.value;
+            if (!pw) {
+                showToast(_t('lock_passphrase_required'), { type: 'error' });
+                return false;
+            }
+            if (!workspace.lockPassphraseHash) return true;
+            const stored = typeof workspace.lockPassphraseHash === 'string' ? JSON.parse(workspace.lockPassphraseHash) : workspace.lockPassphraseHash;
+            const entered = await hashPassphrase(pw, stored.salt);
+            if (entered.hash !== stored.hash) {
+                showToast(_t('lock_wrong_passphrase'), { type: 'error' });
+                return false;
+            }
+            return true;
+        }
+
+        modal.querySelector('#confirmWorkspaceLockBtn').onclick = async () => {
+            if (isLocked) {
+                if (!(await verifyPassphrase())) return;
+                sessionUnlockedWorkspaces.add(workspace.id);
+                modal.remove();
+                renderWorkspacesSidebar();
+                showToast(_t('workspace_unlocked'), { type: 'success' });
+                if (typeof onUnlocked === 'function') onUnlocked();
+                return;
+            }
+            const pw = passInput.value;
+            const pw2 = modal.querySelector('#workspacePassphraseConfirmInput')?.value || '';
+            if (!pw) { showToast(_t('lock_passphrase_required'), { type: 'error' }); return; }
+            if (pw !== pw2) { showToast(_t('lock_passphrase_mismatch'), { type: 'error' }); return; }
+            workspace.locked = true;
+            workspace.lockPassphraseHash = await hashPassphrase(pw);
+            workspace.updatedAt = Date.now();
+            sessionUnlockedWorkspaces.add(workspace.id);
+            saveWorkspaces();
+            renderWorkspacesSidebar();
+            modal.remove();
+            showToast(_t('workspace_locked'), { type: 'success' });
+        };
+
+        modal.querySelector('#removeWorkspaceLockBtn')?.addEventListener('click', async () => {
+            if (!(await verifyPassphrase())) return;
+            workspace.locked = false;
+            delete workspace.lockPassphraseHash;
+            sessionUnlockedWorkspaces.delete(workspace.id);
+            workspace.updatedAt = Date.now();
+            saveWorkspaces();
+            renderWorkspacesSidebar();
+            modal.remove();
+            showToast(_t('workspace_lock_removed'), { type: 'success' });
+        });
+    }
+
     function showDeleteWorkspaceFlow(workspaceId, parentModal = null) {
         const workspace = workspaces.find(ws => ws.id === workspaceId);
         if (!workspace) return;
@@ -5944,7 +6157,6 @@ if ('serviceWorker' in navigator) {
                 <h2>${_t('workspaces')}</h2>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
                     <button id="managerAddWorkspaceBtn"><icon>add</icon> ${_t('add_workspace')}</button>
-                    <button id="managerToggleWorkspaceSidebarBtn"><icon>view_sidebar</icon> ${localStorage.getItem(WORKSPACES_HIDDEN_KEY) === 'true' ? _t('show_sidebar') : _t('hide_sidebar')}</button>
                 </div>
                 <div id="workspaceManagerList" style="display:grid;gap:10px;"></div>
             </div>
@@ -5958,12 +6170,13 @@ if ('serviceWorker' in navigator) {
                 const docCount = getWorkspaceDocuments(ws.id).length;
                 const folderCount = getWorkspaceFolders(ws.id).length;
                 return `
-                    <div class="settings-row" style="grid-template-columns:1fr auto auto auto;gap:10px;">
+                    <div class="settings-row" style="grid-template-columns:1fr auto auto auto auto;gap:10px;">
                         <div class="settings-row-info">
-                            <div class="settings-row-title">${ws.name}${ws.id === activeId ? ' • ' + _t('active') : ''}</div>
+                            <div class="settings-row-title">${ws.name}${ws.id === activeId ? ' • ' + _t('active') : ''}${ws.locked ? ' • ' + _t('locked') : ''}</div>
                             <div class="settings-row-subtitle">${_t('workspace_counts').replace('{documents}', docCount).replace('{folders}', folderCount)}</div>
                         </div>
                         <button data-action="switch" data-workspace-id="${ws.id}" style="width:auto;">${_t('open')}</button>
+                        <button data-action="lock" data-workspace-id="${ws.id}" style="width:auto;">${ws.locked ? _t('unlock_workspace') : _t('lock_workspace')}</button>
                         <button data-action="edit" data-workspace-id="${ws.id}" style="width:auto;">${_t('edit')}</button>
                         <button data-action="delete" data-workspace-id="${ws.id}" style="width:auto;background:#e74c3c;color:#fff;" ${ws.id === PERSONAL_WORKSPACE_ID ? 'disabled' : ''}>${_t('delete')}</button>
                     </div>
@@ -5975,12 +6188,6 @@ if ('serviceWorker' in navigator) {
         modal._renderManagerList = renderManagerList;
         modal.querySelector('#closeWorkspacesManagerModal').onclick = () => modal.remove();
         modal.querySelector('#managerAddWorkspaceBtn').onclick = () => showWorkspaceModal();
-        modal.querySelector('#managerToggleWorkspaceSidebarBtn').onclick = function() {
-            const nextHidden = localStorage.getItem(WORKSPACES_HIDDEN_KEY) !== 'true';
-            localStorage.setItem(WORKSPACES_HIDDEN_KEY, nextHidden ? 'true' : 'false');
-            applyWorkspacesSidebarVisibility();
-            this.innerHTML = `<icon>view_sidebar</icon> ${nextHidden ? _t('show_sidebar') : _t('hide_sidebar')}`;
-        };
         modal.querySelector('#workspaceManagerList').addEventListener('mousedown', e => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
@@ -5993,6 +6200,12 @@ if ('serviceWorker' in navigator) {
             }
             if (button.dataset.action === 'edit') {
                 showWorkspaceModal(workspaceId);
+            }
+            if (button.dataset.action === 'lock') {
+                const ws = workspaces.find(item => item.id === workspaceId);
+                showWorkspaceLockModal(ws, () => {
+                    if (modal && typeof modal._renderManagerList === 'function') modal._renderManagerList();
+                });
             }
             if (button.dataset.action === 'delete') {
                 showDeleteWorkspaceFlow(workspaceId, modal);
@@ -6107,7 +6320,7 @@ if ('serviceWorker' in navigator) {
                     <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ws.name}</strong>
                     <small style="opacity:0.68;">${getWorkspaceDocuments(ws.id).length} ${_t('documents_section')} · ${getWorkspaceFolders(ws.id).length} ${_t('folders')}</small>
                 </span>
-                <icon>${ws.id === activeId ? 'check_circle' : 'chevron_right'}</icon>
+                <icon>${ws.locked && !sessionUnlockedWorkspaces.has(ws.id) ? 'lock' : (ws.id === activeId ? 'check_circle' : 'chevron_right')}</icon>
             </button>
         `).join('');
     }
@@ -6558,6 +6771,12 @@ if ('serviceWorker' in navigator) {
     
     // Save all documents to IndexedDB (encrypted) with mutex to prevent race conditions
     async function saveDocuments() {
+        if (!isCurrentWorkspaceWritable('failed_save_documents') || isUnknownDocumentActive()) {
+            isSaved = false;
+            updateSavingStatus(_t('save_failed'));
+            if (isUnknownDocumentActive()) showToast(_t('document_not_found'), { type: 'error' });
+            return;
+        }
         if (storageUnavailable || !db) {
             isSaved = false;
             updateSavingStatus(_t('storage_unavailable'));
@@ -6767,6 +6986,9 @@ if ('serviceWorker' in navigator) {
     // Save all folders to IndexedDB (encrypted)
     async function saveFolders() {
         try {
+            if (!isCurrentWorkspaceWritable('failed_save_folder')) {
+                return;
+            }
             if (storageUnavailable || !db) {
                 showAppErrorToast('storage_save_unavailable', 'Failed to save because private browser storage is unavailable.', new Error('IndexedDB unavailable'));
                 return;
@@ -7066,6 +7288,7 @@ if ('serviceWorker' in navigator) {
 
             // #/create?name=...&content=... → create and open a new document
             if (hash.startsWith('#/create?')) {
+                if (!isCurrentWorkspaceWritable('failed_save_documents')) return;
                 const params = new URLSearchParams(hash.slice('#/create?'.length));
                 const name    = params.get('name')    || 'Untitled Document';
                 const content = params.get('content') || '';
@@ -7089,7 +7312,20 @@ if ('serviceWorker' in navigator) {
                 const docId = docMatch[2];
                 // Switch workspace if needed
                 const targetWs = resolveWorkspaceFromSlug(wsSlug);
+                if (!targetWs) {
+                    if (!workspacesLoaded) return;
+                    setUnknownWorkspaceContext(wsSlug);
+                    setUnknownDocumentContext(docId);
+                    switchPage('selectArea');
+                    renderHomeDashboard();
+                    return;
+                }
+                if (targetWs && isWorkspaceLocked(targetWs)) {
+                    showWorkspaceLockModal(targetWs, () => handleHashChangeWithDocument());
+                    return;
+                }
                 if (targetWs && targetWs.id !== getActiveWorkspaceId()) {
+                    clearUnknownWorkspaceContext();
                     localStorage.setItem(ACTIVE_WORKSPACE_KEY, targetWs.id);
                     renderWorkspacesSidebar();
                     renderDocumentsList();
@@ -7110,12 +7346,26 @@ if ('serviceWorker' in navigator) {
                 const page = profileMatch ? profileMatch[2] : null;
                 if (profileMatch) {
                     const targetWs = resolveWorkspaceFromSlug(profileMatch[1]);
-                    if (targetWs && targetWs.id !== getActiveWorkspaceId()) {
+                    if (!targetWs) {
+                        if (!workspacesLoaded) return;
+                        setUnknownWorkspaceContext(profileMatch[1]);
+                    } else if (isWorkspaceLocked(targetWs)) {
+                        showWorkspaceLockModal(targetWs, () => handleHashChangeWithDocument());
+                        return;
+                    } else if (targetWs.id !== getActiveWorkspaceId()) {
+                        clearUnknownWorkspaceContext();
+                        clearUnknownDocumentContext();
                         localStorage.setItem(ACTIVE_WORKSPACE_KEY, targetWs.id);
                         renderWorkspacesSidebar();
                         renderDocumentsList();
                         if (typeof renderFoldersList === 'function') renderFoldersList();
+                    } else {
+                        clearUnknownWorkspaceContext();
+                        clearUnknownDocumentContext();
                     }
+                } else {
+                    clearUnknownWorkspaceContext();
+                    clearUnknownDocumentContext();
                 }
                 if (page === 'tasks' || hash === '#/tasks') {
                     switchPage('tasksApp');
@@ -7145,7 +7395,11 @@ if ('serviceWorker' in navigator) {
     // When opening a document, update the hash
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
-        if (!doc) return;
+        if (!doc) {
+            setUnknownDocumentContext(docId);
+            return;
+        }
+        clearUnknownDocumentContext();
         if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
             localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
             renderWorkspacesSidebar();
@@ -7371,7 +7625,11 @@ if ('serviceWorker' in navigator) {
     // Open document in editor
     function openDocument(docId) {
         const doc = documents.find(d => d.id === docId);
-        if (!doc) return;
+        if (!doc) {
+            setUnknownDocumentContext(docId);
+            return;
+        }
+        clearUnknownDocumentContext();
         if ((doc.workspaceId || PERSONAL_WORKSPACE_ID) !== getActiveWorkspaceId()) {
             localStorage.setItem(ACTIVE_WORKSPACE_KEY, doc.workspaceId || PERSONAL_WORKSPACE_ID);
             renderWorkspacesSidebar();
@@ -8378,8 +8636,8 @@ if ('serviceWorker' in navigator) {
         function getOmniChartFontFamily() {
             const editorArea = getActiveEditorSurface();
             const editorFont = editorArea ? window.getComputedStyle(editorArea).fontFamily : '';
-            const savedDefaultFont = localStorage.getItem('omniwrite-default-font') || '';
-            return editorFont || savedDefaultFont || "'Google Sans Flex', sans-serif";
+            const savedDefaultFont = typeof getSavedDefaultDocumentFont === 'function' ? getSavedDefaultDocumentFont() : "'Google Sans Flex'";
+            return normalizeGoogleSansFlexFontValue(editorFont || savedDefaultFont || "'Google Sans Flex'");
         }
         function getOmniChartColors() {
             const accent = getComputedStyle(document.documentElement).getPropertyValue('--omni-accent').trim() || '#8f5cff';
@@ -11050,7 +11308,7 @@ Q4: 22</textarea>
             // Get current editor styles
             const editorArea = document.getElementById('editorArea');
             const computedStyle = window.getComputedStyle(editorArea);
-            const fontFamily = computedStyle.fontFamily || 'Google Sans Flex, Arial, sans-serif';
+            const fontFamily = normalizeGoogleSansFlexFontValue(computedStyle.fontFamily || "'Google Sans Flex'");
             const fontSize = computedStyle.fontSize || '16px';
             const color = computedStyle.color || '#222';
             
@@ -11334,9 +11592,50 @@ Q4: 22</textarea>
                 backgroundColor: computedStyle.backgroundColor || '#ffffff'
             };
         }
+
+        function documentHasInlineMedia(targetDoc) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = targetDoc.content || '';
+            return !!tempDiv.querySelector('video, audio, iframe[src*="youtube"], iframe[src*="youtu.be"], iframe[src*="vimeo"], [data-omniwrite-video-id], [data-omniwrite-audio-id]');
+        }
+
+        function confirmMediaLimitedDownload(formatLabel, proceed) {
+            const warningModal = document.createElement('div');
+            warningModal.className = 'modal';
+            warningModal.innerHTML = `
+                <div class="modal-content liquid-glass" style="max-width: 420px;">
+                    <div class="modal-content-close" id="closeMediaExportWarning">
+                        <icon>close</icon>
+                    </div>
+                    <h2>${_t('media_export_warning_title')}</h2>
+                    <p style="margin-bottom: 20px;">${_t('media_export_warning_body').replace('{format}', formatLabel)}</p>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+                        <button id="cancelMediaExport" class="secondary-btn">${_t('cancel')}</button>
+                        <button id="continueMediaExport">${_t('continue_download')}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(warningModal);
+            const closeWarning = () => warningModal.remove();
+            warningModal.querySelector('#closeMediaExportWarning').onclick = closeWarning;
+            warningModal.querySelector('#cancelMediaExport').onclick = closeWarning;
+            warningModal.querySelector('#continueMediaExport').onclick = () => {
+                warningModal.remove();
+                proceed();
+            };
+        }
+
+        function runMediaDownloadWithWarning(formatLabel, proceed) {
+            if (!documentHasInlineMedia(doc)) {
+                proceed();
+                return;
+            }
+            confirmMediaLimitedDownload(formatLabel, proceed);
+        }
         
         // Download as TXT
         downloadModal.querySelector('#downloadTxt').onclick = function() {
+            runMediaDownloadWithWarning('TXT', () => {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = doc.content;
             const text = tempDiv.innerText || tempDiv.textContent || '';
@@ -11352,6 +11651,7 @@ Q4: 22</textarea>
             }, 100);
             downloadModal.remove();
             showToast(_t('document_downloaded_txt'), { type: 'success' });
+            });
         };
         
         // Download as HTML
@@ -11423,6 +11723,7 @@ Q4: 22</textarea>
         
         // Download as DOCX (HTML wrapped as DOCX format)
         downloadModal.querySelector('#downloadDocx').onclick = function() {
+            runMediaDownloadWithWarning('DOCX', () => {
             const styles = getEditorStyles();
             const docxContent = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -11455,10 +11756,12 @@ Q4: 22</textarea>
             }, 100);
             downloadModal.remove();
             showToast(_t('document_downloaded_docx'), { type: 'success' });
+            });
         };
         
         // Download as Markdown
         downloadModal.querySelector('#downloadMd').onclick = function() {
+            runMediaDownloadWithWarning('Markdown', () => {
             // Simple HTML to Markdown conversion
             let markdown = doc.content
                 .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
@@ -11508,6 +11811,7 @@ Q4: 22</textarea>
             }, 100);
             downloadModal.remove();
             showToast(_t('document_downloaded_md'), { type: 'success' });
+            });
         };
     });
 
@@ -11616,7 +11920,7 @@ Q4: 22</textarea>
         const pickerEl = _fontFamilyPickerRef || document.getElementById('fontFamilyPicker');
         const fontItems = pickerEl ? pickerEl.querySelectorAll('.dropdown-item[data-font]') : [];
         const editorArea = document.getElementById('editorArea');
-        const currentFont = (editorArea && editorArea.style.fontFamily) || "'Google Sans Flex', sans-serif";
+        const currentFont = normalizeGoogleSansFlexFontValue((editorArea && editorArea.style.fontFamily) || "'Google Sans Flex'");
         const fontOptionData = Array.from(fontItems).map(el => {
             const font = el.getAttribute('data-font');
             const name = (el.querySelector('.menu-text') || {}).textContent || font;
@@ -11749,7 +12053,7 @@ Q4: 22</textarea>
         // Duplicate current document
         const docId = getCurrentDocIdFromHash();
         const doc = documents.find(d => d.id === docId);
-        if (!doc) return;
+        if (!requireKnownDocument(doc)) return;
         if (isEffectivelyLocked(doc)) {
             showToast(_t('doc_locked_no_duplicate'), { type: 'error' });
             return;
@@ -12239,7 +12543,7 @@ Q4: 22</textarea>
                 }
                 probe = probe.parentNode;
             }
-            if (!font) font = "'Google Sans Flex', sans-serif";
+            if (!font) font = "'Google Sans Flex'";
             let found = false;
             fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
                 const itemFont = item.getAttribute('data-font');
@@ -12332,7 +12636,7 @@ Q4: 22</textarea>
             _fontToolbarContext = { editorArea, fontSizeDisplay, fontFamilyPicker, fontFamilyText };
 
             // Apply default document font from settings
-            const savedDefaultFont = localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex', sans-serif";
+            const savedDefaultFont = getSavedDefaultDocumentFont();
             ensureFontFaceLoadedFromValue(savedDefaultFont);
             editorArea.style.fontFamily = savedDefaultFont;
             editorArea.style.fontFeatureSettings = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
@@ -13153,6 +13457,7 @@ Q4: 22</textarea>
             div.title = tpl.name;
             div.addEventListener('click', async () => {
                 try {
+                    if (!isCurrentWorkspaceWritable('failed_save_documents')) return;
                     const newDoc = {
                         id: createDocumentId(),
                         title: tpl.name,
@@ -13212,6 +13517,7 @@ Q4: 22</textarea>
     // --- Folder Management Functionality ---
     // Show folder creation/edit modal
     function showFolderModal(folderId = null) {
+        if (!isCurrentWorkspaceWritable('failed_save_folder')) return;
         const isEdit = !!folderId;
         const folder = isEdit ? folders.find(f => f.id === folderId) : null;
         
@@ -13294,6 +13600,7 @@ Q4: 22</textarea>
         // Save folder
         modal.querySelector('#saveFolderBtn').onclick = async () => {
             try {
+                if (!isCurrentWorkspaceWritable('failed_save_folder')) return;
                 const name = document.getElementById('folderNameInput').value.trim();
                 if (!name) {
                     showToast(_t('please_enter_folder_name'), { type: 'error' });
@@ -13831,6 +14138,7 @@ Q4: 22</textarea>
         try {
             // Hide dropdown
             document.getElementById('createOptions').style.display = 'none';
+            if (!isCurrentWorkspaceWritable('failed_save_documents')) return;
             // Create new doc
             const newDoc = {
                 id: createDocumentId(),
@@ -13851,6 +14159,7 @@ Q4: 22</textarea>
     document.getElementById('createNewFolderBtn').addEventListener('click', function() {
         // Hide dropdown
         document.getElementById('createOptions').style.display = 'none';
+        if (!isCurrentWorkspaceWritable('failed_save_folder')) return;
         // Show folder modal
         showFolderModal();
     });
@@ -13876,12 +14185,26 @@ Q4: 22</textarea>
             const page = profileMatch ? profileMatch[2] : null;
             if (profileMatch) {
                 const targetWs = typeof resolveWorkspaceFromSlug === 'function' ? resolveWorkspaceFromSlug(profileMatch[1]) : null;
-                if (targetWs && targetWs.id !== getActiveWorkspaceId()) {
+                if (!targetWs) {
+                    if (typeof workspacesLoaded !== 'undefined' && !workspacesLoaded) return;
+                    if (typeof setUnknownWorkspaceContext === 'function') setUnknownWorkspaceContext(profileMatch[1]);
+                } else if (typeof isWorkspaceLocked === 'function' && isWorkspaceLocked(targetWs)) {
+                    if (typeof showWorkspaceLockModal === 'function') showWorkspaceLockModal(targetWs, () => handleHashChange());
+                    return;
+                } else if (targetWs.id !== getActiveWorkspaceId()) {
+                    if (typeof clearUnknownWorkspaceContext === 'function') clearUnknownWorkspaceContext();
+                    if (typeof clearUnknownDocumentContext === 'function') clearUnknownDocumentContext();
                     localStorage.setItem(ACTIVE_WORKSPACE_KEY, targetWs.id);
                     if (typeof renderWorkspacesSidebar === 'function') renderWorkspacesSidebar();
                     if (typeof renderDocumentsList === 'function') renderDocumentsList();
                     if (typeof renderFoldersList === 'function') renderFoldersList();
+                } else {
+                    if (typeof clearUnknownWorkspaceContext === 'function') clearUnknownWorkspaceContext();
+                    if (typeof clearUnknownDocumentContext === 'function') clearUnknownDocumentContext();
                 }
+            } else {
+                if (typeof clearUnknownWorkspaceContext === 'function') clearUnknownWorkspaceContext();
+                if (typeof clearUnknownDocumentContext === 'function') clearUnknownDocumentContext();
             }
             if (page === 'tasks') {
                 switchPage('tasksApp');
@@ -13919,14 +14242,332 @@ Q4: 22</textarea>
         if (dashboardCreateDocBtn) dashboardCreateDocBtn.addEventListener('click', function() { document.getElementById('createNewDocumentBtn').click(); });
         if (dashboardTemplatesBtn) dashboardTemplatesBtn.addEventListener('click', function() { window.location.hash = getWorkspaceHashPrefix() + '/templates'; });
         if (dashboardBusinessBtn) dashboardBusinessBtn.addEventListener('click', showBusinessModeModal);
+
+        function readUint16LE(bytes, offset) {
+            return bytes[offset] | (bytes[offset + 1] << 8);
+        }
+
+        function readUint32LE(bytes, offset) {
+            return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0;
+        }
+
+        async function decompressBytes(bytes, format) {
+            if (!bytes || !bytes.length) return new Uint8Array();
+            if (typeof DecompressionStream !== 'function') throw new Error('Compressed import is not supported in this browser.');
+            const stream = new DecompressionStream(format);
+            const writer = stream.writable.getWriter();
+            await writer.write(bytes);
+            await writer.close();
+            return new Uint8Array(await new Response(stream.readable).arrayBuffer());
+        }
+
+        async function readZipEntry(arrayBuffer, entryName) {
+            const bytes = new Uint8Array(arrayBuffer);
+            let eocdOffset = -1;
+            for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65558); i -= 1) {
+                if (readUint32LE(bytes, i) === 0x06054b50) {
+                    eocdOffset = i;
+                    break;
+                }
+            }
+            if (eocdOffset < 0) throw new Error('Invalid ZIP file.');
+            const entryCount = readUint16LE(bytes, eocdOffset + 10);
+            let cursor = readUint32LE(bytes, eocdOffset + 16);
+            const decoder = new TextDecoder('utf-8');
+            for (let i = 0; i < entryCount; i += 1) {
+                if (readUint32LE(bytes, cursor) !== 0x02014b50) break;
+                const method = readUint16LE(bytes, cursor + 10);
+                const compressedSize = readUint32LE(bytes, cursor + 20);
+                const fileNameLength = readUint16LE(bytes, cursor + 28);
+                const extraLength = readUint16LE(bytes, cursor + 30);
+                const commentLength = readUint16LE(bytes, cursor + 32);
+                const localHeaderOffset = readUint32LE(bytes, cursor + 42);
+                const name = decoder.decode(bytes.slice(cursor + 46, cursor + 46 + fileNameLength));
+                if (name === entryName) {
+                    const localNameLength = readUint16LE(bytes, localHeaderOffset + 26);
+                    const localExtraLength = readUint16LE(bytes, localHeaderOffset + 28);
+                    const dataStart = localHeaderOffset + 30 + localNameLength + localExtraLength;
+                    const compressed = bytes.slice(dataStart, dataStart + compressedSize);
+                    if (method === 0) return compressed;
+                    if (method === 8) return decompressBytes(compressed, 'deflate-raw');
+                    throw new Error('Unsupported ZIP compression method.');
+                }
+                cursor += 46 + fileNameLength + extraLength + commentLength;
+            }
+            throw new Error('DOCX document content was not found.');
+        }
+
+        function htmlEscape(value) {
+            return String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        }
+
+        function getXmlAttr(el, localName) {
+            if (!el || !el.attributes) return '';
+            for (const attr of el.attributes) {
+                if (attr.localName === localName) return attr.value;
+            }
+            return '';
+        }
+
+        function getChildrenByLocalName(root, localName) {
+            return Array.from(root ? root.children : []).filter(el => el.localName === localName);
+        }
+
+        function getFirstDescendantByLocalName(root, localName) {
+            return Array.from(root ? root.getElementsByTagName('*') : []).find(el => el.localName === localName) || null;
+        }
+
+        function convertDocxRunToHtml(run) {
+            let text = '';
+            Array.from(run.children).forEach(child => {
+                if (child.localName === 't') text += htmlEscape(child.textContent || '');
+                if (child.localName === 'tab') text += '&emsp;';
+                if (child.localName === 'br' || child.localName === 'cr') text += '<br>';
+            });
+            if (!text) return '';
+            const props = getFirstDescendantByLocalName(run, 'rPr');
+            if (props) {
+                if (getFirstDescendantByLocalName(props, 'b')) text = '<strong>' + text + '</strong>';
+                if (getFirstDescendantByLocalName(props, 'i')) text = '<em>' + text + '</em>';
+                if (getFirstDescendantByLocalName(props, 'u')) text = '<u>' + text + '</u>';
+            }
+            return text;
+        }
+
+        function convertDocxParagraphToHtml(paragraph) {
+            const styleEl = getFirstDescendantByLocalName(paragraph, 'pStyle');
+            const style = getXmlAttr(styleEl, 'val').toLowerCase();
+            const runs = getChildrenByLocalName(paragraph, 'r');
+            const content = runs.map(convertDocxRunToHtml).join('').trim();
+            if (!content) return '';
+            if (style.includes('title')) return '<h1>' + content + '</h1>';
+            const headingMatch = style.match(/heading([1-6])/);
+            if (headingMatch) return '<h' + headingMatch[1] + '>' + content + '</h' + headingMatch[1] + '>';
+            if (style.includes('list')) return '<ul><li>' + content + '</li></ul>';
+            return '<p>' + content + '</p>';
+        }
+
+        function convertDocxTableToHtml(table) {
+            const rows = getChildrenByLocalName(table, 'tr').map(row => {
+                const cells = getChildrenByLocalName(row, 'tc').map(cell => {
+                    const html = getChildrenByLocalName(cell, 'p').map(convertDocxParagraphToHtml).join('').replace(/^<p>|<\/p>$/g, '');
+                    return '<td>' + (html || '&nbsp;') + '</td>';
+                }).join('');
+                return '<tr>' + cells + '</tr>';
+            }).join('');
+            return rows ? '<table>' + rows + '</table>' : '';
+        }
+
+        function looksLikeZipArchive(bytes) {
+            return bytes && bytes.length >= 4 && (
+                readUint32LE(bytes, 0) === 0x04034b50 ||
+                readUint32LE(bytes, 0) === 0x06054b50 ||
+                readUint32LE(bytes, 0) === 0x08074b50
+            );
+        }
+
+        function extractHtmlDocxFallback(arrayBuffer) {
+            const text = new TextDecoder('utf-8').decode(arrayBuffer);
+            if (!/<(?:!doctype\s+html|html|body|head|p|h[1-6]|div|table)\b/i.test(text)) return '';
+            const parsed = new DOMParser().parseFromString(text, 'text/html');
+            const bodyHtml = parsed.body ? parsed.body.innerHTML.trim() : '';
+            if (bodyHtml) return bodyHtml;
+            return text.trim() ? '<pre>' + htmlEscape(text) + '</pre>' : '';
+        }
+
+        async function importDocxFileToHtml(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const rawBytes = new Uint8Array(arrayBuffer);
+            if (!looksLikeZipArchive(rawBytes)) {
+                const html = extractHtmlDocxFallback(arrayBuffer);
+                if (html) return html;
+                throw new Error('Invalid DOCX file.');
+            }
+            const bytes = await readZipEntry(arrayBuffer, 'word/document.xml');
+            const xml = new TextDecoder('utf-8').decode(bytes);
+            const xmlDoc = new DOMParser().parseFromString(xml, 'application/xml');
+            if (xmlDoc.querySelector('parsererror')) throw new Error('Invalid DOCX XML.');
+            const body = Array.from(xmlDoc.getElementsByTagName('*')).find(el => el.localName === 'body');
+            if (!body) throw new Error('DOCX body missing.');
+            const html = Array.from(body.children).map(child => {
+                if (child.localName === 'p') return convertDocxParagraphToHtml(child);
+                if (child.localName === 'tbl') return convertDocxTableToHtml(child);
+                return '';
+            }).join('');
+            return html || '<p></p>';
+        }
+
+        function decodePdfLiteralString(value) {
+            return String(value || '').replace(/\\([nrtbf\\()])/g, (_, ch) => {
+                if (ch === 'n') return '\n';
+                if (ch === 'r') return '\r';
+                if (ch === 't') return '\t';
+                if (ch === 'b') return '\b';
+                if (ch === 'f') return '\f';
+                return ch;
+            }).replace(/\\([0-7]{1,3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
+        }
+
+        function extractPdfTextFromContent(content) {
+            const chunks = [];
+            const textBlocks = content.match(/BT[\s\S]*?ET/g) || [content];
+            textBlocks.forEach(block => {
+                let match;
+                const arrayRe = /\[((?:\s*(?:\((?:\\.|[^\\)])*\)|<[\da-fA-F\s]+>|-?\d+(?:\.\d+)?)\s*)+)\]\s*TJ/g;
+                while ((match = arrayRe.exec(block))) {
+                    const part = match[1].replace(/<([\da-fA-F\s]+)>/g, (_, hex) => {
+                        const clean = hex.replace(/\s+/g, '');
+                        let out = '';
+                        for (let i = 0; i < clean.length; i += 2) out += String.fromCharCode(parseInt(clean.slice(i, i + 2), 16));
+                        return '(' + out + ')';
+                    });
+                    const strings = [...part.matchAll(/\((?:\\.|[^\\)])*\)/g)].map(item => decodePdfLiteralString(item[0].slice(1, -1))).join('');
+                    if (strings.trim()) chunks.push(strings);
+                }
+                const textRe = /\((?:\\.|[^\\)])*\)\s*Tj/g;
+                while ((match = textRe.exec(block))) {
+                    const raw = match[0].replace(/\s*Tj$/, '');
+                    const text = decodePdfLiteralString(raw.slice(1, -1));
+                    if (text.trim()) chunks.push(text);
+                }
+            });
+            return chunks.join('\n');
+        }
+
+        function withTimeout(promise, timeoutMs, message) {
+            let timeoutId;
+            const timeout = new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+            });
+            return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+        }
+
+        async function decompressPdfStreamBytes(streamBytes) {
+            try {
+                return await withTimeout(decompressBytes(streamBytes, 'deflate'), 900, 'PDF stream decompression timed out.');
+            } catch (error) {
+                try {
+                    return await withTimeout(decompressBytes(streamBytes, 'deflate-raw'), 900, 'Raw PDF stream decompression timed out.');
+                } catch (rawError) {
+                    throw error;
+                }
+            }
+        }
+
+        function importedPdfTextToHtml(text) {
+            const fontFamily = typeof normalizeGoogleSansFlexFontValue === 'function'
+                ? normalizeGoogleSansFlexFontValue("'Google Sans Flex'")
+                : "'Google Sans Flex'";
+            const lines = text
+                .replace(/\u0000/g, '')
+                .split(/\n{2,}|\r?\n/)
+                .map(line => line.replace(/\s+/g, ' ').trim())
+                .filter(Boolean);
+            const pdfFontStyle = "font-family: " + fontFamily + " !important; font-variation-settings: 'ROND' 90;";
+            const body = lines.length
+                ? lines.map(line => '<p style="' + pdfFontStyle + '">' + htmlEscape(line) + '</p>').join('')
+                : '<p style="' + pdfFontStyle + '"></p>';
+            return '<div class="imported-pdf-document" style="' + pdfFontStyle + ' white-space: normal;">' + body + '</div>';
+        }
+
+        function bytesToBase64(bytes) {
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.subarray(i, i + chunkSize);
+                binary += String.fromCharCode.apply(null, chunk);
+            }
+            return btoa(binary);
+        }
+
+        function importedPdfEmbedToHtml(bytes, title) {
+            const fontFamily = typeof normalizeGoogleSansFlexFontValue === 'function'
+                ? normalizeGoogleSansFlexFontValue("'Google Sans Flex'")
+                : "'Google Sans Flex'";
+            const pdfFontStyle = "font-family: " + fontFamily + " !important; font-variation-settings: 'ROND' 90;";
+            const dataUrl = 'data:application/pdf;base64,' + bytesToBase64(bytes);
+            const safeTitle = htmlEscape(title || 'Imported PDF');
+            return ''
+                + '<div class="imported-pdf-document" style="' + pdfFontStyle + ' white-space: normal;">'
+                + '<p style="' + pdfFontStyle + '"><strong>' + safeTitle + '</strong></p>'
+                + '<object data="' + dataUrl + '" type="application/pdf" style="width: 100%; min-height: 720px; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; background: rgba(255,255,255,0.04);">'
+                + '<iframe src="' + dataUrl + '" title="' + safeTitle + '" style="width: 100%; min-height: 720px; border: 0;"></iframe>'
+                + '</object>'
+                + '<p style="' + pdfFontStyle + '"><a href="' + dataUrl + '" download="' + safeTitle.replace(/"/g, '&quot;') + '.pdf">Open PDF</a></p>'
+                + '</div>';
+        }
+
+        async function ensureGoogleSansFlexReady() {
+            if (!document.fonts || typeof document.fonts.load !== 'function') return;
+            try {
+                await withTimeout(document.fonts.load("16px 'Google Sans Flex'"), 2000, 'Google Sans Flex font load timed out.');
+            } catch (error) {
+                console.warn('Google Sans Flex was not ready before PDF import:', error);
+            }
+        }
+
+        async function importPdfFileToHtml(file) {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            if (bytes.length < 5 || new TextDecoder('latin1').decode(bytes.slice(0, 5)) !== '%PDF-') {
+                throw new Error('Invalid PDF file.');
+            }
+            const binary = new TextDecoder('latin1').decode(bytes);
+            const textParts = [];
+            let streamCount = 0;
+            let cursor = 0;
+            const startedAt = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+            const now = () => typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+            while (streamCount < 80 && now() - startedAt < 9000) {
+                const streamMarker = binary.indexOf('stream', cursor);
+                if (streamMarker < 0) break;
+                const dictStart = binary.lastIndexOf('<<', streamMarker);
+                const dictEnd = binary.lastIndexOf('>>', streamMarker);
+                if (dictStart < 0 || dictEnd < dictStart) {
+                    cursor = streamMarker + 6;
+                    continue;
+                }
+                let dataStart = streamMarker + 6;
+                if (binary.slice(dataStart, dataStart + 2) === '\r\n') dataStart += 2;
+                else if (binary[dataStart] === '\n' || binary[dataStart] === '\r') dataStart += 1;
+                const streamEnd = binary.indexOf('endstream', dataStart);
+                if (streamEnd < 0) break;
+                cursor = streamEnd + 9;
+                streamCount += 1;
+                const dict = binary.slice(dictStart, dictEnd + 2);
+                if (/\/Subtype\s*\/Image\b/.test(dict) || /\/Type\s*\/XObject\b/.test(dict)) continue;
+                const streamContent = binary.slice(dataStart, streamEnd).replace(/\r?\n$/, '');
+                if (streamContent.length > 3000000) continue;
+                let streamBytes = Uint8Array.from(streamContent, ch => ch.charCodeAt(0) & 255);
+                try {
+                    if (/\/FlateDecode\b/.test(dict)) {
+                        streamBytes = await decompressPdfStreamBytes(streamBytes);
+                    }
+                    const content = new TextDecoder('latin1').decode(streamBytes);
+                    const extracted = extractPdfTextFromContent(content);
+                    if (extracted.trim()) textParts.push(extracted);
+                } catch(e) {
+                    console.debug('Skipped PDF stream:', e);
+                }
+            }
+            if (!textParts.length) {
+                const fallback = extractPdfTextFromContent(binary);
+                if (fallback.trim()) textParts.push(fallback);
+            }
+            const text = textParts.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+            await ensureGoogleSansFlexReady();
+            if (!text) return importedPdfEmbedToHtml(bytes, file.name.replace(/\.[^/.]+$/, ''));
+            return importedPdfTextToHtml(text);
+        }
+
         // --- Import File Functionality ---
         document.getElementById('createImportFileBtn').addEventListener('click', async function() {
             // Hide dropdown
             document.getElementById('createOptions').style.display = 'none';
+            if (!isCurrentWorkspaceWritable('failed_save_documents')) return;
             // Open file picker
             let input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.txt,.md,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            input.accept = '.txt,.md,.docx,.pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf';
             input.onchange = async function(e) {
                 const file = input.files[0];
                 if (!file) return;
@@ -13988,25 +14629,24 @@ Q4: 22</textarea>
                     file.name.match(/\.docx$/i)
                 ) {
                     showToast(_t('importing_docx'), { type: 'info' });
-                    // Use mammoth.js via CDN
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js';
-                    script.onload = function() {
-                        const reader = new FileReader();
-                        reader.onload = async function(ev) {
-                            try {
-                                window.mammoth.convertToHtml({arrayBuffer: ev.target.result})
-                                    .then(async result => {
-                                        await createAndOpenDoc(result.value, title);
-                                    })
-                                    .catch(() => showToast(_t('failed_import_docx'), { type: 'error' }));
-                            } catch (err) {
-                                showToast(_t('failed_import_docx'), { type: 'error' });
-                            }
-                        };
-                        reader.readAsArrayBuffer(file);
-                    };
-                    document.body.appendChild(script);
+                    try {
+                        const html = await importDocxFileToHtml(file);
+                        await createAndOpenDoc(html, title);
+                    } catch (err) {
+                        console.error('Failed to import DOCX:', err);
+                        showToast(_t('failed_import_docx'), { type: 'error' });
+                    }
+                }
+                // PDF
+                else if (file.type === 'application/pdf' || file.name.match(/\.pdf$/i)) {
+                    showToast(_t('importing_pdf'), { type: 'info' });
+                    try {
+                        const html = await importPdfFileToHtml(file);
+                        await createAndOpenDoc(html, title);
+                    } catch (err) {
+                        console.error('Failed to import PDF:', err);
+                        showToast(_t('failed_import_pdf'), { type: 'error' });
+                    }
                 }
                 // Fallback: show error
                 else {
@@ -14075,7 +14715,7 @@ Q4: 22</textarea>
             sidebarContainer.style.background = '';
             sidebarContainer.style.boxShadow = '';
             sidebarContainer.style.transition = '';
-            sidebarContainer.style.display = sidebarVisible ? '' : 'none';
+            sidebarContainer.style.display = '';
             document.body.style.overflow = '';
         }
     }
@@ -14085,7 +14725,7 @@ Q4: 22</textarea>
         if (width > 1190) {
             // Desktop: toggle sidebar visibility
             if (sidebarVisible) {
-                sidebarContainer.style.display = 'none';
+                sidebarContainer.style.display = '';
                 document.body.classList.add('omni-sidebar-collapsed');
                 sidebarVisible = false;
             } else {
@@ -14125,7 +14765,7 @@ Q4: 22</textarea>
         updateResponsiveShellState();
         if (window.innerWidth > 1190) {
             showSidebarDesktop();
-            sidebarVisible = true;
+            sidebarVisible = !document.body.classList.contains('omni-sidebar-collapsed');
         } else {
             hideSidebarOverlay();
         }
@@ -14157,7 +14797,7 @@ Q4: 22</textarea>
                 window.location.hash = '';
                 switchPage('selectArea');
             } else if (action === 'images') {
-                window.location.hash = '#/images';
+                window.location.hash = getWorkspaceHashPrefix() + '/images';
                 switchPage('imagesApp');
             } else if (action === 'tasks') {
                 window.location.hash = '#/tasks';
@@ -14225,6 +14865,9 @@ Q4: 22</textarea>
     let imagesTabMode = 'main'; // 'main' or 'trash'
 
     async function addImageToDB(file) {
+        if (!isCurrentWorkspaceWritable('failed_save_image')) {
+            return Promise.reject(new Error('Unknown workspace'));
+        }
         return new Promise((resolve, reject) => {
             try {
                 const tx = db.transaction(IMAGE_STORE, 'readwrite');
@@ -14233,6 +14876,7 @@ Q4: 22</textarea>
                     name: file.name,
                     type: file.type,
                     created: Date.now(),
+                    workspaceId: getActiveWorkspaceId(),
                     file
                 };
                 const req = store.add(imgObj);
@@ -14293,6 +14937,9 @@ Q4: 22</textarea>
     }
 
     async function addImageToDB(file) {
+        if (!isCurrentWorkspaceWritable('failed_save_image')) {
+            return Promise.reject(new Error('Unknown workspace'));
+        }
         return new Promise((resolve, reject) => {
             try {
                 const tx = db.transaction(IMAGE_STORE, 'readwrite');
@@ -14301,6 +14948,7 @@ Q4: 22</textarea>
                     name: file.name,
                     type: file.type,
                     created: Date.now(),
+                    workspaceId: getActiveWorkspaceId(),
                     file
                 };
                 const req = store.add(imgObj);
@@ -14395,10 +15043,17 @@ Q4: 22</textarea>
     async function getAllImages(storeName = IMAGE_STORE) {
         return new Promise((resolve, reject) => {
             try {
+                if (isUnknownWorkspaceActive()) {
+                    resolve([]);
+                    return;
+                }
                 const tx = db.transaction(storeName, 'readonly');
                 const store = tx.objectStore(storeName);
                 const req = store.getAll();
-                req.onsuccess = () => resolve(req.result);
+                req.onsuccess = () => {
+                    const workspaceId = getActiveWorkspaceId();
+                    resolve((req.result || []).filter(img => (img.workspaceId || PERSONAL_WORKSPACE_ID) === workspaceId));
+                };
                 req.onerror = () => { console.error('getAllImages error:', req.error); resolve([]); };
             } catch (e) {
                 console.error('Failed to get images from DB:', e);
@@ -14557,7 +15212,7 @@ Q4: 22</textarea>
                     if (file) {
                         await addImageToDB(file);
                         // Switch to images tab and refresh list
-                        window.location.hash = '#/images';
+                        window.location.hash = getWorkspaceHashPrefix() + '/images';
                         imagesTabMode = 'main';
                         renderImagesList();
                         showToast(_t('image_uploaded_library'), { type: 'success' });
@@ -15124,6 +15779,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.14.3 - Improved importing PDFs and DOCX files, fixed a font bug that Google Sans Flex wouldn't load on Chromebooks.</li>
                         <li>v1.14.2 - Improved version history, redesigned the font picker, improved languages and more</li>
                                <li>v1.14.1 - Replaced the document search bar with a modal, Reduced clutter in small screens, you can click more for Apps, help, tasks, trash, etc.</li>
                                 <li>v1.14.0 - Munetios June 4 redesign.</li>
@@ -15323,8 +15979,25 @@ Q4: 22</textarea>
             return OMNI_FONT_FEATURE_KEYS.map(key => `"${key}" ${state[key] ? 1 : 0}`).join(', ');
         }
 
+        function normalizeGoogleSansFlexFontValue(fontValue) {
+            const value = String(fontValue || '').trim();
+            return /^['"]?Google Sans Flex['"]?(?:\s*,\s*sans-serif)?$/i.test(value) ? "'Google Sans Flex'" : value;
+        }
+
+        function getSavedDefaultDocumentFont() {
+            const font = normalizeGoogleSansFlexFontValue(localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex'");
+            try {
+                if (localStorage.getItem('omniwrite-default-font') !== font) {
+                    localStorage.setItem('omniwrite-default-font', font);
+                }
+            } catch(e) {
+                console.warn('localStorage unavailable:', e);
+            }
+            return font;
+        }
+
         function applyFontPreferences() {
-            const documentFont = localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex', sans-serif";
+            const documentFont = getSavedDefaultDocumentFont();
             const documentFeatures = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
             if (typeof ensureFontFaceLoadedFromValue === 'function') ensureFontFaceLoadedFromValue(documentFont);
             let style = document.getElementById('omniFontPreferencesStyle');
@@ -16914,7 +17587,7 @@ Q4: 22</textarea>
             } catch(e) { console.warn('Failed to load custom font:', e); }
         }
         const OMNI_CORE_FONT_OPTIONS = [
-            { name: 'Google Sans Flex', value: "'Google Sans Flex', sans-serif" },
+            { name: 'Google Sans Flex', value: "'Google Sans Flex'" },
             { name: 'Google Sans', value: "'Google Sans', sans-serif" },
             { name: ' Inter', value: "Inter,  sans-serif" },
                   { name: ' System', value: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
@@ -23471,13 +24144,6 @@ Q4: 22</textarea>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-row-info">
-                                    <div class="settings-row-title">${_t('workspaces_sidebar')}</div>
-                                    <div class="settings-row-subtitle">${_t('workspaces_sidebar_desc')}</div>
-                                </div>
-                                <label class="setting-toggle"><input type="checkbox" id="workspacesSidebarToggle"><span class="setting-toggle-track"></span></label>
-                            </div>
-                            <div class="settings-row">
-                                <div class="settings-row-info">
                                     <div class="settings-row-title">${_t('default_font_settings_label')}</div>
                                     <div class="settings-row-subtitle">${_t('default_font_desc')}</div>
                                 </div>
@@ -23947,16 +24613,6 @@ Q4: 22</textarea>
                 }
             });
 
-            const workspacesSidebarToggle = settingsModal.querySelector('#workspacesSidebarToggle');
-            if (workspacesSidebarToggle) {
-                workspacesSidebarToggle.checked = localStorage.getItem(WORKSPACES_HIDDEN_KEY) !== 'true';
-                workspacesSidebarToggle.onchange = function() {
-                    localStorage.setItem(WORKSPACES_HIDDEN_KEY, this.checked ? 'false' : 'true');
-                    applyWorkspacesSidebarVisibility();
-                    showToast(this.checked ? _t('workspaces_sidebar_shown') : _t('workspaces_sidebar_hidden'), { type: 'success' });
-                };
-            }
-
             // Reduce Transparency toggle
             const reduceTransparencyToggle = settingsModal.querySelector('#reduceTransparencyToggle');
             const isReduceTransparencyEnabled = localStorage.getItem('omniwrite-reduce-transparency') === 'true';
@@ -24068,7 +24724,7 @@ Q4: 22</textarea>
             const defaultFontBtn = settingsModal.querySelector('#defaultFontBtn');
             const fontFamilyPickerEl = _fontFamilyPickerRef || document.getElementById('fontFamilyPicker');
             const allFontItems = fontFamilyPickerEl ? [...fontFamilyPickerEl.querySelectorAll('.dropdown-item')] : [];
-            let currentDefaultFont = localStorage.getItem('omniwrite-default-font') || "'Google Sans Flex', sans-serif";
+            let currentDefaultFont = getSavedDefaultDocumentFont();
             const matchedDefaultItem = allFontItems.find(item => item.getAttribute('data-font') === currentDefaultFont);
             setSettingsButtonLabel(defaultFontBtn, matchedDefaultItem ? matchedDefaultItem.querySelector('.menu-text').innerText : 'Google Sans Flex');
             defaultFontBtn.style.fontFamily = currentDefaultFont;
@@ -25364,7 +26020,32 @@ Q4: 22</textarea>
                 locked_no_add_page: 'Unlock this document before adding a page.',
                 locked_no_split_view: 'Unlock this document before using split view.',
                 untitled_document: 'Untitled Document',
-                template_document_title: '{template} Document'
+                template_document_title: '{template} Document',
+                unknown_workspace_name: 'Unknown',
+                unknown_document_name: 'Unknown Document',
+                workspace_not_found: "This workspace doesn't exist",
+                document_not_found: "This document doesn't exist",
+                failed_save_documents: 'Failed to save documents',
+                failed_save_folder: 'Failed to save folder',
+                failed_create_note: 'Failed to create a note.',
+                failed_save_note: 'Failed to save note.',
+                error_loading_notes: 'Error loading notes.',
+                locked: 'Locked',
+                lock_workspace: 'Lock Workspace',
+                unlock_workspace: 'Unlock Workspace',
+                lock_workspace_btn: 'Lock Workspace',
+                unlock_workspace_btn: 'Unlock',
+                lock_workspace_desc: 'Lock this workspace with a passphrase. You will need to unlock it before opening workspace documents, folders, images, and notes.',
+                unlock_workspace_desc: 'Enter the workspace passphrase to open this workspace for this browser session.',
+                remove_workspace_lock: 'Remove Lock',
+                workspace_locked: 'Workspace locked.',
+                workspace_unlocked: 'Workspace unlocked.',
+                workspace_lock_removed: 'Workspace lock removed.',
+                importing_pdf: 'Importing PDF...',
+                failed_import_pdf: 'Failed to import PDF.',
+                media_export_warning_title: "Media won't be included",
+                media_export_warning_body: "{format} downloads can't include embedded video or music. Continue downloading the document without those media files?",
+                continue_download: 'Continue Download'
             },
             es: {
                 notes: 'Notas',
@@ -25425,7 +26106,32 @@ Q4: 22</textarea>
                 locked_no_add_page: 'Desbloquea este documento antes de agregar una página.',
                 locked_no_split_view: 'Desbloquea este documento antes de usar la vista dividida.',
                 untitled_document: 'Documento sin título',
-                template_document_title: 'Documento de {template}'
+                template_document_title: 'Documento de {template}',
+                unknown_workspace_name: 'Desconocido',
+                unknown_document_name: 'Documento desconocido',
+                workspace_not_found: 'Este espacio de trabajo no existe',
+                document_not_found: 'Este documento no existe',
+                failed_save_documents: 'No se pudieron guardar los documentos',
+                failed_save_folder: 'No se pudo guardar la carpeta',
+                failed_create_note: 'No se pudo crear una nota.',
+                failed_save_note: 'No se pudo guardar la nota.',
+                error_loading_notes: 'Error al cargar notas.',
+                locked: 'Bloqueado',
+                lock_workspace: 'Bloquear espacio',
+                unlock_workspace: 'Desbloquear espacio',
+                lock_workspace_btn: 'Bloquear espacio',
+                unlock_workspace_btn: 'Desbloquear',
+                lock_workspace_desc: 'Bloquea este espacio con una contraseña. Tendrás que desbloquearlo antes de abrir documentos, carpetas, imágenes y notas.',
+                unlock_workspace_desc: 'Introduce la contraseña del espacio para abrirlo en esta sesión del navegador.',
+                remove_workspace_lock: 'Quitar bloqueo',
+                workspace_locked: 'Espacio bloqueado.',
+                workspace_unlocked: 'Espacio desbloqueado.',
+                workspace_lock_removed: 'Bloqueo del espacio quitado.',
+                importing_pdf: 'Importando PDF...',
+                failed_import_pdf: 'Error al importar PDF.',
+                media_export_warning_title: 'Los medios no se incluirán',
+                media_export_warning_body: 'Las descargas {format} no pueden incluir video o música incrustados. ¿Continuar descargando el documento sin esos archivos multimedia?',
+                continue_download: 'Continuar descarga'
             }
         };
         if (typeof TRANSLATIONS !== 'undefined') {
@@ -25434,6 +26140,34 @@ Q4: 22</textarea>
             });
             Object.keys(TRANSLATIONS).forEach(lang => {
                 TRANSLATIONS[lang] = Object.assign({}, NEW_TRANSLATIONS.en, TRANSLATIONS[lang]);
+            });
+            const WORKSPACE_LOCK_TRANSLATIONS = {
+                fr: { unknown_workspace_name:'Inconnu', unknown_document_name:'Document inconnu', workspace_not_found:"Cet espace de travail n'existe pas", document_not_found:"Ce document n'existe pas", failed_save_documents:'Impossible d’enregistrer les documents', failed_save_folder:'Impossible d’enregistrer le dossier', failed_create_note:'Impossible de créer une note.', failed_save_note:'Impossible d’enregistrer la note.', locked:'Verrouillé', lock_workspace:'Verrouiller l’espace', unlock_workspace:'Déverrouiller l’espace', lock_workspace_btn:'Verrouiller l’espace', unlock_workspace_btn:'Déverrouiller', lock_workspace_desc:'Verrouillez cet espace avec une phrase de passe. Vous devrez le déverrouiller avant d’ouvrir ses documents, dossiers, images et notes.', unlock_workspace_desc:'Saisissez la phrase de passe de l’espace pour l’ouvrir pendant cette session du navigateur.', remove_workspace_lock:'Retirer le verrou', workspace_locked:'Espace verrouillé.', workspace_unlocked:'Espace déverrouillé.', workspace_lock_removed:'Verrou de l’espace retiré.' },
+                de: { unknown_workspace_name:'Unbekannt', unknown_document_name:'Unbekanntes Dokument', workspace_not_found:'Dieser Arbeitsbereich existiert nicht', document_not_found:'Dieses Dokument existiert nicht', failed_save_documents:'Dokumente konnten nicht gespeichert werden', failed_save_folder:'Ordner konnte nicht gespeichert werden', failed_create_note:'Notiz konnte nicht erstellt werden.', failed_save_note:'Notiz konnte nicht gespeichert werden.', locked:'Gesperrt', lock_workspace:'Arbeitsbereich sperren', unlock_workspace:'Arbeitsbereich entsperren', lock_workspace_btn:'Arbeitsbereich sperren', unlock_workspace_btn:'Entsperren', lock_workspace_desc:'Sperre diesen Arbeitsbereich mit einer Passphrase. Vor dem Öffnen von Dokumenten, Ordnern, Bildern und Notizen musst du ihn entsperren.', unlock_workspace_desc:'Gib die Passphrase des Arbeitsbereichs ein, um ihn für diese Browsersitzung zu öffnen.', remove_workspace_lock:'Sperre entfernen', workspace_locked:'Arbeitsbereich gesperrt.', workspace_unlocked:'Arbeitsbereich entsperrt.', workspace_lock_removed:'Arbeitsbereichssperre entfernt.' },
+                pt: { unknown_workspace_name:'Desconhecido', unknown_document_name:'Documento desconhecido', workspace_not_found:'Este espaço de trabalho não existe', document_not_found:'Este documento não existe', failed_save_documents:'Falha ao salvar documentos', failed_save_folder:'Falha ao salvar pasta', failed_create_note:'Falha ao criar uma nota.', failed_save_note:'Falha ao salvar nota.', locked:'Bloqueado', lock_workspace:'Bloquear espaço', unlock_workspace:'Desbloquear espaço', lock_workspace_btn:'Bloquear espaço', unlock_workspace_btn:'Desbloquear', lock_workspace_desc:'Bloqueie este espaço com uma senha. Você precisará desbloqueá-lo antes de abrir documentos, pastas, imagens e notas.', unlock_workspace_desc:'Digite a senha do espaço para abri-lo nesta sessão do navegador.', remove_workspace_lock:'Remover bloqueio', workspace_locked:'Espaço bloqueado.', workspace_unlocked:'Espaço desbloqueado.', workspace_lock_removed:'Bloqueio do espaço removido.' },
+                it: { unknown_workspace_name:'Sconosciuto', unknown_document_name:'Documento sconosciuto', workspace_not_found:'Questo spazio di lavoro non esiste', document_not_found:'Questo documento non esiste', failed_save_documents:'Impossibile salvare i documenti', failed_save_folder:'Impossibile salvare la cartella', failed_create_note:'Impossibile creare una nota.', failed_save_note:'Impossibile salvare la nota.', locked:'Bloccato', lock_workspace:'Blocca spazio', unlock_workspace:'Sblocca spazio', lock_workspace_btn:'Blocca spazio', unlock_workspace_btn:'Sblocca', lock_workspace_desc:'Blocca questo spazio con una passphrase. Dovrai sbloccarlo prima di aprire documenti, cartelle, immagini e note.', unlock_workspace_desc:'Inserisci la passphrase dello spazio per aprirlo in questa sessione del browser.', remove_workspace_lock:'Rimuovi blocco', workspace_locked:'Spazio bloccato.', workspace_unlocked:'Spazio sbloccato.', workspace_lock_removed:'Blocco dello spazio rimosso.' },
+                zh: { unknown_workspace_name:'未知', unknown_document_name:'未知文档', workspace_not_found:'此工作区不存在', document_not_found:'此文档不存在', failed_save_documents:'无法保存文档', failed_save_folder:'无法保存文件夹', failed_create_note:'无法创建笔记。', failed_save_note:'无法保存笔记。', locked:'已锁定', lock_workspace:'锁定工作区', unlock_workspace:'解锁工作区', lock_workspace_btn:'锁定工作区', unlock_workspace_btn:'解锁', lock_workspace_desc:'使用口令锁定此工作区。打开工作区文档、文件夹、图片和笔记前需要先解锁。', unlock_workspace_desc:'输入工作区口令以在此浏览器会话中打开它。', remove_workspace_lock:'移除锁定', workspace_locked:'工作区已锁定。', workspace_unlocked:'工作区已解锁。', workspace_lock_removed:'工作区锁定已移除。' },
+                ja: { unknown_workspace_name:'不明', unknown_document_name:'不明な文書', workspace_not_found:'このワークスペースは存在しません', document_not_found:'この文書は存在しません', failed_save_documents:'文書を保存できませんでした', failed_save_folder:'フォルダーを保存できませんでした', failed_create_note:'ノートを作成できませんでした。', failed_save_note:'ノートを保存できませんでした。', locked:'ロック済み', lock_workspace:'ワークスペースをロック', unlock_workspace:'ワークスペースをロック解除', lock_workspace_btn:'ワークスペースをロック', unlock_workspace_btn:'ロック解除', lock_workspace_desc:'このワークスペースをパスフレーズでロックします。文書、フォルダー、画像、ノートを開く前に解除が必要です。', unlock_workspace_desc:'このブラウザーセッションで開くにはワークスペースのパスフレーズを入力してください。', remove_workspace_lock:'ロックを削除', workspace_locked:'ワークスペースをロックしました。', workspace_unlocked:'ワークスペースをロック解除しました。', workspace_lock_removed:'ワークスペースのロックを削除しました。' },
+                ko: { unknown_workspace_name:'알 수 없음', unknown_document_name:'알 수 없는 문서', workspace_not_found:'이 작업공간은 존재하지 않습니다', document_not_found:'이 문서는 존재하지 않습니다', failed_save_documents:'문서를 저장하지 못했습니다', failed_save_folder:'폴더를 저장하지 못했습니다', failed_create_note:'메모를 만들지 못했습니다.', failed_save_note:'메모를 저장하지 못했습니다.', locked:'잠김', lock_workspace:'작업공간 잠금', unlock_workspace:'작업공간 잠금 해제', lock_workspace_btn:'작업공간 잠금', unlock_workspace_btn:'잠금 해제', lock_workspace_desc:'암호로 이 작업공간을 잠급니다. 문서, 폴더, 이미지, 메모를 열기 전에 잠금을 해제해야 합니다.', unlock_workspace_desc:'이 브라우저 세션에서 작업공간을 열려면 암호를 입력하세요.', remove_workspace_lock:'잠금 제거', workspace_locked:'작업공간이 잠겼습니다.', workspace_unlocked:'작업공간 잠금이 해제되었습니다.', workspace_lock_removed:'작업공간 잠금이 제거되었습니다.' },
+                ar: { unknown_workspace_name:'غير معروف', unknown_document_name:'مستند غير معروف', workspace_not_found:'مساحة العمل هذه غير موجودة', document_not_found:'هذا المستند غير موجود', failed_save_documents:'فشل حفظ المستندات', failed_save_folder:'فشل حفظ المجلد', failed_create_note:'فشل إنشاء ملاحظة.', failed_save_note:'فشل حفظ الملاحظة.', locked:'مقفلة', lock_workspace:'قفل مساحة العمل', unlock_workspace:'فتح مساحة العمل', lock_workspace_btn:'قفل مساحة العمل', unlock_workspace_btn:'فتح', lock_workspace_desc:'اقفل مساحة العمل بعبارة مرور. ستحتاج إلى فتحها قبل فتح المستندات والمجلدات والصور والملاحظات.', unlock_workspace_desc:'أدخل عبارة مرور مساحة العمل لفتحها في جلسة المتصفح هذه.', remove_workspace_lock:'إزالة القفل', workspace_locked:'تم قفل مساحة العمل.', workspace_unlocked:'تم فتح مساحة العمل.', workspace_lock_removed:'تمت إزالة قفل مساحة العمل.' },
+                hi: { unknown_workspace_name:'अज्ञात', unknown_document_name:'अज्ञात दस्तावेज़', workspace_not_found:'यह कार्यस्थान मौजूद नहीं है', document_not_found:'यह दस्तावेज़ मौजूद नहीं है', failed_save_documents:'दस्तावेज़ सहेजने में विफल', failed_save_folder:'फ़ोल्डर सहेजने में विफल', failed_create_note:'नोट बनाने में विफल।', failed_save_note:'नोट सहेजने में विफल।', locked:'लॉक', lock_workspace:'कार्यस्थान लॉक करें', unlock_workspace:'कार्यस्थान अनलॉक करें', lock_workspace_btn:'कार्यस्थान लॉक करें', unlock_workspace_btn:'अनलॉक', lock_workspace_desc:'इस कार्यस्थान को पासफ़्रेज़ से लॉक करें। दस्तावेज़, फ़ोल्डर, छवियां और नोट्स खोलने से पहले इसे अनलॉक करना होगा।', unlock_workspace_desc:'इस ब्राउज़र सत्र के लिए कार्यस्थान खोलने हेतु पासफ़्रेज़ दर्ज करें।', remove_workspace_lock:'लॉक हटाएं', workspace_locked:'कार्यस्थान लॉक हो गया।', workspace_unlocked:'कार्यस्थान अनलॉक हो गया।', workspace_lock_removed:'कार्यस्थान लॉक हटाया गया।' },
+                ru: { unknown_workspace_name:'Неизвестно', unknown_document_name:'Неизвестный документ', workspace_not_found:'Эта рабочая область не существует', document_not_found:'Этот документ не существует', failed_save_documents:'Не удалось сохранить документы', failed_save_folder:'Не удалось сохранить папку', failed_create_note:'Не удалось создать заметку.', failed_save_note:'Не удалось сохранить заметку.', locked:'Заблокировано', lock_workspace:'Заблокировать область', unlock_workspace:'Разблокировать область', lock_workspace_btn:'Заблокировать область', unlock_workspace_btn:'Разблокировать', lock_workspace_desc:'Заблокируйте эту рабочую область фразой-паролем. Перед открытием документов, папок, изображений и заметок ее нужно будет разблокировать.', unlock_workspace_desc:'Введите фразу-пароль рабочей области, чтобы открыть ее в этой сессии браузера.', remove_workspace_lock:'Снять блокировку', workspace_locked:'Рабочая область заблокирована.', workspace_unlocked:'Рабочая область разблокирована.', workspace_lock_removed:'Блокировка рабочей области снята.' }
+            };
+            const MEDIA_EXPORT_TRANSLATIONS = {
+                fr: { importing_pdf:'Importation du PDF...', failed_import_pdf:'Erreur lors de l’importation du PDF.', media_export_warning_title:'Les médias ne seront pas inclus', media_export_warning_body:'Les téléchargements {format} ne peuvent pas inclure les vidéos ou la musique intégrées. Continuer le téléchargement du document sans ces fichiers multimédias ?', continue_download:'Continuer le téléchargement' },
+                de: { importing_pdf:'PDF wird importiert...', failed_import_pdf:'Fehler beim Importieren der PDF-Datei.', media_export_warning_title:'Medien werden nicht eingeschlossen', media_export_warning_body:'{format}-Downloads können eingebettete Videos oder Musik nicht enthalten. Dokument ohne diese Mediendateien herunterladen?', continue_download:'Download fortsetzen' },
+                pt: { importing_pdf:'Importando PDF...', failed_import_pdf:'Falha ao importar PDF.', media_export_warning_title:'A mídia não será incluída', media_export_warning_body:'Downloads em {format} não podem incluir vídeo ou música incorporados. Continuar baixando o documento sem esses arquivos de mídia?', continue_download:'Continuar download' },
+                it: { importing_pdf:'Importazione PDF...', failed_import_pdf:'Impossibile importare PDF.', media_export_warning_title:'I contenuti multimediali non saranno inclusi', media_export_warning_body:'I download {format} non possono includere video o musica incorporati. Continuare a scaricare il documento senza quei file multimediali?', continue_download:'Continua download' },
+                zh: { importing_pdf:'正在导入PDF...', failed_import_pdf:'导入PDF失败。', media_export_warning_title:'媒体不会包含在内', media_export_warning_body:'{format} 下载无法包含嵌入的视频或音乐。是否继续下载不含这些媒体文件的文档？', continue_download:'继续下载' },
+                ja: { importing_pdf:'PDFをインポート中...', failed_import_pdf:'PDFのインポートに失敗しました。', media_export_warning_title:'メディアは含まれません', media_export_warning_body:'{format} のダウンロードには埋め込み動画や音楽を含められません。これらのメディアファイルなしで文書をダウンロードしますか？', continue_download:'ダウンロードを続行' },
+                ko: { importing_pdf:'PDF 가져오는 중...', failed_import_pdf:'PDF를 가져오지 못했습니다.', media_export_warning_title:'미디어는 포함되지 않습니다', media_export_warning_body:'{format} 다운로드에는 포함된 비디오나 음악을 넣을 수 없습니다. 해당 미디어 파일 없이 문서를 다운로드할까요?', continue_download:'다운로드 계속' },
+                ar: { importing_pdf:'جارٍ استيراد PDF...', failed_import_pdf:'فشل استيراد PDF.', media_export_warning_title:'لن يتم تضمين الوسائط', media_export_warning_body:'لا يمكن أن تتضمن تنزيلات {format} الفيديو أو الموسيقى المضمنة. هل تريد متابعة تنزيل المستند بدون ملفات الوسائط هذه؟', continue_download:'متابعة التنزيل' },
+                hi: { importing_pdf:'PDF आयात हो रहा है...', failed_import_pdf:'PDF आयात करने में विफल।', media_export_warning_title:'मीडिया शामिल नहीं होगा', media_export_warning_body:'{format} डाउनलोड में एम्बेड किए गए वीडियो या संगीत शामिल नहीं हो सकते। क्या इन मीडिया फ़ाइलों के बिना दस्तावेज़ डाउनलोड जारी रखें?', continue_download:'डाउनलोड जारी रखें' },
+                ru: { importing_pdf:'Импорт PDF...', failed_import_pdf:'Ошибка импорта PDF.', media_export_warning_title:'Медиа не будет включено', media_export_warning_body:'Загрузки {format} не могут включать встроенное видео или музыку. Продолжить загрузку документа без этих медиафайлов?', continue_download:'Продолжить загрузку' }
+            };
+            Object.keys(TRANSLATIONS).forEach(lang => {
+                const base = String(lang || '').split('-')[0];
+                TRANSLATIONS[lang] = Object.assign({}, NEW_TRANSLATIONS.en, TRANSLATIONS[lang] || {}, WORKSPACE_LOCK_TRANSLATIONS[base] || WORKSPACE_LOCK_TRANSLATIONS[lang] || {}, MEDIA_EXPORT_TRANSLATIONS[base] || MEDIA_EXPORT_TRANSLATIONS[lang] || {});
             });
         }
         const originalTranslateHelper = typeof _t === 'function' ? _t : null;
@@ -26051,11 +26785,24 @@ Q4: 22</textarea>
         }
 
         function getNotes() {
-            try { return JSON.parse(localStorage.getItem('omniwrite-quick-notes') || '[]'); }
+            if (isUnknownWorkspaceActive()) return null;
+            const workspaceId = getActiveWorkspaceId();
+            const scopedKey = 'omniwrite-quick-notes-' + workspaceId;
+            try {
+                const stored = localStorage.getItem(scopedKey);
+                if (stored !== null) return JSON.parse(stored || '[]');
+                if (workspaceId === PERSONAL_WORKSPACE_ID) return JSON.parse(localStorage.getItem('omniwrite-quick-notes') || '[]');
+                return [];
+            }
             catch(e) { return []; }
         }
         function saveNotes(notes) {
-            localStorage.setItem('omniwrite-quick-notes', JSON.stringify(notes));
+            if (!isCurrentWorkspaceWritable('failed_create_note')) {
+                throw new Error('Unknown workspace');
+            }
+            const workspaceId = getActiveWorkspaceId();
+            const scopedKey = 'omniwrite-quick-notes-' + workspaceId;
+            localStorage.setItem(scopedKey, JSON.stringify(notes));
         }
         let notesSaveTimer = null;
         let pendingNotesSave = null;
@@ -26065,12 +26812,18 @@ Q4: 22</textarea>
             pendingNotesSave = notes;
             clearTimeout(notesSaveTimer);
             notesSaveTimer = setTimeout(() => {
-                saveNotes(pendingNotesSave || notes);
+                try {
+                    saveNotes(pendingNotesSave || notes);
+                } catch(e) {
+                    showToast(_t('failed_save_note'), { type: 'error' });
+                }
                 pendingNotesSave = null;
             }, delay);
         }
         window.addEventListener('beforeunload', () => {
-            if (pendingNotesSave) saveNotes(pendingNotesSave);
+            if (pendingNotesSave) {
+                try { saveNotes(pendingNotesSave); } catch(e) {}
+            }
         });
         function buildNoteBlockHtml(noteText) {
             return '<aside class="callout-block"><strong>' + escapeHtml(_t('notes')) + '</strong><p>' + escapeHtml(noteText).replace(/\n/g, '<br>') + '</p></aside>';
@@ -26156,6 +26909,10 @@ Q4: 22</textarea>
             const list = document.getElementById('notesList');
             if (!list) return;
             const notes = getNotes();
+            if (notes === null) {
+                list.innerHTML = '<div class="omni-note-card"><strong>' + escapeHtml(_t('error_loading_notes')) + '</strong></div>';
+                return;
+            }
             if (!notes.length) {
                 list.innerHTML = '<div class="omni-note-card"><strong>' + escapeHtml(_t('empty_notes')) + '</strong></div>';
                 return;
@@ -26200,10 +26957,16 @@ Q4: 22</textarea>
             });
         }
         document.getElementById('newQuickNoteBtn')?.addEventListener('click', () => {
-            const notes = getNotes();
-            notes.unshift({ id: 'note-' + Date.now().toString(36) + Math.random().toString(36).slice(2), text: '', createdAt: Date.now(), updatedAt: Date.now() });
-            saveNotes(notes);
-            renderNotes();
+            try {
+                if (!isCurrentWorkspaceWritable('failed_create_note')) return;
+                const notes = getNotes();
+                if (!Array.isArray(notes)) throw new Error('Notes unavailable');
+                notes.unshift({ id: 'note-' + Date.now().toString(36) + Math.random().toString(36).slice(2), text: '', createdAt: Date.now(), updatedAt: Date.now() });
+                saveNotes(notes);
+                renderNotes();
+            } catch(e) {
+                showToast(_t('failed_create_note'), { type: 'error' });
+            }
         });
 
         function setupNavigationExtensions() {
