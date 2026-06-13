@@ -4169,6 +4169,14 @@ if ('serviceWorker' in navigator) {
                 height: 38px;
             }
         }
+        @media (max-width: 600px) {
+            .hide-mobile {
+                display: none !important;
+            }
+            .omni-images-hero {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -4377,7 +4385,7 @@ if ('serviceWorker' in navigator) {
                                 <div class="menu-btn liquid-glass" id="toggleSidebar">
                                     <icon>menu</icon>
                                 </div>
-                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="images">Images</div>
+                                <div class="liquid-glass hide-mobile" style="padding:12px 14px;font-weight:700;" data-i18n="images">Images</div>
                             </div>
                             <div class="navbar__right">
                                 <div class="menu-btn liquid-glass" style="display: flex; align-items: center; gap: 10px;" id="uploadImageBtn">
