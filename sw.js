@@ -12,16 +12,6 @@ const urlsToCache = [
   "/favicon-16x16.png",
   "/favicon-32x32.png",
 
-  "/sheets",
-  "/sheets/",
-  "/sheets/index.html",
-  "/sheets/favicon.ico",
-  "/sheets/site.webmanifest",
-  "/sheets/android-chrome-192x192.png",
-  "/sheets/android-chrome-512x512.png",
-  "/sheets/apple-touch-icon.png",
-  "/sheets/favicon-16x16.png",
-  "/sheets/favicon-32x32.png",
 
   "https://api.munetios.com/beautiful-css/beautiful.css",
 
