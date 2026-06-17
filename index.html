@@ -52,6 +52,8 @@
             "name": "Munetios"
         }
     }
+
+
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -119,7 +121,13 @@ if ('serviceWorker' in navigator) {
         video::-internal-media-controls-overflow-menu-list-item {
                       font-family: 'Google Sans Flex' !important;
         }
-        
+        audio .phase-ready,  audio::-webkit-media-controls-enclosure{
+                   background-color: rgba(255, 255, 255, 0.356) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            backdrop-filter: blur(2px) !important;
+            color: #fff;
+            border-radius: 146px !important;  
+        }
         video::-internal-media-controls-overflow-menu-list {
             background-color: rgba(0, 0, 0, 0.01) !important;
             border: 1px solid rgba(255,255,255,0.12) !important;
@@ -199,6 +207,9 @@ if ('serviceWorker' in navigator) {
         p {
                      font-variation-settings: 'ROND' 60 !important;
                            font-feature-settings: "liga" 0, "ss01" 1 !important;
+        }
+        i {
+             font-variation-settings: 'ROND' 60, 'slnt' -10 ;  
         }
         .modal-content h1, h2, h3, h4, h5, h6, p, li, button, b, i, span {
             font-feature-settings: "ss01" 1 !important;
@@ -1855,12 +1866,15 @@ if ('serviceWorker' in navigator) {
             display: flex;
             flex-direction: column;
             gap: 22px;
-            min-width: 100%;
+            width: 100%;
+            min-width: 0;
+            align-items: center;
+            margin-inline: auto;
         }
         .omni-editor-fixed-width .editor-pages-column {
             align-items: center;
-            min-width: max(100%, var(--editor-width, 100%));
-            width: max-content;
+            min-width: var(--editor-width, 100%);
+            width: var(--editor-width, 100%);
         }
         .omni-editor-fixed-width .document-page-shell {
             width: var(--editor-width, 100%);
@@ -1871,7 +1885,9 @@ if ('serviceWorker' in navigator) {
             display: flex;
             flex-direction: column;
             width: 100%;
+            max-width: var(--editor-max-width, none);
             position: relative;
+            margin-inline: auto;
         }
         /* Header / Footer bars */
         .doc-header-bar, .doc-footer-bar {
@@ -2388,6 +2404,26 @@ if ('serviceWorker' in navigator) {
             justify-content: center;
             position: relative;
         }
+        .toolbar-number-input {
+            width: 74px;
+            min-height: 32px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            color: inherit;
+            font: inherit;
+            font-size: 13px;
+            text-align: center;
+            outline: none;
+        }
+        .toolbar-number-input:focus {
+            border-color: var(--omni-accent, #8f5cff);
+            box-shadow: 0 0 0 4px rgba(143,92,255,0.18);
+        }
+        .toolbar-item.has-input {
+            gap: 6px;
+            padding: 5px 8px;
+        }
         .toolbar-item:hover {
             background-color: rgba(255, 255, 255, 0.15);
             transform: translateY(-2px) scale(1.05);
@@ -2419,6 +2455,153 @@ if ('serviceWorker' in navigator) {
         .editor-content-editor {
             margin-top: 80px;
             min-width: 0;
+        }
+        .editor-zoom-rail {
+            position: sticky;
+            top: 96px;
+            align-self: flex-start;
+            display: none !important;
+            gap: 8px;
+            z-index: 6;
+            margin: 12px 8px 0 0;
+        }
+        .editor-zoom-trigger {
+            width: 48px;
+            height: 48px;
+            border: 0;
+            border-radius: 16px;
+            color: inherit;
+            background: rgba(255,255,255,0.08);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(2px) saturate(140%);
+            -webkit-backdrop-filter: blur(2px) saturate(140%);
+        }
+        .editor-zoom-trigger icon {
+            font-size: 22px;
+        }
+        .editor-paper-canvas {
+            --document-zoom: 1;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: auto;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 18px 12px 42px;
+            scrollbar-gutter: stable both-edges;
+        }
+        .editor-paper-canvas .editor-pages-column {
+            zoom: var(--document-zoom);
+            transform: none;
+            transform-origin: top center;
+            transition: transform 0.16s ease;
+            will-change: transform;
+            width: 100%;
+            max-width: var(--editor-max-width, none);
+            min-width: 0;
+            flex: 0 0 auto;
+            margin-inline: auto;
+        }
+        .editor-with-line-numbers {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .document-page-editor {
+            position: relative;
+            z-index: 1;
+            margin-inline: auto;
+        }
+        .document-page-editor::selection,
+        .document-page-editor *::selection {
+            background: rgba(156, 163, 175, 0.48);
+            color: inherit;
+        }
+        ::highlight(omni-editor-selection) {
+            background: rgba(156, 163, 175, 0.42);
+            color: inherit;
+        }
+        .document-page-shell {
+            position: relative;
+            overflow: hidden;
+        }
+        .document-page-shell::before {
+            content: attr(data-watermark);
+            position: absolute;
+            inset: 0;
+            display: none;
+            place-items: center;
+            z-index: 0;
+            color: rgba(255,255,255,0.11);
+            font-size: clamp(42px, 10vw, 118px);
+            font-weight: 800;
+            text-transform: uppercase;
+            transform: rotate(-24deg);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .document-page-shell.has-watermark::before {
+            display: grid;
+        }
+        .document-page-shell > * {
+            position: relative;
+            z-index: 1;
+        }
+        .omni-zoom-menu,
+        .omni-insert-menu {
+            min-width: 260px;
+            max-height: min(72vh, 620px);
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .omni-menu-field {
+            display: grid;
+            gap: 6px;
+            padding: 8px;
+        }
+        .omni-menu-field label {
+            font-size: 12px;
+            opacity: 0.72;
+            font-weight: 700;
+        }
+        .omni-menu-field input {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            color: inherit;
+            padding: 9px 10px;
+            font: inherit;
+            outline: none;
+        }
+        .omni-menu-section-title {
+            padding: 8px 10px 4px;
+            font-size: 12px;
+            opacity: 0.58;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .omni-command-hint {
+            opacity: 0.62;
+            font-size: 12px;
+            margin-left: auto;
+        }
+        .document-rail-trigger {
+            width: 48px;
+            height: 48px;
+            border: 0;
+            border-radius: 16px;
+            color: inherit;
+            background: rgba(255,255,255,0.08);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(2px) saturate(140%);
+            -webkit-backdrop-filter: blur(2px) saturate(140%);
         }
         .toolbar-item icon,
         .menu-btn icon,
@@ -4511,6 +4694,13 @@ if ('serviceWorker' in navigator) {
                     <div class="toolbar-item" id="findInDocumentBtn">
                         <icon>search</icon>
                     </div>
+                    <div class="toolbar-item" id="replaceInDocumentBtn" title="Find and Replace" data-i18n-title="find_replace">
+                        <icon>find_replace</icon>
+                    </div>
+                    <div class="toolbar-item" id="documentZoomBtn" title="Zoom" data-i18n-title="zoom">
+                        <icon>zoom_in</icon>
+                        <div class="menu-text" contenteditable="true" id="documentZoomDisplay">100</div>
+                    </div>
                     <div class="toolbar-item" id="boldBtn" title="Bold">
                         <icon>format_bold</icon>
                     </div>
@@ -4531,8 +4721,9 @@ if ('serviceWorker' in navigator) {
                         <icon>remove</icon>
                     </div>
                     <div class="toolbar-item" id="fontSizeBtn" title="Font Size" style="min-width: 70px; vertical-align: center; display: flex; align-items: center; justify-content: center; position: relative;">
-                        <div class="menu-text" id="fontSizeDisplay" style="cursor: pointer;">18px</div>
+                        <div class="menu-text" id="fontSizeDisplay" contenteditable="true" style="cursor: pointer;">18</div><div class="another-word">pt</div>
                     </div>
+            
                     <div class="toolbar-item" id="fontSizeIncreaseBtn" title="Increase Font Size">
                         <icon>add</icon>
                     </div>
@@ -4570,7 +4761,9 @@ if ('serviceWorker' in navigator) {
                         </div>
                     <div class="toolbar-item" id="redoBtn" title="Redo">
                         <icon>redo</icon>
-                        </div>     <div class="toolbar-item" id="insertHrBtn" title="Insert Horizontal Line">
+                        </div>
+                 
+                    <div class="toolbar-item" id="insertHrBtn" title="Insert Horizontal Line">
                         <icon>horizontal_rule</icon>
                     </div>
                     <div class="toolbar-item" id="insertLinkBtn" title="Insert Link">
@@ -4604,6 +4797,9 @@ if ('serviceWorker' in navigator) {
                         <div class="toolbar-item" id="insertChartBtn" title="Insert Chart">
                             <icon>bar_chart</icon>
                         </div>
+                        <div class="toolbar-item" id="insertWatermarkBtn" title="Insert Watermark">
+                            <icon>water_damage</icon>
+                        </div>
                         <div class="toolbar-item" id="insertTableOfContentsBtn" title="Insert Table of Contents">
                             <icon>toc</icon>
                         </div>
@@ -4626,6 +4822,7 @@ if ('serviceWorker' in navigator) {
   <div class="toolbar-item" id="heading4Btn" title="Heading 4">
                         <icon>looks_4</icon>
                     </div>
+
                     <div class="toolbar-item" id="superscriptBtn" title="Superscript">
                         <icon>superscript</icon>
                     </div>
@@ -4670,6 +4867,11 @@ if ('serviceWorker' in navigator) {
                     </div>
                 </div><!-- end .toolbar -->
                 <div class="editor-content-area-container">
+                <div class="editor-zoom-rail">
+                    <button class="editor-zoom-trigger liquid-glass" id="leftZoomBtn" type="button" title="Zoom" aria-label="Zoom"><icon>zoom_in</icon></button>
+                    <button class="document-rail-trigger liquid-glass" id="documentInsertBtn" type="button" title="Insert" aria-label="Insert"><icon>add_box</icon></button>
+                </div>
+                <div class="editor-paper-canvas" id="editorPaperCanvas">
                 <div class="editor-pages-column" id="editorPagesColumn">
                     <div class="document-page-shell" id="staticPageShell">
                         <div class="doc-header-bar" contenteditable="true" data-placeholder="Header — click to edit" data-role="doc-header"></div>
@@ -4681,6 +4883,7 @@ if ('serviceWorker' in navigator) {
                         </div>
                         <div class="doc-footer-bar" contenteditable="true" data-placeholder="Footer — click to edit" data-role="doc-footer"></div>
                     </div>
+                </div>
                 </div>
                 <div id="omniPageFab">
                     <div class="omni-fab-icon" id="voiceTypingBtn" title="Voice Typing" role="button" tabindex="0" aria-label="Voice Typing">mic</div>
@@ -4772,7 +4975,7 @@ if ('serviceWorker' in navigator) {
         </div>
         <div class="app-panel-error hidden" id="appPanelError">
             <icon style="font-size:48px;opacity:0.45;">wifi_off</icon>
-            <div style="margin-top:10px;font-size:15px;opacity:0.7;" id="appPanelErrorMsg">Could not load this app.</div>
+            <div style="margin-top:10px;font-size:15px;opacity:0.7;" id="appPanelErrorMsg">Couldn't load this app.</div>
             <button id="appPanelRetryBtn" style="margin-top:16px;padding:8px 20px;">Retry</button>
         </div>
         <iframe class="app-panel-iframe" id="appPanelIframe" src="about:blank" allow="fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
@@ -4790,25 +4993,27 @@ if ('serviceWorker' in navigator) {
             <div id="voiceOtherActions"></div>
         </div>
                         <div class="dropdown-wrapper liquid-glass" id="fontSizePicker" style="min-width: 80px;">
-                              <div class="dropdown-item" data-size="6"><div class="menu-text" style="font-size:6px;">6 px</div></div>
-                        <div class="dropdown-item" data-size="8"><div class="menu-text" style="font-size:8px;">8 px</div></div>
-                        <div class="dropdown-item" data-size="10"><div class="menu-text" style="font-size:10px;">10 px</div></div>
-                        <div class="dropdown-item" data-size="12"><div class="menu-text" style="font-size:12px;">12 px</div></div>
-                        <div class="dropdown-item" data-size="14"><div class="menu-text" style="font-size:14px;">14 px</div></div>
-                        <div class="dropdown-item" data-size="16"><div class="menu-text" style="font-size:16px;">16 px</div></div>
-                        <div class="dropdown-item" data-size="18"><div class="menu-text" style="font-size:18px;">18 px</div></div>
-                        <div class="dropdown-item" data-size="20"><div class="menu-text" style="font-size:20px;">20 px</div></div>
-                        <div class="dropdown-item" data-size="22"><div class="menu-text" style="font-size:22px;">22 px</div></div>
-                        <div class="dropdown-item" data-size="24"><div class="menu-text" style="font-size:24px;">24 px</div></div>
-                        <div class="dropdown-item" data-size="28"><div class="menu-text" style="font-size:28px;">28 px</div></div>
-                        <div class="dropdown-item" data-size="32"><div class="menu-text" style="font-size:32px;">32 px</div></div>
-                        <div class="dropdown-item" data-size="36"><div class="menu-text" style="font-size:36px;">36 px</div></div>
-                        <div class="dropdown-item" data-size="48"><div class="menu-text" style="font-size:48px;">48 px</div></div>
-                        <div class="dropdown-item" data-size="60"><div class="menu-text" style="font-size:60px;">60 px</div></div>
-                        <div class="dropdown-item" data-size="72"><div class="menu-text" style="font-size:72px;">72 px</div></div>
-                          <div class="dropdown-item" data-size="85"><div class="menu-text" style="font-size:85px;">85 px</div></div>
-                            <div class="dropdown-item" data-size="96"><div class="menu-text" style="font-size:96px;">96 px</div></div>
-                              <div class="dropdown-item" data-size="120"><div class="menu-text" style="font-size:120px;">120 px</div></div>
+                              <div class="dropdown-item" data-size="6"><div class="menu-text" style="font-size:6pt;">6 pt</div></div>
+                        <div class="dropdown-item" data-size="8"><div class="menu-text" style="font-size:8pt;">8 pt</div></div>
+                        <div class="dropdown-item" data-size="10"><div class="menu-text" style="font-size:10pt;">10 pt</div></div>
+                        <div class="dropdown-item" data-size="12"><div class="menu-text" style="font-size:12pt;">12 pt</div></div>
+                        <div class="dropdown-item" data-size="14"><div class="menu-text" style="font-size:14pt;">14 pt</div></div>
+                        <div class="dropdown-item" data-size="16"><div class="menu-text" style="font-size:16pt;">16 pt</div></div>
+                        <div class="dropdown-item" data-size="18"><div class="menu-text" style="font-size:18pt;">18 pt</div></div>
+                        <div class="dropdown-item" data-size="20"><div class="menu-text" style="font-size:20pt;">20 pt</div></div>
+                        <div class="dropdown-item" data-size="22"><div class="menu-text" style="font-size:22pt;">22 pt</div></div>
+                        <div class="dropdown-item" data-size="24"><div class="menu-text" style="font-size:24pt;">24 pt</div></div>
+                        <div class="dropdown-item" data-size="28"><div class="menu-text" style="font-size:28pt;">28 pt</div></div>
+                        <div class="dropdown-item" data-size="32"><div class="menu-text" style="font-size:32pt;">32 pt</div></div>
+                        <div class="dropdown-item" data-size="36"><div class="menu-text" style="font-size:36pt;">36 pt</div></div>
+                        <div class="dropdown-item" data-size="48"><div class="menu-text" style="font-size:48pt;">48 pt</div></div>
+                        <div class="dropdown-item" data-size="60"><div class="menu-text" style="font-size:60pt;">60 pt</div></div>
+                        <div class="dropdown-item" data-size="72"><div class="menu-text" style="font-size:72pt;">72 pt</div></div>
+                          <div class="dropdown-item" data-size="85"><div class="menu-text" style="font-size:85pt;">85 pt</div></div>
+                            <div class="dropdown-item" data-size="96"><div class="menu-text" style="font-size:96pt;">96 pt</div></div>
+                              <div class="dropdown-item" data-size="120"><div class="menu-text" style="font-size:120pt;">120 pt</div></div>
+                              <div class="dropdown-item" data-size="160"><div class="menu-text" style="font-size:72pt;">160 pt</div></div>
+                              <div class="dropdown-item" data-size="200"><div class="menu-text" style="font-size:72pt;">200 pt</div></div>
                     </div>
 <div class="dropdown-wrapper liquid-glass" id="fontFamilyPicker">
     <div class="dropdown-item" data-font="'Google Sans Flex'">
@@ -5015,6 +5220,8 @@ if ('serviceWorker' in navigator) {
         </div>
      
 </div>
+<div class="dropdown-wrapper liquid-glass omni-zoom-menu" id="documentZoomPicker"></div>
+<div class="dropdown-wrapper liquid-glass omni-insert-menu" id="insertCommandPicker"></div>
 <div class="dropdown-wrapper liquid-glass" id="themeDropdownOptions"> 
     <div class="dropdown-item" id="systemThemeOption">
       <icon>settings_brightness</icon>
@@ -5115,6 +5322,10 @@ if ('serviceWorker' in navigator) {
     <div class="dropdown-item" id="moveToFolderMoreOptionsBtn">
         <icon>drive_file_move</icon>
         <div class="menu-text" data-i18n="move_to_folder">Move to Folder</div>
+    </div>
+    <div class="dropdown-item" id="moveToWorkspaceMoreOptionsBtn">
+        <icon>workspaces</icon>
+        <div class="menu-text" data-i18n="move_to_workspace">Move to Workspace</div>
     </div>
     <div class="dropdown-item" id="resizeDocumentMoreOptionsBtn">
         <icon>fit_width</icon>
@@ -5401,7 +5612,7 @@ if ('serviceWorker' in navigator) {
     let folderStoreIds = new Set();
     let _fontFamilyPickerRef = null; // persistent ref, survives DOM detach
     let _fontToolbarContext = null;
-    const FONT_SIZE_STEPS = [10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72, 96, 120];
+    const FONT_SIZE_STEPS = [1, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 48, 60, 72, 85, 96, 120, 160, 200];
     let saveStartTime = null;
     let isSaved = true; // Track if document is saved
     const WORKSPACES_KEY = 'omniwrite-workspaces';
@@ -5415,6 +5626,9 @@ if ('serviceWorker' in navigator) {
     let unknownDocumentContext = null;
     let workspacesLoaded = false;
     const sessionUnlockedWorkspaces = new Set();
+    const DOCUMENT_ZOOM_MIN = 25;
+    const DOCUMENT_ZOOM_MAX = 1600;
+    const DOCUMENT_ZOOM_PRESETS = [25, 50, 75, 90, 100, 110, 125, 150, 175, 200, 300, 400, 800, 1200, 1600];
 
     function createDocumentId(length = 72) {
         const safeLength = Math.max(6, Math.min(72, Number(length) || 72));
@@ -5622,7 +5836,7 @@ if ('serviceWorker' in navigator) {
         const fallbackMessages = {
             failed_load_documents_retry: 'Failed to load documents',
             failed_load_templates: 'Failed to load templates',
-            error_loading_notes: 'Error loading notes',
+            error_loading_notes: "Couldn't load notes",
             failed_load_trash: 'Failed to load the trash'
         };
         const translatedMessage = typeof _t === 'function' ? _t(messageKey) : '';
@@ -6478,7 +6692,7 @@ if ('serviceWorker' in navigator) {
             const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease('G4', '8n');
         } catch(e) {
-            console.warn('Could not play voice typing sound:', e);
+            console.warn("Couldn't play voice typing sound:", e);
         }
     }
 
@@ -7716,6 +7930,8 @@ if ('serviceWorker' in navigator) {
         document.title = doc.title + ' — Munetios OmniWrite';
         const editorArea = renderDocumentPages(doc) || document.getElementById('editorArea');
         markEditorActive(editorArea);
+        setupDocumentZoomAndInsertControls();
+        applyDocumentZoom(getDocumentZoomPercent(doc));
         // Remove any stale lock banner from previous document
         const _staleBanner = document.getElementById('docLockBanner');
         if (_staleBanner) _staleBanner.remove();
@@ -7725,6 +7941,8 @@ if ('serviceWorker' in navigator) {
             // Re-attach font pickers for this document/editor (ensure DOM is ready)
         setTimeout(() => {
             setupFontPickers(doc, editorArea);
+            syncFontToolbarState();
+            if (!isEffectivelyLocked(doc)) focusEditorSurface(editorArea);
         }, 0);
         if (typeof resolveStoredDocumentImages === 'function') {
             resolveStoredDocumentImages(document.getElementById('editorPagesColumn') || editorArea);
@@ -9003,7 +9221,7 @@ Q4: 22</textarea>
                     chartDataUrl = await renderChartDataUrl(rows);
                 } catch (err) {
                     console.error('Failed to render chart for insert:', err);
-                    showToast('Could not render chart image.', { type: 'error' });
+                    showToast("Couldn't render chart image.", { type: 'error' });
                     insertBtn.disabled = false;
                     return;
                 }
@@ -9260,7 +9478,7 @@ Q4: 22</textarea>
             controls.style.padding = '8px 12px';
             controls.style.margin = '8px 0';
             controls.style.userSelect = 'none';
-
+            controls.contentEditable = 'false';
             // Play/Pause button
             const playBtn = document.createElement('button');
             playBtn.innerHTML = '<icon>play_arrow</icon>';
@@ -9270,10 +9488,11 @@ Q4: 22</textarea>
             playBtn.style.fontSize = '24px';
             playBtn.style.cursor = 'pointer';
 
+            playBtn.dataset.role = 'play';
             // Timestamp
             const timeDisplay = document.createElement('span');
             timeDisplay.textContent = '0:00 / 0:00';
-            timeDisplay.style.fontFamily = 'monospace';
+
             timeDisplay.style.fontSize = '15px';
             timeDisplay.style.minWidth = '90px';
 
@@ -9288,9 +9507,12 @@ Q4: 22</textarea>
             slider.style.height = '3px';
             slider.style.background = '#ffe066';
 
+            slider.dataset.role = 'seek';
+
             // Volume icon
             const volumeBtn = document.createElement('button');
             volumeBtn.innerHTML = '<icon>volume_up</icon>';
+            volumeBtn.dataset.role = 'volumeBtn';
             volumeBtn.style.background = 'transparent';
             volumeBtn.style.border = 'none';
             volumeBtn.style.color = '#fff';
@@ -9307,8 +9529,11 @@ Q4: 22</textarea>
             volumeSlider.style.marginLeft = '6px';
             volumeSlider.style.display = 'none';
 
+            volumeSlider.dataset.for = 'volume';
+
             // More icon (speed)
             const moreBtn = document.createElement('button');
+            moreBtn.dataset.role = 'more';
             moreBtn.innerHTML = '<icon>more_vert</icon>';
             moreBtn.style.background = 'transparent';
             moreBtn.style.border = 'none';
@@ -9323,29 +9548,15 @@ Q4: 22</textarea>
             speedDropdown.style.minWidth = '90px';
             speedDropdown.style.display = 'none';
             speedDropdown.style.zIndex = '1000000';
-            [
-                0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 5, 10, 16
-            ].forEach(spd => {
+            [0.25,0.5,0.75,1,1.25,1.5,1.75,2,5,10,16].forEach(spd => {
                 const item = document.createElement('div');
                 item.className = 'dropdown-item';
+                item.dataset.speed = String(spd);
                 item.innerHTML = `<div class="menu-text">${spd}x</div>`;
-                item.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                audio.playbackRate = spd;
-                moreBtn.title = `Speed: ${spd}x`;
-                speedDropdown.style.display = 'none';
-                });
                 speedDropdown.appendChild(item);
             });
 
-            // Play/Pause logic
-            playBtn.onclick = () => {
-                if (audio.paused) {
-                audio.play();
-                } else {
-                audio.pause();
-                }
-            };
+            // Play/Pause logic handled via delegated listeners (bound once below)
             audio.addEventListener('play', () => {
                 playBtn.innerHTML = '<icon>pause</icon>';
             });
@@ -9366,20 +9577,12 @@ Q4: 22</textarea>
             }
             audio.addEventListener('timeupdate', updateTime);
             audio.addEventListener('loadedmetadata', updateTime);
-            slider.oninput = function() {
-                if (audio.duration) {
-                audio.currentTime = (slider.value / 1000) * audio.duration;
-                }
-            };
+            // Seek handled by delegated input listener
+            slider.dataset.for = 'seek';
 
             // Volume logic
-            volumeBtn.onclick = function() {
-                volumeSlider.style.display = volumeSlider.style.display === 'none' ? 'inline-block' : 'none';
-            };
-            volumeSlider.oninput = function() {
-                audio.volume = volumeSlider.value / 100;
-                volumeBtn.innerHTML = audio.volume === 0 ? '<icon>volume_off</icon>' : '<icon>volume_up</icon>';
-            };
+            // Volume toggle and change handled by delegated listeners
+            volumeBtn.dataset.toggle = 'volumeSlider';
             audio.addEventListener('volumechange', function() {
                 volumeSlider.value = Math.round(audio.volume * 100);
                 volumeBtn.innerHTML = audio.volume === 0 ? '<icon>volume_off</icon>' : '<icon>volume_up</icon>';
@@ -9392,13 +9595,71 @@ Q4: 22</textarea>
                 const rect = moreBtn.getBoundingClientRect();
                 speedDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
                 speedDropdown.style.left = (rect.left + window.scrollX - 30) + 'px';
-                speedDropdown.style.display = speedDropdown.style.display === 'block' ? 'none' : 'block';
+                const show = speedDropdown.style.display !== 'block';
+                speedDropdown.style.display = show ? 'block' : 'none';
+                // mark owning controls for delegated handlers
+                try { controls.dataset.opened = show ? 'true' : 'false'; } catch(e) {}
             };
-            document.addEventListener('mousedown', function(e) {
-                if (speedDropdown.style.display === 'block' && !speedDropdown.contains(e.target) && !moreBtn.contains(e.target)) {
-                speedDropdown.style.display = 'none';
-                }
-            });
+
+            // Bind a single delegated handler once to keep controls functional after reloads
+            if (!window._omni_audio_delegation_bound) {
+                window._omni_audio_delegation_bound = true;
+
+                document.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.custom-audio-controls button');
+                    if (btn) {
+                        const controls = btn.closest('.custom-audio-controls');
+                        const audioEl = controls && controls.previousElementSibling && controls.previousElementSibling.tagName === 'AUDIO' ? controls.previousElementSibling : null;
+                        if (!audioEl) return;
+                        const role = btn.dataset.role || btn.dataset.toggle;
+                        if (role === 'play') {
+                            if (audioEl.paused) audioEl.play(); else audioEl.pause();
+                        } else if (role === 'volumeBtn') {
+                            const vol = controls.querySelector('input[type="range"][data-for="volume"]');
+                            if (vol) vol.style.display = vol.style.display === 'none' ? 'inline-block' : 'none';
+                        } else if (role === 'more') {
+                            return;
+                        }
+                    }
+                    // Speed selection
+                    const speedItem = e.target.closest('.dropdown-wrapper .dropdown-item');
+                    if (speedItem && speedItem.dataset.speed) {
+                        const spd = Number(speedItem.dataset.speed);
+                        const controls = document.querySelector('.custom-audio-controls[data-opened="true"]');
+                        const audioEl = controls && controls.previousElementSibling && controls.previousElementSibling.tagName === 'AUDIO' ? controls.previousElementSibling : null;
+                        if (audioEl) {
+                            audioEl.playbackRate = spd;
+                            const moreBtn = controls.querySelector('button[data-role="more"]');
+                            if (moreBtn) moreBtn.title = `Speed: ${spd}x`;
+                        }
+                        document.querySelectorAll('.dropdown-wrapper').forEach(d => d.style.display = 'none');
+                    }
+                });
+
+                document.addEventListener('input', function(e) {
+                    const range = e.target;
+                    if (range && range.tagName === 'INPUT' && range.type === 'range') {
+                        const controls = range.closest('.custom-audio-controls');
+                        const audioEl = controls && controls.previousElementSibling && controls.previousElementSibling.tagName === 'AUDIO' ? controls.previousElementSibling : null;
+                        if (!audioEl) return;
+                        if (range.dataset.for === 'seek') {
+                            if (audioEl.duration) audioEl.currentTime = (range.value / 1000) * audioEl.duration;
+                        } else if (range.dataset.for === 'volume') {
+                            audioEl.volume = range.value / 100;
+                        }
+                    }
+                });
+
+                document.addEventListener('mousedown', function(e) {
+                    document.querySelectorAll('.dropdown-wrapper').forEach(d => {
+                        if (d.style.display === 'block' && !d.contains(e.target) && !document.querySelector('button[data-role="more"]')?.contains(e.target)) {
+                            d.style.display = 'none';
+                            // clear opened flag on all controls
+                            document.querySelectorAll('.custom-audio-controls').forEach(c => { try { c.dataset.opened = 'false'; } catch(e) {} });
+                        }
+                    });
+                });
+            }
 
             // Assemble controls
             controls.appendChild(playBtn);
@@ -10864,7 +11125,7 @@ Q4: 22</textarea>
               const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease("G4", "8n");
         } catch (e) {
-            console.warn('Could not play start sound:', e);
+            console.warn("Couldn't play start sound:", e);
         }
     }
 
@@ -10876,7 +11137,7 @@ Q4: 22</textarea>
               const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease("G4", "8n");
         } catch (e) {
-            console.warn('Could not play stop sound:', e);
+            console.warn("Couldn't play stop sound:", e);
         }
     }
 
@@ -11345,14 +11606,14 @@ Q4: 22</textarea>
             shareModal.querySelector('#shareCopyText').onclick = function() {
                 navigator.clipboard.writeText(bodyText).then(() => {
                     showToast('Document text copied.', { type: 'success' });
-                }).catch(() => showToast('Could not copy document text.', { type: 'error' }));
+                }).catch(() => showToast("Couldn't copy document text.", { type: 'error' }));
             };
 
             shareModal.querySelector('#shareCopyMarkdown').onclick = function() {
                 const markdown = bodyText.split('\n').map(line => line.trimEnd()).join('\n');
                 navigator.clipboard.writeText('# ' + doc.title + '\n\n' + markdown).then(() => {
                     showToast('Markdown copied.', { type: 'success' });
-                }).catch(() => showToast('Could not copy markdown.', { type: 'error' }));
+                }).catch(() => showToast("Couldn't copy markdown.", { type: 'error' }));
             };
 
             shareModal.querySelector('#shareNativeBtn').onclick = async function() {
@@ -11596,6 +11857,78 @@ Q4: 22</textarea>
             return;
         }
         showMoveToFolderModal(docId);
+    });
+
+    function showMoveToWorkspaceModal(docId) {
+        try {
+        const doc = documents.find(d => d.id === docId);
+        if (!doc) return;
+        if (isEffectivelyLocked(doc)) {
+            showToast(_t('doc_locked_no_move'), { type: 'error' });
+            return;
+        }
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        const currentWorkspaceId = doc.workspaceId || PERSONAL_WORKSPACE_ID;
+        modal.innerHTML = `
+            <div class="modal-content liquid-glass" style="position:relative;max-width:560px;max-height:82vh;overflow-y:auto;">
+                <span class="modal-content-close" id="closeMoveWorkspaceModal" style="position:absolute;top:14px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                <h2 style="display:flex;align-items:center;gap:10px;"><icon>workspaces</icon>${_t('move_to_workspace')}</h2>
+                <p style="opacity:.74;line-height:1.55;margin:10px 0 16px;">${_t('move_to_workspace_desc')}</p>
+                <div id="moveWorkspaceList" style="display:grid;gap:10px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const list = modal.querySelector('#moveWorkspaceList');
+        list.innerHTML = workspaces.map(ws => `
+            <button type="button" class="settings-row" data-workspace-id="${ws.id}" ${ws.id === currentWorkspaceId ? 'disabled' : ''} style="width:100%;grid-template-columns:auto 1fr auto;text-align:left;">
+                <icon>${ws.locked && !sessionUnlockedWorkspaces.has(ws.id) ? 'lock' : 'dashboard_customize'}</icon>
+                <span class="settings-row-info">
+                    <span class="settings-row-title">${escapeHtml(ws.name)}</span>
+                    <span class="settings-row-subtitle">${ws.id === currentWorkspaceId ? escapeHtml(_t('current_workspace')) : escapeHtml(_t('move_here'))}</span>
+                </span>
+                <icon>${ws.id === currentWorkspaceId ? 'check' : 'chevron_right'}</icon>
+            </button>
+        `).join('');
+        modal.querySelector('#closeMoveWorkspaceModal').onclick = () => modal.remove();
+        modal.addEventListener('mousedown', event => { if (event.target === modal) modal.remove(); });
+        list.querySelectorAll('[data-workspace-id]').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetWorkspace = workspaces.find(ws => ws.id === button.dataset.workspaceId);
+                if (!targetWorkspace || targetWorkspace.id === currentWorkspaceId) return;
+                const completeMove = () => {
+                    doc.workspaceId = targetWorkspace.id;
+                    doc.updatedAt = Date.now();
+                    doc.timestamp = Date.now();
+                    folders.forEach(folder => {
+                        if (folder.documentIds && folder.documentIds.includes(doc.id) && (folder.workspaceId || PERSONAL_WORKSPACE_ID) !== targetWorkspace.id) {
+                            folder.documentIds = folder.documentIds.filter(id => id !== doc.id);
+                        }
+                    });
+                    scheduleDocumentSave();
+                    scheduleFolderSave();
+                    renderDocumentsList();
+                    renderFoldersList();
+                    modal.remove();
+                    showToast(_t('document_moved_to_workspace'), { type: 'success' });
+                    openDocument(doc.id);
+                };
+                if (isWorkspaceLocked(targetWorkspace)) {
+                    showWorkspaceLockModal(targetWorkspace, completeMove);
+                    return;
+                }
+                completeMove();
+            });
+        });
+    } catch {
+        showToast('Failed to move document to workspace.', { type: 'error' });
+    }
+    }
+
+    document.getElementById('moveToWorkspaceMoreOptionsBtn')?.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        editorMoreOptions.style.display = 'none';
+        showMoveToWorkspaceModal(getCurrentDocIdFromHash());
     });
 
     // --- Download Document (Multiple Formats) ---
@@ -12207,6 +12540,7 @@ Q4: 22</textarea>
     });
 
     function enterSplitView() {
+        try {
         // Get current document
         const currentDocId = getCurrentDocIdFromHash();
         if (!currentDocId) {
@@ -12242,9 +12576,13 @@ Q4: 22</textarea>
                 activateSplitView(currentDocId, selectedDocId);
             };
         });
-    }
-
+    } catch(e) {
+    showToast('Couldn\'t enter split view. Please try again.', { type: 'error' });
+}
+}
+try {
     function activateSplitView(leftDocId, rightDocId) {
+        
         isSplitView = true;
         splitRightDocId = rightDocId;
 
@@ -12419,7 +12757,10 @@ Q4: 22</textarea>
 
         showToast(_t('split_view_activated'), { type: 'success' });
     }
-
+} catch {
+    showToast('Couldn\'t enter split view. Please try again.', { type: 'error' });
+}
+try {
     function exitSplitView() {
         isSplitView = false;
         const editorContentContainer = document.querySelector('.editor-content-area-container');
@@ -12452,12 +12793,17 @@ Q4: 22</textarea>
         splitRightDocId = null;
 
         // Update split screen button icon
-        splitScreenBtn.querySelector('icon').textContent = 'vertical_split';
+        const iconElement = splitScreenBtn.querySelector('icon');
+        if (iconElement) {
+            iconElement.textContent = 'vertical_split';
+        }
         splitScreenBtn.title = 'Split Screen';
 
         showToast(_t('exited_split_view'), { type: 'info' });
     }
-
+} catch {
+    showToast('Couldn\'t exit split view. Please try again.', { type: 'error' });
+}
         function getSelectionFontSizePx(editorArea) {
             const selection = window.getSelection();
             if (!selection || !selection.rangeCount) return null;
@@ -12501,7 +12847,13 @@ Q4: 22</textarea>
 
         function getAdjacentFontSize(currentSize, direction) {
             const numeric = Math.round(Number(currentSize) || 18);
-            return Math.max(1, Math.min(400, numeric + (direction > 0 ? 1 : -1)));
+            return Math.max(1, Math.min(200, numeric + (direction > 0 ? 1 : -1)));
+        }
+
+        function pxToPt(px) {
+            const numeric = Number(px);
+            if (!Number.isFinite(numeric) || numeric <= 0) return null;
+            return Math.max(1, Math.min(200, Math.round(numeric * 0.75)));
         }
 
         function saveEditorSelection(editorArea) {
@@ -12529,7 +12881,7 @@ Q4: 22</textarea>
 
         function applyEditorFontSize(doc, editorArea, fontSizeDisplay, size) {
             if (!doc || !editorArea || !fontSizeDisplay) return;
-            const numericSize = Math.max(1, Math.min(400, Math.round(Number(size) || 18)));
+            const numericSize = Math.max(1, Math.min(200, Math.round(Number(size) || 18)));
 
             let preservedFontFamily = '';
             const selBefore = window.getSelection();
@@ -12555,7 +12907,7 @@ Q4: 22</textarea>
 
             editorArea.querySelectorAll('font[size="7"]').forEach(fontEl => {
                 const span = document.createElement('span');
-                span.style.fontSize = numericSize + 'px';
+                span.style.fontSize = numericSize + 'pt';
                 const faceAttr = fontEl.getAttribute('face');
                 if (faceAttr) {
                     span.style.fontFamily = faceAttr;
@@ -12566,7 +12918,7 @@ Q4: 22</textarea>
                 fontEl.parentNode.replaceChild(span, fontEl);
             });
 
-            fontSizeDisplay.textContent = numericSize + 'px';
+            fontSizeDisplay.textContent = String(numericSize);
             doc.content = editorArea.innerHTML;
             scheduleDocumentSave();
         }
@@ -12592,7 +12944,7 @@ Q4: 22</textarea>
 
             const computedSize = getSelectionFontSizePx(editorArea);
             if (fontSizeDisplay && computedSize) {
-                fontSizeDisplay.textContent = Math.round(computedSize) + 'px';
+                if (document.activeElement !== fontSizeDisplay) fontSizeDisplay.textContent = String(pxToPt(computedSize));
             }
 
             let font = '';
@@ -12671,6 +13023,9 @@ Q4: 22</textarea>
                 return;
             }
 
+            closeFloatingDropdown(fontSizePicker);
+            closeFloatingDropdown(fontFamilyPicker);
+
             // Remove previous listeners by cloning
             function replaceWithClone(el) {
                 const clone = el.cloneNode(true);
@@ -12705,7 +13060,10 @@ Q4: 22</textarea>
             editorArea.style.fontFamily = savedDefaultFont;
             editorArea.style.fontFeatureSettings = fontFeaturesToCss(loadFontFeatureState(OMNI_DOCUMENT_FONT_FEATURES_KEY));
             const currentSelectionSize = getSelectionFontSizePx(editorArea);
-            fontSizeDisplay.textContent = Math.round(currentSelectionSize || parseFloat(window.getComputedStyle(editorArea).fontSize) || 18) + 'px';
+            const initialFontSize = pxToPt(currentSelectionSize || parseFloat(window.getComputedStyle(editorArea).fontSize) || 24);
+            fontSizeDisplay.textContent = String(initialFontSize);
+            fontSizeDisplay.setAttribute('inputmode', 'numeric');
+            fontSizeDisplay.setAttribute('aria-label', _t('font_size') || 'Font Size');
             // Update toolbar font family display to show the default font
             if (fontFamilyPicker && fontFamilyText) {
                 const defaultFontEl = fontFamilyPicker.querySelector(`[data-font="${savedDefaultFont}"]`);
@@ -12717,25 +13075,39 @@ Q4: 22</textarea>
 
             // Font Size Picker
             fontSizeBtn.addEventListener('mousedown', function(e) {
-                e.preventDefault();
+                e.stopImmediatePropagation();
                 fontSizePicker._savedSelection = saveEditorSelection(editorArea);
+                if (e.target === fontSizeDisplay || fontSizeDisplay.contains(e.target)) {
+                    if (document.activeElement === fontSizeDisplay) {
+                        e.preventDefault();
+                        openFontSizePickerAtButton();
+                    } else {
+                        closeFloatingDropdown(fontSizePicker);
+                    }
+                    return;
+                }
+                e.preventDefault();
+                openFontSizePickerAtButton();
+            });
+            function openFontSizePickerAtButton() {
                 if (document.body.contains(fontSizePicker) && fontSizePicker.style.display === 'block') {
-                    fontSizePicker.remove();
+                    closeFloatingDropdown(fontSizePicker);
                 } else {
                     const rect = fontSizeBtn.getBoundingClientRect();
                     fontSizePicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                     fontSizePicker.style.left = (rect.left + window.scrollX) + 'px';
                     fontSizePicker.style.display = 'block';
-                    document.body.appendChild(fontSizePicker);
+                    fontSizePicker.setAttribute('aria-hidden', 'false');
+                    if (!document.body.contains(fontSizePicker)) document.body.appendChild(fontSizePicker);
                 }
-            });
+            }
             document.addEventListener('mousedown', function(e) {
                 if (
                     document.body.contains(fontSizePicker) &&
                     !fontSizePicker.contains(e.target) &&
-                    !fontSizeBtn.contains(e.target)
+                    !e.target.closest('#fontSizeBtn')
                 ) {
-                    fontSizePicker.remove();
+                    closeFloatingDropdown(fontSizePicker);
                 }
             });
             fontSizePicker.querySelectorAll('.dropdown-item').forEach(item => {
@@ -12744,45 +13116,47 @@ Q4: 22</textarea>
                     const size = Number(this.getAttribute('data-size'));
                     restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
                     applyEditorFontSize(doc, editorArea, fontSizeDisplay, size);
-                    if (document.body.contains(fontSizePicker)) fontSizePicker.remove();
+                    closeFloatingDropdown(fontSizePicker);
                 });
             });
 
             fontSizeDecreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
                 restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
-                const currentSize = getSelectionFontSizePx(editorArea) || parseFloat(fontSizeDisplay.textContent) || 18;
+                const currentSize = pxToPt(getSelectionFontSizePx(editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
                 applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, -1));
             });
 
             fontSizeIncreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
                 restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
-                const currentSize = getSelectionFontSizePx(editorArea) || parseFloat(fontSizeDisplay.textContent) || 18;
+                const currentSize = pxToPt(getSelectionFontSizePx(editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
                 applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, 1));
             });
 
             // Font Family Picker
             fontFamilyBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 fontFamilyPicker._savedSelection = saveEditorSelection(editorArea);
                 if (document.body.contains(fontFamilyPicker) && fontFamilyPicker.style.display === 'block') {
-                    fontFamilyPicker.remove();
+                    closeFloatingDropdown(fontFamilyPicker);
                 } else {
                     const rect = fontFamilyBtn.getBoundingClientRect();
                     fontFamilyPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                     fontFamilyPicker.style.left = (rect.left + window.scrollX) + 'px';
                     fontFamilyPicker.style.display = 'block';
-                    document.body.appendChild(fontFamilyPicker);
+                    fontFamilyPicker.setAttribute('aria-hidden', 'false');
+                    if (!document.body.contains(fontFamilyPicker)) document.body.appendChild(fontFamilyPicker);
                 }
             });
             document.addEventListener('mousedown', function(e) {
                 if (
                     document.body.contains(fontFamilyPicker) &&
                     !fontFamilyPicker.contains(e.target) &&
-                    !fontFamilyBtn.contains(e.target)
+                    !e.target.closest('#fontFamilyBtn')
                 ) {
-                    fontFamilyPicker.remove();
+                    closeFloatingDropdown(fontFamilyPicker);
                 }
             });
             // Store the active document context so the delegated handler always uses the current doc.
@@ -12802,11 +13176,285 @@ Q4: 22</textarea>
                     if (!curDoc || !curEditor) return;
                     restoreEditorSelection(curEditor, fontFamilyPicker._savedSelection);
                     applyEditorFontFamily(curDoc, curEditor, curText, item, font);
-                    if (document.body.contains(fontFamilyPicker)) fontFamilyPicker.remove();
+                    closeFloatingDropdown(fontFamilyPicker);
                 });
             }
 
+            fontSizeDisplay.addEventListener('mousedown', function() {
+                fontSizePicker._savedSelection = saveEditorSelection(editorArea) || fontSizePicker._savedSelection;
+            });
+            fontSizeDisplay.addEventListener('input', function() {
+                let numeric = this.textContent.replace(/[^\d]/g, '').slice(0, 3);
+                if (Number(numeric) > 200) numeric = '200';
+                if (this.textContent !== numeric) this.textContent = numeric;
+                const range = document.createRange();
+                range.selectNodeContents(this);
+                range.collapse(false);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
+            fontSizeDisplay.addEventListener('keydown', function(e) {
+                if (!/^\d$/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)) {
+                    e.preventDefault();
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
+                    applyEditorFontSize(doc, editorArea, fontSizeDisplay, this.textContent);
+                    fontSizeDisplay.blur();
+                }
+            });
+            fontSizeDisplay.addEventListener('blur', function() {
+                const size = Math.max(1, Math.min(200, Math.round(Number(this.textContent) || 18)));
+                restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
+                applyEditorFontSize(doc, editorArea, fontSizeDisplay, size);
+            });
+
             syncFontToolbarState();
+        }
+
+        function closeFloatingDropdown(dropdown) {
+            if (!dropdown) return;
+            dropdown.style.display = 'none';
+            dropdown.setAttribute('aria-hidden', 'true');
+        }
+
+        function positionDropdownNear(dropdown, anchor) {
+            if (!dropdown || !anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            dropdown.style.position = 'absolute';
+            dropdown.style.left = Math.max(8, rect.left + window.scrollX) + 'px';
+            dropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+            dropdown.style.display = 'block';
+            dropdown.setAttribute('aria-hidden', 'false');
+            if (!document.body.contains(dropdown)) document.body.appendChild(dropdown);
+            scheduleOmniFloatingClamp(dropdown);
+        }
+
+        function buildZoomPicker() {
+            const picker = document.getElementById('documentZoomPicker');
+            if (!picker) return null;
+            const current = getDocumentZoomPercent(documents.find(d => d.id === getCurrentDocIdFromHash()));
+            picker.innerHTML = [
+                '<div class="omni-menu-field"><label>' + escapeHtml(_t('zoom_percent')) + '</label><input id="documentZoomNumberInput" type="number" min="' + DOCUMENT_ZOOM_MIN + '" max="' + DOCUMENT_ZOOM_MAX + '" step="1" value="' + current + '"></div>',
+                '<div class="omni-menu-section-title">' + escapeHtml(_t('zoom_presets')) + '</div>',
+                DOCUMENT_ZOOM_PRESETS.map(value => '<div class="dropdown-item" data-zoom="' + value + '"><icon>zoom_in</icon><div class="menu-text">' + value + '%</div></div>').join('')
+            ].join('');
+            picker.querySelectorAll('[data-zoom]').forEach(item => {
+                item.addEventListener('mousedown', event => {
+                    event.preventDefault();
+                    applyDocumentZoom(Number(item.dataset.zoom), true);
+                    closeFloatingDropdown(picker);
+                });
+            });
+
+            const input = picker.querySelector('#documentZoomNumberInput');
+            input?.addEventListener('mousedown', event => event.stopPropagation());
+            input?.addEventListener('change', () => applyDocumentZoom(input.value, true));
+            input?.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    applyDocumentZoom(input.value, true);
+                    closeFloatingDropdown(picker);
+                }
+            });
+            return picker;
+        }
+
+        function openZoomPicker(anchor) {
+            const picker = document.getElementById('documentZoomPicker');
+            if (picker && document.body.contains(picker) && picker.style.display === 'block') {
+                closeFloatingDropdown(picker);
+                return;
+            }
+            positionDropdownNear(buildZoomPicker(), anchor);
+        }
+
+        function promptForWatermark() {
+            try {
+            const { doc } = getCurrentDocAndEditor();
+            if (!doc) return;
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;max-width:440px;">
+                    <span class="modal-content-close" id="closeWatermarkModal" style="position:absolute;top:14px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                    <h2>${_t('watermark')}</h2>
+                    <label style="display:grid;gap:8px;margin-top:16px;">
+                        <span>${_t('watermark_text')}</span>
+                        <input id="watermarkTextInput" type="text" value="${escapeHtml(doc.watermarkText || '')}" placeholder="${_t('watermark_placeholder')}">
+                    </label>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;">
+                        <button id="clearWatermarkBtn" type="button"><icon>backspace</icon>${_t('clear')}</button>
+                        <button id="saveWatermarkBtn" type="button"><icon>branding_watermark</icon>${_t('save')}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const input = modal.querySelector('#watermarkTextInput');
+            setTimeout(() => input?.focus(), 30);
+            modal.querySelector('#closeWatermarkModal').onclick = () => modal.remove();
+            modal.querySelector('#clearWatermarkBtn').onclick = () => { setDocumentWatermark(doc, ''); modal.remove(); };
+            modal.querySelector('#saveWatermarkBtn').onclick = () => { setDocumentWatermark(doc, input.value); modal.remove(); };
+            input?.addEventListener('keydown', event => {
+                if (event.key === 'Enter') modal.querySelector('#saveWatermarkBtn').click();
+            });
+        } catch {
+            showToast('Couldn\'t open watermark modal.', { type: 'error' });
+        }
+        }
+
+        function toggleHeadersFootersForCurrentDocument() {
+            const docId = getCurrentDocIdFromHash();
+            const doc = docId ? documents.find(d => d.id === docId) : null;
+            if (!doc) return;
+            applyHeadersFooters(!getDocumentHeadersFootersEnabled(doc));
+            showToast(_t('headers_footers_updated'), { type: 'success' });
+        }
+
+        function openInsertCommandPicker(anchor) {
+            const picker = document.getElementById('insertCommandPicker');
+            if (!picker) return;
+            if (document.body.contains(picker) && picker.style.display === 'block') {
+                closeFloatingDropdown(picker);
+                return;
+            }
+            const commands = [
+                { icon: 'title', label: _t('insert_header_footer'), hint: '/header', action: toggleHeadersFootersForCurrentDocument },
+                { icon: 'branding_watermark', label: _t('watermark'), hint: '/watermark', action: promptForWatermark },
+                { icon: 'horizontal_rule', label: _t('insert_hr'), hint: '/hr', action: () => document.getElementById('insertHrBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'link', label: _t('insert_link'), hint: '/link', action: () => document.getElementById('insertLinkBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'image', label: _t('insert_image'), hint: '/image', action: () => document.getElementById('insertImageBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'table_chart', label: _t('insert_table'), hint: '/table', action: () => document.getElementById('insertTableBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'format_quote', label: _t('insert_quote'), hint: '/quote', action: () => document.getElementById('insertQuoteBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'code', label: _t('insert_code_block'), hint: '/code', action: () => document.getElementById('insertCodeBlockBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'toc', label: _t('Table of Contents'), hint: '/toc', action: () => document.getElementById('insertTableOfContentsBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'insert_page_break', label: _t('page_break'), hint: '/page', action: () => document.getElementById('insertPageBreakBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'swap_horiz', label: _t('command_switch_document_workspace'), hint: '/switch', action: () => showMoveToWorkspaceModal(getCurrentDocIdFromHash()) }
+            ];
+            picker._savedSelection = saveEditorSelection(getActiveEditorSurface());
+            picker.innerHTML = '<div class="omni-menu-field"><label>' + escapeHtml(_t('insert_command')) + '</label><input id="insertCommandSearch" type="text" placeholder="/switch, /table, /watermark"></div><div id="insertCommandList"></div>';
+            const list = picker.querySelector('#insertCommandList');
+            const search = picker.querySelector('#insertCommandSearch');
+            function render(filter = '') {
+                const normalized = filter.trim().toLowerCase();
+                list.innerHTML = commands.filter(command => !normalized || command.label.toLowerCase().includes(normalized) || command.hint.includes(normalized)).map((command, index) => `
+                    <div class="dropdown-item" data-command-index="${index}">
+                        <icon>${command.icon}</icon>
+                        <div class="menu-text">${escapeHtml(command.label)}</div>
+                        <span class="omni-command-hint">${escapeHtml(command.hint)}</span>
+                    </div>
+                `).join('');
+                list.querySelectorAll('[data-command-index]').forEach(item => {
+                    item.addEventListener('mousedown', event => {
+                        event.preventDefault();
+                        const editor = getActiveEditorSurface();
+                        restoreEditorSelection(editor, picker._savedSelection);
+                        commands[Number(item.dataset.commandIndex)].action();
+                        closeFloatingDropdown(picker);
+                    });
+                });
+            }
+            search.addEventListener('mousedown', event => event.stopPropagation());
+            search.addEventListener('input', () => render(search.value));
+            search.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    list.querySelector('.dropdown-item')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                }
+            });
+            render();
+            positionDropdownNear(picker, anchor);
+            setTimeout(() => search.focus({ preventScroll: true }), 20);
+        }
+
+        function setupDocumentZoomAndInsertControls() {
+            const zoomBtn = document.getElementById('documentZoomBtn');
+            const leftZoomBtn = document.getElementById('leftZoomBtn');
+            const insertBtn = document.getElementById('documentInsertBtn');
+            const zoomDisplay = document.getElementById('documentZoomDisplay');
+            if (zoomBtn && zoomBtn.dataset.ready !== 'true') {
+                zoomBtn.dataset.ready = 'true';
+                zoomBtn.addEventListener('mousedown', event => {
+                    if (event.target === zoomDisplay || zoomDisplay?.contains(event.target)) {
+                        openZoomPicker(zoomBtn);
+                        return;
+                    }
+                    event.preventDefault();
+                    openZoomPicker(zoomBtn);
+                });
+            }
+            if (zoomDisplay && zoomDisplay.dataset.ready !== 'true') {
+                zoomDisplay.dataset.ready = 'true';
+                zoomDisplay.setAttribute('inputmode', 'numeric');
+                zoomDisplay.addEventListener('input', function() {
+                    const numeric = this.textContent.replace(/[^\d]/g, '').slice(0, 4);
+                    if (this.textContent !== numeric) this.textContent = numeric;
+                    const range = document.createRange();
+                    range.selectNodeContents(this);
+                    range.collapse(false);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                });
+                zoomDisplay.addEventListener('keydown', function(event) {
+                    if (!/^\d$/.test(event.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(event.key)) {
+                        event.preventDefault();
+                        return;
+                    }
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyDocumentZoom(this.textContent, true);
+                        this.blur();
+                    }
+                });
+                zoomDisplay.addEventListener('blur', function() {
+                    applyDocumentZoom(this.textContent, true);
+                });
+            }
+            if (leftZoomBtn && leftZoomBtn.dataset.ready !== 'true') {
+                leftZoomBtn.dataset.ready = 'true';
+                leftZoomBtn.addEventListener('mousedown', event => { event.preventDefault(); openZoomPicker(leftZoomBtn); });
+            }
+            if (insertBtn && insertBtn.dataset.ready !== 'true') {
+                insertBtn.dataset.ready = 'true';
+                insertBtn.addEventListener('mousedown', event => { event.preventDefault(); openInsertCommandPicker(insertBtn); });
+            }
+            if (!document.body.dataset.omniDocumentDropdownCloseReady) {
+                document.body.dataset.omniDocumentDropdownCloseReady = 'true';
+                document.addEventListener('mousedown', event => {
+                    const zoomPicker = document.getElementById('documentZoomPicker');
+                    const insertPicker = document.getElementById('insertCommandPicker');
+                    if (zoomPicker && zoomPicker.style.display === 'block' && !zoomPicker.contains(event.target) && !event.target.closest('#documentZoomBtn, #leftZoomBtn')) {
+                        closeFloatingDropdown(zoomPicker);
+                    }
+                    if (insertPicker && insertPicker.style.display === 'block' && !insertPicker.contains(event.target) && !event.target.closest('#documentInsertBtn')) {
+                        closeFloatingDropdown(insertPicker);
+                    }
+                });
+            }
+            if (!document.body.dataset.omniDocumentZoomShortcutsReady) {
+                document.body.dataset.omniDocumentZoomShortcutsReady = 'true';
+                document.addEventListener('keydown', event => {
+                    const mod = event.ctrlKey || event.metaKey;
+                    if (!mod || event.altKey) return;
+                    const editorPage = document.getElementById('editorContent');
+                    if (!editorPage || !editorPage.classList.contains('active')) return;
+                    const key = event.key;
+                    const code = event.code;
+                    const isZoomIn = key === '+' || key === '=' || code === 'NumpadAdd';
+                    const isZoomOut = key === '-' || key === '_' || code === 'NumpadSubtract';
+                    const isZoomReset = key === '0' || code === 'Digit0' || code === 'Numpad0';
+                    if (!isZoomIn && !isZoomOut && !isZoomReset) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (isZoomIn) changeDocumentZoomBy(10);
+                    else if (isZoomOut) changeDocumentZoomBy(-10);
+                    else resetDocumentZoom();
+                }, true);
+            }
         }
     
     // ================================================================
@@ -13131,7 +13779,22 @@ Q4: 22</textarea>
             });
         });
     }
-
+// Ensure toolbar watermark button opens the watermark modal
+(function bindInsertWatermarkBtn(){
+    function bind(){
+        const btn = document.getElementById('insertWatermarkBtn');
+        if (btn) {
+            btn.addEventListener('mousedown', (e) => { e.stopPropagation(); e.preventDefault(); promptForWatermark(); });
+            btn.addEventListener('click', (e) => { e.preventDefault(); promptForWatermark(); });
+            return true;
+        }
+        return false;
+    }
+    if (!bind()) {
+        document.addEventListener('DOMContentLoaded', bind);
+        setTimeout(bind, 100);
+    }
+})();
     // --- Helper function to get current document and editor ---
     function getCurrentDocAndEditor() {
         const _rawDocId = getCurrentDocIdFromHash();
@@ -15847,6 +16510,7 @@ Q4: 22</textarea>
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                          <li>v1.14.4 - Added watermark feature, improved font family/size, added zoom, and added move to workspace feature.</li>
                         <li>v1.14.3 - Improved importing PDFs and DOCX files, fixed a font bug that Google Sans Flex wouldn't load on Chromebooks.</li>
                         <li>v1.14.2 - Improved version history, redesigned the font picker, improved languages and more</li>
                                <li>v1.14.1 - Replaced the document search bar with a modal, Reduced clutter in small screens, you can click more for Apps, help, tasks, trash, etc.</li>
@@ -16459,6 +17123,8 @@ Q4: 22</textarea>
 
         var ACTIVE_EDITOR_SELECTOR = '.editor-surface';
         var _lastFocusedEditor = document.getElementById('editorArea');
+        var _cachedEditorSelection = null;
+        var _cachedEditorHighlight = null;
 
         function getEditorDocId(editor) {
             if (!editor) return null;
@@ -16548,6 +17214,118 @@ Q4: 22</textarea>
             return localStorage.getItem('omniwrite-headers-footers') === 'true';
         }
 
+        function getDocumentZoomPercent(doc) {
+            const raw = Number(doc && doc.zoomPercent ? doc.zoomPercent : localStorage.getItem('omniwrite-document-zoom') || 100);
+            return Math.max(DOCUMENT_ZOOM_MIN, Math.min(DOCUMENT_ZOOM_MAX, Math.round(raw || 100)));
+        }
+
+        function applyDocumentZoom(percent, persist = false) {
+            const safePercent = Math.max(DOCUMENT_ZOOM_MIN, Math.min(DOCUMENT_ZOOM_MAX, Math.round(Number(percent) || 100)));
+            const scale = safePercent / 100;
+            const canvas = document.getElementById('editorPaperCanvas');
+            const column = getMainDocumentPagesColumn();
+            if (canvas) {
+                canvas.style.setProperty('--document-zoom', String(scale));
+                canvas.style.overflowX = safePercent > 100 ? 'auto' : '';
+                canvas.style.overflowY = 'auto';
+                canvas.style.minWidth = '';
+                canvas.style.paddingBottom = '';
+            }
+            if (column) {
+                column.dataset.zoom = String(scale);
+            }
+            const display = document.getElementById('documentZoomDisplay');
+            if (display && document.activeElement !== display) display.textContent = String(safePercent);
+            const leftBtn = document.getElementById('leftZoomBtn');
+            if (leftBtn) leftBtn.setAttribute('aria-label', (_t('zoom') || 'Zoom') + ' ' + safePercent + '%');
+            const zoomInput = document.getElementById('documentZoomNumberInput');
+            if (zoomInput) zoomInput.value = safePercent;
+            if (persist) {
+                const docId = getCurrentDocIdFromHash();
+                const doc = docId ? documents.find(d => d.id === docId) : null;
+                if (doc) {
+                    doc.zoomPercent = safePercent;
+                    doc.updatedAt = Date.now();
+                    doc.timestamp = Date.now();
+                    debouncedSaveDocuments(300);
+                } else {
+                    localStorage.setItem('omniwrite-document-zoom', String(safePercent));
+                }
+            }
+        }
+
+        function changeDocumentZoomBy(delta) {
+            const docId = getCurrentDocIdFromHash();
+            const doc = docId ? documents.find(d => d.id === docId) : null;
+            const current = getDocumentZoomPercent(doc);
+            applyDocumentZoom(current + delta, true);
+        }
+
+        function resetDocumentZoom() {
+            applyDocumentZoom(100, true);
+        }
+
+        function applyDocumentWatermarkToShell(shell, doc) {
+            if (!shell) return;
+            const watermark = String((doc && doc.watermarkText) || '').trim();
+            try {
+                // Set the raw attribute value so CSS attr(data-watermark) reads it reliably
+                shell.setAttribute('data-watermark', watermark);
+            } catch (e) {
+                // Fallback to dataset if setAttribute fails for any reason
+                try { shell.dataset.watermark = watermark; } catch (e) {}
+            }
+            shell.classList.toggle('has-watermark', !!watermark);
+
+            // Additionally create/update a real DOM watermark element so browsers
+            // that have trouble with pseudo-element attr() rendering still show it.
+            try {
+                const existing = shell.querySelector('.omni-document-watermark');
+                if (watermark) {
+                    let wm = existing;
+                    if (!wm) {
+                        wm = document.createElement('div');
+                        wm.className = 'omni-document-watermark';
+                        shell.insertBefore(wm, shell.firstChild);
+                    }
+                    wm.textContent = watermark;
+                    // Inline styles mirror the CSS pseudo-element rules
+                    wm.style.position = 'absolute';
+                    wm.style.inset = '0';
+                    wm.style.display = 'grid';
+                    wm.style.placeItems = 'center';
+                    wm.style.zIndex = '10000';
+                    wm.style.color = 'rgba(255,255,255,0.11)';
+                    wm.style.fontSize = 'clamp(42px, 10vw, 118px)';
+                    wm.style.fontWeight = '800';
+                    wm.style.textTransform = 'uppercase';
+                    wm.style.transform = 'rotate(-24deg)';
+                    wm.style.pointerEvents = 'none';
+                    wm.style.whiteSpace = 'nowrap';
+                } else if (existing) {
+                    existing.remove();
+                }
+            } catch (e) {
+                // ignore DOM errors
+            }
+        }
+
+        function setDocumentWatermark(doc, text) {
+            if (!doc) return;
+            doc.watermarkText = String(text || '').trim();
+            doc.updatedAt = Date.now();
+            doc.timestamp = Date.now();
+            // Only update shells that belong to this document to avoid affecting other documents
+            document.querySelectorAll('.document-page-shell').forEach(shell => {
+                const editor = shell.querySelector('.document-page-editor[data-doc-id]');
+                const shellDocId = editor ? editor.dataset.docId : null;
+                if (!shellDocId || !doc.id || shellDocId === String(doc.id)) {
+                    applyDocumentWatermarkToShell(shell, doc);
+                }
+            });
+            debouncedSaveDocuments(300);
+        }
+
         function saveDocumentHeaderFooterFromBar(bar) {
             if (!bar) return;
             const shell = bar.closest('.document-page-shell');
@@ -16583,6 +17361,7 @@ Q4: 22</textarea>
             const doc = docId ? documents.find(d => d.id === docId) : null;
             const shell = document.createElement('div');
             shell.className = 'document-page-shell';
+            applyDocumentWatermarkToShell(shell, doc);
 
             // Header bar
             const headerBar = document.createElement('div');
@@ -16670,6 +17449,7 @@ Q4: 22</textarea>
             }
             mountOmniPageFab();
             applySpellcheckSetting(localStorage.getItem('omniwrite-spellcheck') !== 'false');
+            applyDocumentZoom(getDocumentZoomPercent(doc));
             return firstEditor;
         }
         const editorContentSaveTimers = new WeakMap();
@@ -16714,6 +17494,59 @@ Q4: 22</textarea>
             markEditorActive(editor);
             editor.focus();
         }
+        function paintCachedEditorSelection(range) {
+            if (!('Highlight' in window) || typeof CSS === 'undefined' || !CSS.highlights) return;
+            try {
+                if (_cachedEditorHighlight) CSS.highlights.delete('omni-editor-selection');
+                if (!range || range.collapsed) {
+                    _cachedEditorHighlight = null;
+                    return;
+                }
+                _cachedEditorHighlight = new Highlight(range.cloneRange());
+                CSS.highlights.set('omni-editor-selection', _cachedEditorHighlight);
+            } catch (e) {}
+        }
+        function cacheCurrentEditorSelection() {
+            const selection = window.getSelection();
+            if (!selection || !selection.rangeCount) return;
+            const range = selection.getRangeAt(0);
+            const node = range.commonAncestorContainer;
+            const element = node && (node.nodeType === 1 ? node : node.parentElement);
+            const editor = element && element.closest ? element.closest(ACTIVE_EDITOR_SELECTOR) : null;
+            if (!editor) return;
+            const savedRange = saveEditorSelection(editor);
+            if (!savedRange) return;
+            _cachedEditorSelection = { editor: editor, range: savedRange };
+            paintCachedEditorSelection(savedRange);
+            markEditorActive(editor);
+        }
+        function restoreCachedEditorSelection(editor) {
+            const target = editor || (_cachedEditorSelection && _cachedEditorSelection.editor) || getActiveEditorSurface();
+            if (!target || !_cachedEditorSelection || _cachedEditorSelection.editor !== target) return false;
+            return restoreEditorSelection(target, _cachedEditorSelection.range);
+        }
+        document.addEventListener('selectionchange', function() {
+            const active = document.activeElement;
+            if (active && active.closest && active.closest('input, textarea, select, [contenteditable="true"]:not(.editor-surface)')) return;
+            cacheCurrentEditorSelection();
+        });
+        document.addEventListener('pointerdown', function(event) {
+            const target = event.target;
+            if (!target || !target.closest) return;
+            if (target.closest(ACTIVE_EDITOR_SELECTOR)) return;
+            cacheCurrentEditorSelection();
+        }, true);
+        if (!document._omniwriteExecCommandSelectionWrapped) {
+            document._omniwriteExecCommandSelectionWrapped = true;
+            const originalExecCommand = document.execCommand.bind(document);
+            document.execCommand = function(command, showDefaultUI, value) {
+                const active = document.activeElement;
+                const commandName = String(command || '').toLowerCase();
+                const shouldRestore = active && active.closest && !active.closest(ACTIVE_EDITOR_SELECTOR) && commandName !== 'copy';
+                if (shouldRestore) restoreCachedEditorSelection();
+                return originalExecCommand(command, showDefaultUI, value);
+            };
+        }
         function getCaretRangeFromPointForEditor(editor, x, y) {
             let range = null;
             if (document.caretPositionFromPoint) {
@@ -16746,6 +17579,7 @@ Q4: 22</textarea>
             }
         }
         function placeNodeAtSelectionOrEnd(editor, node) {
+            restoreCachedEditorSelection(editor);
             const sel = window.getSelection();
             if (sel && sel.rangeCount) {
                 const range = sel.getRangeAt(0);
@@ -17158,7 +17992,7 @@ Q4: 22</textarea>
         }
         function showPanelError(msg) {
             hidePanelLoading();
-            appPanelErrorMsg.textContent = msg || 'Could not load this app.';
+            appPanelErrorMsg.textContent = msg || "Couldn't load this app.";
             appPanelError.classList.remove('hidden');
             appPanelIframe.style.display = 'none';
         }
@@ -18182,7 +19016,7 @@ Q4: 22</textarea>
                 'failed_load_documents': 'Failed to load some documents.',
                 'failed_load_documents_retry': 'Failed to load documents',
                 'failed_load_templates': 'Failed to load templates',
-                'error_loading_notes': 'Error loading notes',
+                'error_loading_notes': "Couldn't load notes",
                 'failed_load_trash': 'Failed to load the trash',
                 'business_setup_start_failed': 'We couldn\'t start setup',
                 'settings_update_failed': 'We were unable to process updating your settings. Please try again later.',
@@ -18535,11 +19369,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Failed to decrypt data.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Only http, https, mailto, and tel URLs are allowed.',
                 'Add at least one valid chart row.': 'Add at least one valid chart row.',
-                'Could not render chart image.': 'Could not render chart image.',
+                "Couldn't render chart image.": "Couldn't render chart image.",
                 'Document text copied.': 'Document text copied.',
-                'Could not copy document text.': 'Could not copy document text.',
+                "Couldn't copy document text.": "Couldn't copy document text.",
                 'Markdown copied.': 'Markdown copied.',
-                'Could not copy markdown.': 'Could not copy markdown.',
+                "Couldn't copy markdown.": "Couldn't copy markdown.",
                 'System share is not available in this browser.': 'System share is not available in this browser.',
                 'System share failed.': 'System share failed.',
                 'create_new': 'New',
@@ -19088,11 +19922,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Error al descifrar los datos.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Solo se permiten URLs http, https, mailto y tel.',
                 'Add at least one valid chart row.': 'Agrega al menos una fila de gráfico válida.',
-                'Could not render chart image.': 'No se pudo renderizar la imagen del gráfico.',
+                "Couldn't render chart image.": 'No se pudo renderizar la imagen del gráfico.',
                 'Document text copied.': 'Texto del documento copiado.',
-                'Could not copy document text.': 'No se pudo copiar el texto del documento.',
+                "Couldn't copy document text.": 'No se pudo copiar el texto del documento.',
                 'Markdown copied.': 'Markdown copiado.',
-                'Could not copy markdown.': 'No se pudo copiar el Markdown.',
+                "Couldn't copy markdown.": 'No se pudo copiar el Markdown.',
                 'System share is not available in this browser.': 'El uso compartido del sistema no está disponible en este navegador.',
                 'System share failed.': 'Error al compartir con el sistema.',
                 'create_new': 'Nuevo',
@@ -19670,11 +20504,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Échec du déchiffrement des données.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Seules les URL http, https, mailto et tel sont autorisées.',
                 'Add at least one valid chart row.': 'Ajoutez au moins une ligne de graphique valide.',
-                'Could not render chart image.': "Impossible de générer l'image du graphique.",
+                "Couldn't render chart image.": "Impossible de générer l'image du graphique.",
                 'Document text copied.': 'Texte du document copié.',
-                'Could not copy document text.': 'Impossible de copier le texte du document.',
+                "Couldn't copy document text.": 'Impossible de copier le texte du document.',
                 'Markdown copied.': 'Markdown copié.',
-                'Could not copy markdown.': 'Impossible de copier le Markdown.',
+                "Couldn't copy markdown.": 'Impossible de copier le Markdown.',
                 'System share is not available in this browser.': "Le partage système n'est pas disponible dans ce navigateur.",
                 'System share failed.': 'Le partage système a échoué.',
                 'create_new': 'Nouveau',
@@ -20241,11 +21075,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Datenentschlüsselung fehlgeschlagen.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Nur http-, https-, mailto- und tel-URLs sind erlaubt.',
                 'Add at least one valid chart row.': 'Fügen Sie mindestens eine gültige Diagrammzeile hinzu.',
-                'Could not render chart image.': 'Diagrammbild konnte nicht gerendert werden.',
+                "Couldn't render chart image.": 'Diagrammbild konnte nicht gerendert werden.',
                 'Document text copied.': 'Dokumenttext kopiert.',
-                'Could not copy document text.': 'Dokumenttext konnte nicht kopiert werden.',
+                "Couldn't copy document text.": 'Dokumenttext konnte nicht kopiert werden.',
                 'Markdown copied.': 'Markdown kopiert.',
-                'Could not copy markdown.': 'Markdown konnte nicht kopiert werden.',
+                "Couldn't copy markdown.": 'Markdown konnte nicht kopiert werden.',
                 'System share is not available in this browser.': 'Systemfreigabe ist in diesem Browser nicht verfügbar.',
                 'System share failed.': 'Systemfreigabe fehlgeschlagen.',
                 'create_new': 'Neu',
@@ -20812,11 +21646,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': '数据解密失败。',
                 'Only http, https, mailto, and tel URLs are allowed.': '仅允许 http、https、mailto 和 tel URL。',
                 'Add at least one valid chart row.': '请至少添加一行有效的图表数据。',
-                'Could not render chart image.': '无法渲染图表图像。',
+                "Couldn't render chart image.": '无法渲染图表图像。',
                 'Document text copied.': '文档文本已复制。',
-                'Could not copy document text.': '无法复制文档文本。',
+                "Couldn't copy document text.": '无法复制文档文本。',
                 'Markdown copied.': 'Markdown 已复制。',
-                'Could not copy markdown.': '无法复制 Markdown。',
+                "Couldn't copy markdown.": '无法复制 Markdown。',
                 'System share is not available in this browser.': '此浏览器不支持系统分享。',
                 'System share failed.': '系统分享失败。',
                 'create_new': '新建',
@@ -21383,11 +22217,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'データの復号に失敗しました。',
                 'Only http, https, mailto, and tel URLs are allowed.': 'http、https、mailto、tel の URL のみ使用できます。',
                 'Add at least one valid chart row.': '少なくとも1つの有効なグラフ行を追加してください。',
-                'Could not render chart image.': 'グラフ画像を描画できませんでした。',
+                "Couldn't render chart image.": 'グラフ画像を描画できませんでした。',
                 'Document text copied.': 'ドキュメントのテキストをコピーしました。',
-                'Could not copy document text.': 'ドキュメントのテキストをコピーできませんでした。',
+                "Couldn't copy document text.": 'ドキュメントのテキストをコピーできませんでした。',
                 'Markdown copied.': 'Markdown をコピーしました。',
-                'Could not copy markdown.': 'Markdown をコピーできませんでした。',
+                "Couldn't copy markdown.": 'Markdown をコピーできませんでした。',
                 'System share is not available in this browser.': 'このブラウザではシステム共有は使用できません。',
                 'System share failed.': 'システム共有に失敗しました。',
                 'create_new': '新規',
@@ -21954,11 +22788,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'فشل فك تشفير البيانات.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'يُسمح فقط بعناوين URL من نوع http و https و mailto و tel.',
                 'Add at least one valid chart row.': 'أضف صفاً واحداً صالحاً على الأقل للمخطط.',
-                'Could not render chart image.': 'تعذر عرض صورة المخطط.',
+                "Couldn't render chart image.": 'تعذر عرض صورة المخطط.',
                 'Document text copied.': 'تم نسخ نص المستند.',
-                'Could not copy document text.': 'تعذر نسخ نص المستند.',
+                "Couldn't copy document text.": 'تعذر نسخ نص المستند.',
                 'Markdown copied.': 'تم نسخ Markdown.',
-                'Could not copy markdown.': 'تعذر نسخ Markdown.',
+                "Couldn't copy markdown.": 'تعذر نسخ Markdown.',
                 'System share is not available in this browser.': 'المشاركة عبر النظام غير متاحة في هذا المتصفح.',
                 'System share failed.': 'فشلت المشاركة عبر النظام.',
                 'create_new': 'جديد',
@@ -22359,11 +23193,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Falha ao descriptografar dados.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Apenas URLs http, https, mailto e tel são permitidas.',
                 'Add at least one valid chart row.': 'Adicione pelo menos uma linha de gráfico válida.',
-                'Could not render chart image.': 'Não foi possível renderizar a imagem do gráfico.',
+                "Couldn't render chart image.": 'Não foi possível renderizar a imagem do gráfico.',
                 'Document text copied.': 'Texto do documento copiado.',
-                'Could not copy document text.': 'Não foi possível copiar o texto do documento.',
+                "Couldn't copy document text.": 'Não foi possível copiar o texto do documento.',
                 'Markdown copied.': 'Markdown copiado.',
-                'Could not copy markdown.': 'Não foi possível copiar o Markdown.',
+                "Couldn't copy markdown.": 'Não foi possível copiar o Markdown.',
                 'System share is not available in this browser.': 'Compartilhamento do sistema não está disponível neste navegador.',
                 'System share failed.': 'O compartilhamento do sistema falhou.',
                 'create_new': 'Novo',
@@ -22710,11 +23544,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Decrittografia dei dati non riuscita.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Sono consentiti solo URL http, https, mailto e tel.',
                 'Add at least one valid chart row.': 'Aggiungi almeno una riga del grafico valida.',
-                'Could not render chart image.': "Impossibile generare l'immagine del grafico.",
+                "Couldn't render chart image.": "Impossibile generare l'immagine del grafico.",
                 'Document text copied.': 'Testo del documento copiato.',
-                'Could not copy document text.': 'Impossibile copiare il testo del documento.',
+                "Couldn't copy document text.": 'Impossibile copiare il testo del documento.',
                 'Markdown copied.': 'Markdown copiato.',
-                'Could not copy markdown.': 'Impossibile copiare il Markdown.',
+                "Couldn't copy markdown.": 'Impossibile copiare il Markdown.',
                 'System share is not available in this browser.': 'La condivisione di sistema non è disponibile in questo browser.',
                 'System share failed.': 'Condivisione di sistema non riuscita.',
                 'create_new': 'Nuovo',
@@ -22963,11 +23797,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': '데이터 복호화에 실패했습니다.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'http, https, mailto, tel URL만 허용됩니다.',
                 'Add at least one valid chart row.': '유효한 차트 행을 하나 이상 추가하세요.',
-                'Could not render chart image.': '차트 이미지를 렌더링할 수 없습니다.',
+                "Couldn't render chart image.": '차트 이미지를 렌더링할 수 없습니다.',
                 'Document text copied.': '문서 텍스트가 복사되었습니다.',
-                'Could not copy document text.': '문서 텍스트를 복사할 수 없습니다.',
+                "Couldn't copy document text.": '문서 텍스트를 복사할 수 없습니다.',
                 'Markdown copied.': 'Markdown이 복사되었습니다.',
-                'Could not copy markdown.': 'Markdown을 복사할 수 없습니다.',
+                "Couldn't copy markdown.": 'Markdown을 복사할 수 없습니다.',
                 'System share is not available in this browser.': '이 브라우저에서는 시스템 공유를 사용할 수 없습니다.',
                 'System share failed.': '시스템 공유에 실패했습니다.',
                 'create_new': '새로 만들기',
@@ -23224,11 +24058,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'डेटा डिक्रिप्ट करने में विफल।',
                 'Only http, https, mailto, and tel URLs are allowed.': 'केवल http, https, mailto और tel URL की अनुमति है।',
                 'Add at least one valid chart row.': 'कम से कम एक वैध चार्ट पंक्ति जोड़ें।',
-                'Could not render chart image.': 'चार्ट छवि रेंडर नहीं की जा सकी।',
+                "Couldn't render chart image.": 'चार्ट छवि रेंडर नहीं की जा सकी।',
                 'Document text copied.': 'दस्तावेज़ का टेक्स्ट कॉपी किया गया।',
-                'Could not copy document text.': 'दस्तावेज़ का टेक्स्ट कॉपी नहीं हो सका।',
+                "Couldn't copy document text.": 'दस्तावेज़ का टेक्स्ट कॉपी नहीं हो सका।',
                 'Markdown copied.': 'Markdown कॉपी किया गया।',
-                'Could not copy markdown.': 'Markdown कॉपी नहीं हो सका।',
+                "Couldn't copy markdown.": 'Markdown कॉपी नहीं हो सका।',
                 'System share is not available in this browser.': 'इस ब्राउज़र में सिस्टम शेयर उपलब्ध नहीं है।',
                 'System share failed.': 'सिस्टम शेयर विफल हो गया।',
                 'create_new': 'नया',
@@ -23613,11 +24447,11 @@ Q4: 22</textarea>
                 'Failed to decrypt data': 'Не удалось расшифровать данные.',
                 'Only http, https, mailto, and tel URLs are allowed.': 'Разрешены только URL с http, https, mailto и tel.',
                 'Add at least one valid chart row.': 'Добавьте хотя бы одну допустимую строку диаграммы.',
-                'Could not render chart image.': 'Не удалось отобразить изображение диаграммы.',
+                "Couldn't render chart image.": 'Не удалось отобразить изображение диаграммы.',
                 'Document text copied.': 'Текст документа скопирован.',
-                'Could not copy document text.': 'Не удалось скопировать текст документа.',
+                "Couldn't copy document text.": 'Не удалось скопировать текст документа.',
                 'Markdown copied.': 'Markdown скопирован.',
-                'Could not copy markdown.': 'Не удалось скопировать Markdown.',
+                "Couldn't copy markdown.": 'Не удалось скопировать Markdown.',
                 'System share is not available in this browser.': 'Системный общий доступ недоступен в этом браузере.',
                 'System share failed.': 'Ошибка системного общего доступа.',
                 'create_new': 'Создать',
@@ -26105,7 +26939,7 @@ Q4: 22</textarea>
                 failed_save_folder: 'Failed to save folder',
                 failed_create_note: 'Failed to create a note.',
                 failed_save_note: 'Failed to save note.',
-                error_loading_notes: 'Error loading notes.',
+                error_loading_notes: "Couldn't load notes.",
                 locked: 'Locked',
                 lock_workspace: 'Lock Workspace',
                 unlock_workspace: 'Unlock Workspace',
@@ -26122,7 +26956,24 @@ Q4: 22</textarea>
                 failed_import_pdf: 'Failed to import PDF.',
                 media_export_warning_title: "Media won't be included",
                 media_export_warning_body: "{format} downloads can't include embedded video or music. Continue downloading the document without those media files?",
-                continue_download: 'Continue Download'
+                continue_download: 'Continue Download',
+                zoom: 'Zoom',
+                zoom_percent: 'Zoom percent',
+                zoom_presets: 'Zoom presets',
+                move_to_workspace: 'Move to Workspace',
+                move_to_workspace_desc: 'Choose another workspace for this document. Locked workspaces require the passphrase before moving.',
+                current_workspace: 'Current workspace',
+                move_here: 'Move here',
+                document_moved_to_workspace: 'Document moved to workspace.',
+                insert_header_footer: 'Header & Footer',
+                watermark: 'Watermark',
+                watermark_text: 'Watermark text',
+                watermark_placeholder: 'Draft, Private, Confidential...',
+                clear: 'Clear',
+                insert_command: 'Insert command',
+                command_switch_document_workspace: 'Switch document or workspace',
+                insert_quote: 'Insert Quote',
+                insert_code_block: 'Insert Code Block'
             },
             es: {
                 notes: 'Notas',
@@ -26209,7 +27060,24 @@ Q4: 22</textarea>
                 failed_import_pdf: 'Error al importar PDF.',
                 media_export_warning_title: 'Los medios no se incluirán',
                 media_export_warning_body: 'Las descargas {format} no pueden incluir video o música incrustados. ¿Continuar descargando el documento sin esos archivos multimedia?',
-                continue_download: 'Continuar descarga'
+                continue_download: 'Continuar descarga',
+                zoom: 'Zoom',
+                zoom_percent: 'Porcentaje de zoom',
+                zoom_presets: 'Preajustes de zoom',
+                move_to_workspace: 'Mover a espacio',
+                move_to_workspace_desc: 'Elige otro espacio para este documento. Los espacios bloqueados requieren contraseña antes de mover.',
+                current_workspace: 'Espacio actual',
+                move_here: 'Mover aquí',
+                document_moved_to_workspace: 'Documento movido al espacio.',
+                insert_header_footer: 'Encabezado y pie',
+                watermark: 'Marca de agua',
+                watermark_text: 'Texto de marca de agua',
+                watermark_placeholder: 'Borrador, privado, confidencial...',
+                clear: 'Limpiar',
+                insert_command: 'Comando de inserción',
+                command_switch_document_workspace: 'Cambiar documento o espacio',
+                insert_quote: 'Insertar cita',
+                insert_code_block: 'Insertar bloque de código'
             }
         };
         if (typeof TRANSLATIONS !== 'undefined') {
@@ -27159,25 +28027,42 @@ Q4: 22</textarea>
 
         function setupFindReplace() {
             const btn = document.getElementById('findInDocumentBtn');
-            if (!btn || btn.dataset.omniFindReady === 'true') return;
-            btn.dataset.omniFindReady = 'true';
-            btn.addEventListener('click', event => {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                openFindReplaceBar();
-            }, true);
+            const replaceBtn = document.getElementById('replaceInDocumentBtn');
+            if (btn && btn.dataset.omniFindReady !== 'true') {
+                btn.dataset.omniFindReady = 'true';
+                btn.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    openFindBar();
+                }, true);
+            }
+            if (replaceBtn && replaceBtn.dataset.omniReplaceReady !== 'true') {
+                replaceBtn.dataset.omniReplaceReady = 'true';
+                replaceBtn.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    openFindReplaceBar();
+                }, true);
+            }
         }
 
-        function openFindReplaceBar() {
-            const existing = document.getElementById('omniFindReplaceBar');
+        function openFindBar() {
+            openFindReplaceBar(false);
+        }
+
+        function openFindReplaceBar(withReplace = true) {
+            const barId = withReplace ? 'omniFindReplaceBar' : 'omniFindTextBar';
+            const otherId = withReplace ? 'omniFindTextBar' : 'omniFindReplaceBar';
+            document.getElementById(otherId)?.remove();
+            const existing = document.getElementById(barId);
             if (existing) {
                 existing.querySelector('#omniFindInput')?.focus();
                 return;
             }
             const bar = document.createElement('div');
-            bar.id = 'omniFindReplaceBar';
+            bar.id = barId;
             bar.className = 'omni-find-replace liquid-glass';
-            bar.innerHTML = '<icon>search</icon><input id="omniFindInput" type="text" placeholder="' + escapeHtml(_t('find_in_document')) + '"><input id="omniReplaceInput" type="text" placeholder="' + escapeHtml(_t('replace_with')) + '"><span id="omniFindCount" style="font-size:13px;opacity:.72;"></span><button id="omniFindPrevBtn" title="Previous"><icon>expand_less</icon></button><button id="omniFindNextBtn" title="Next"><icon>expand_more</icon></button><button id="omniReplaceBtn" title="' + escapeHtml(_t('replace')) + '"><icon>find_replace</icon></button><button id="omniReplaceAllBtn" title="' + escapeHtml(_t('replace_all')) + '"><icon>published_with_changes</icon></button><button id="omniFindCloseBtn" title="Close"><icon>close</icon></button>';
+            bar.innerHTML = '<icon>' + (withReplace ? 'find_replace' : 'search') + '</icon><input id="omniFindInput" type="text" placeholder="' + escapeHtml(_t('find_in_document')) + '">' + (withReplace ? '<input id="omniReplaceInput" type="text" placeholder="' + escapeHtml(_t('replace_with')) + '">' : '') + '<span id="omniFindCount" style="font-size:13px;opacity:.72;"></span><button id="omniFindPrevBtn" title="Previous"><icon>expand_less</icon></button><button id="omniFindNextBtn" title="Next"><icon>expand_more</icon></button>' + (withReplace ? '<button id="omniReplaceBtn" title="' + escapeHtml(_t('replace')) + '"><icon>find_replace</icon></button><button id="omniReplaceAllBtn" title="' + escapeHtml(_t('replace_all')) + '"><icon>published_with_changes</icon></button>' : '') + '<button id="omniFindCloseBtn" title="Close"><icon>close</icon></button>';
             document.body.appendChild(bar);
             const input = bar.querySelector('#omniFindInput');
             const replaceInput = bar.querySelector('#omniReplaceInput');
@@ -27239,7 +28124,7 @@ Q4: 22</textarea>
                 count.textContent = matches.length ? (index + 1) + ' / ' + matches.length : '0';
             };
             const replaceCurrent = () => {
-                if (!matches[index]) return;
+                if (!withReplace || !matches[index] || !replaceInput) return;
                 const text = replaceInput.value;
                 const mark = matches[index];
                 mark.parentNode.replaceChild(document.createTextNode(text), mark);
@@ -27250,14 +28135,14 @@ Q4: 22</textarea>
             input.addEventListener('input', highlight);
             bar.querySelector('#omniFindNextBtn').onclick = () => { if (matches.length) { index = (index + 1) % matches.length; update(); } };
             bar.querySelector('#omniFindPrevBtn').onclick = () => { if (matches.length) { index = (index - 1 + matches.length) % matches.length; update(); } };
-            bar.querySelector('#omniReplaceBtn').onclick = replaceCurrent;
-            bar.querySelector('#omniReplaceAllBtn').onclick = () => {
+            bar.querySelector('#omniReplaceBtn')?.addEventListener('click', replaceCurrent);
+            bar.querySelector('#omniReplaceAllBtn')?.addEventListener('click', () => {
                 while (matches.length) {
                     index = 0;
                     replaceCurrent();
                     if (!input.value) break;
                 }
-            };
+            });
             bar.querySelector('#omniFindCloseBtn').onclick = () => { clear(); bar.remove(); };
             input.addEventListener('keydown', e => {
                 if (e.key === 'Enter') bar.querySelector('#omniFindNextBtn').click();
@@ -27271,6 +28156,10 @@ Q4: 22</textarea>
             const key = event.key.toLowerCase();
             const mod = event.ctrlKey || event.metaKey;
             if (mod && key === 'f') {
+                event.preventDefault();
+                openFindBar();
+            }
+            if (mod && key === 'h') {
                 event.preventDefault();
                 openFindReplaceBar();
             }
@@ -27931,7 +28820,7 @@ Q4: 22</textarea>
                     try {
                         return originalRenderNotes.apply(this, arguments);
                     } catch(error) {
-                        showAppErrorToast('error_loading_notes', 'Error loading notes.', error);
+                        showAppErrorToast('error_loading_notes', "Couldn't load notes.", error);
                         renderOmniRetryState('notesList', 'error_loading_notes', () => originalRenderNotes());
                     }
                 };
@@ -28148,17 +29037,17 @@ Q4: 22</textarea>
                 'invalid_link_protocol': 'Only http, https, mailto, and tel URLs are allowed.',
                 'clipboard_read_failed': 'Clipboard read failed',
                 'invalid_chart_rows': 'Add at least one valid chart row.',
-                'chart_render_failed': 'Could not render chart image.',
+                'chart_render_failed': "Couldn't render chart image.",
                 'document_text_copied': 'Document text copied.',
-                'copy_document_text_failed': 'Could not copy document text.',
+                'copy_document_text_failed': "Couldn't copy document text.",
                 'markdown_copied': 'Markdown copied.',
-                'copy_markdown_failed': 'Could not copy markdown.',
+                'copy_markdown_failed': "Couldn't copy markdown.",
                 'system_share_unavailable': 'System share is not available in this browser.',
                 'system_share_failed': 'System share failed.',
                 'popup_blocked_print': 'Pop-up blocked. Allow pop-ups to print.',
                 'sidebar_moved_right': 'Sidebar moved to right.',
                 'sidebar_moved_left': 'Sidebar moved to left.',
-                'could_not_load_app': 'Could not load this app.',
+                'could_not_load_app': "Couldn't load this app.",
                 'system_theme': 'System Theme',
                 'light_theme': 'Light Theme',
                 'dark_theme': 'Dark Theme',
@@ -28696,7 +29585,7 @@ Q4: 22</textarea>
                     unexpected_app_error: 'We were unable to process an unexpected error. Please try again.',
                     failed_load_documents_retry: 'Failed to load documents',
                     failed_load_templates: 'Failed to load templates',
-                    error_loading_notes: 'Error loading notes',
+                    error_loading_notes: "Couldn't load notes",
                     failed_load_trash: 'Failed to load the trash',
                     business_setup_start_failed: "We couldn't start setup",
                     settings_update_failed: 'We were unable to process updating your settings. Please try again later.',
