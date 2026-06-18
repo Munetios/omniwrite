@@ -327,6 +327,21 @@ if ('serviceWorker' in navigator) {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
         }
+        .workspace-profile-slot.omni-workspace-profile-topbar {
+            padding: 0;
+            flex: 0 0 auto;
+        }
+        .workspace-profile-slot.omni-workspace-profile-topbar .workspace-top-switcher,
+        .workspace-profile-slot.omni-workspace-profile-topbar .workspace-top-trigger {
+            width: auto;
+        }
+        .workspace-profile-slot.omni-workspace-profile-topbar .workspace-top-trigger {
+            min-width: 48px;
+            max-width: min(240px, 36vw);
+            background: rgba(255,255,255,0.08) !important;
+            backdrop-filter: blur(2px) saturate(140%) !important;
+            -webkit-backdrop-filter: blur(2px) saturate(140%) !important;
+        }
         .workspace-profile-name {
             min-width: 0;
             overflow: hidden;
@@ -2658,6 +2673,15 @@ if ('serviceWorker' in navigator) {
             padding: 8px 10px;
             border-radius: 12px;
         }
+        .toolbar-customizer-row select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.08);
+            color: inherit;
+            font: inherit;
+        }
         .toolbar-customizer-actions {
             display: flex;
             flex-wrap: wrap;
@@ -2666,6 +2690,84 @@ if ('serviceWorker' in navigator) {
         }
         .toolbar-customizer-actions button {
             width: auto;
+        }
+        .omni-sidebar-customizer-row {
+            grid-template-columns: 34px minmax(0, 1fr) minmax(110px, 140px) auto auto;
+        }
+        .omni-folder-page-grid,
+        .omni-charts-page-grid {
+            display: grid;
+            grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+        .omni-folder-list-panel,
+        .omni-folder-docs-panel,
+        .omni-chart-editor-panel,
+        .omni-chart-preview-panel {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .omni-folder-page-item,
+        .omni-chart-template-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: flex-start;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 0;
+            color: inherit;
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+        }
+        .omni-folder-page-item.active,
+        .omni-folder-page-item:hover,
+        .omni-chart-template-item:hover {
+            background: rgba(143, 92, 255, 0.22);
+        }
+        .omni-folder-doc-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 10px;
+        }
+        .omni-chart-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .omni-chart-page-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        body.omni-sidebar-folder-list-mode #sidebarFoldersPageBtn {
+            display: none !important;
+        }
+        body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn {
+            display: flex;
+        }
+        body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn[data-sidebar-hidden="true"],
+        body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn[data-sidebar-user-more="true"] {
+            display: none !important;
+        }
+        @media (max-width: 820px) {
+            .omni-folder-page-grid,
+            .omni-charts-page-grid,
+            .omni-chart-form-grid {
+                grid-template-columns: 1fr;
+            }
         }
         .font-feature-grid {
             display: flex;
@@ -4184,7 +4286,7 @@ if ('serviceWorker' in navigator) {
             font-weight: 800;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 8px 18px rgba(80,28,154,0.32);
         }
-        .workspace-current-name { display: none !important; }
+   
         .workspace-menu {
             position: fixed;
             left: 100px;
@@ -4210,7 +4312,7 @@ if ('serviceWorker' in navigator) {
             border: none;
         }
         .workspace-profile-slot .workspace-current-name {
-            display: block !important;
+            display: block;
         }
         .workspace-menu.open {
             display: flex;
@@ -4337,7 +4439,7 @@ if ('serviceWorker' in navigator) {
         }
         @media (max-width: 760px) {
             .workspace-current-name {
-                display: none;
+                display: none !important;
             }
             .workspace-top-trigger {
                 padding: 6px;
@@ -4375,6 +4477,8 @@ if ('serviceWorker' in navigator) {
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="tasks" aria-label="Tasks"><icon>task_alt</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="templates" aria-label="Templates"><icon>browse</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="notes" aria-label="Notes"><icon>edit_note</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="charts" aria-label="Charts"><icon>bar_chart</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="folders" aria-label="Folders"><icon>folder_open</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="trash" aria-label="Trash"><icon>delete</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="workspaces" aria-label="OmniWrite Workspaces"><icon>dashboard_customize</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Folders and documents"><icon>folder</icon></button>
@@ -4403,6 +4507,10 @@ if ('serviceWorker' in navigator) {
                         <icon>filter</icon>
                         <div class="menu-text" data-i18n="images">Images</div>
                     </div>
+                    <div class="sidebarnav__item" data-nav="folders" id="sidebarFoldersPageBtn">
+                        <icon>folder_open</icon>
+                        <div class="menu-text" data-i18n="folders">Folders</div>
+                    </div>
                     <div class="sidebarnav__item" data-nav="templates">
                         <icon>browse</icon>
                         <div class="menu-text business-templates-label" data-i18n="templates">Templates</div>
@@ -4418,6 +4526,11 @@ if ('serviceWorker' in navigator) {
                         <icon>edit_note</icon>
                         <div class="menu-text" data-i18n="notes">Notes</div>
                     </div>
+                    <div class="sidebarnav__item" data-nav="charts">
+                        <icon>bar_chart</icon>
+                        <div class="menu-text" data-i18n="charts">Charts</div>
+                    </div>
+                 
                     <div class="sidebarnav__item" data-nav="more" id="sidebarMoreBtn">
                         <icon>more_horiz</icon>
                         <div class="menu-text" data-i18n="more">More</div>
@@ -4616,6 +4729,89 @@ if ('serviceWorker' in navigator) {
                         <div id="notesList" class="omni-notes-grid"></div>
                     </div>
                 </div>
+                <div id="foldersApp" class="page">
+                    <div class="navbar-container">
+                        <div class="navbar">
+                            <div class="navbar__left">
+                                <div class="menu-btn liquid-glass" id="toggleSidebar"><icon>menu</icon></div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="folders">Folders</div>
+                            </div>
+                            <div class="navbar__right liquid-glass" style="padding:6px 12px;">
+                                <button id="foldersPageNewFolderBtn" class="newnote-btn" type="button" style="padding:4px 8px;white-space:nowrap;background:rgba(99, 15, 194, 0.808) !important;"><icon>create_new_folder</icon><span data-i18n="new_folder">New Folder</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-area" id="foldersContentArea">
+                        <div class="dashboard-hero liquid-glass" style="margin-bottom:18px;">
+                            <h1 data-i18n="folders_page_title">Folders</h1>
+                            <p data-i18n="folders_page_desc">Browse folders and open documents without expanding the sidebar.</p>
+                        </div>
+                        <div class="omni-folder-page-grid">
+                            <div class="omni-folder-list-panel liquid-glass">
+                                <h3 data-i18n="folders">Folders</h3>
+                                <div id="foldersPageList"></div>
+                            </div>
+                            <div class="omni-folder-docs-panel liquid-glass">
+                                <h3 id="foldersPageDocsTitle" data-i18n="documents_section">Documents</h3>
+                                <div id="foldersPageDocsList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="chartsApp" class="page">
+                    <div class="navbar-container">
+                        <div class="navbar">
+                            <div class="navbar__left">
+                                <div class="menu-btn liquid-glass" id="toggleSidebar"><icon>menu</icon></div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="charts">Charts</div>
+                            </div>
+                            <div class="navbar__right liquid-glass" style="padding:6px 12px;">
+                                <button id="chartsInsertIntoDocumentBtn" class="newnote-btn" type="button" style="padding:4px 8px;background:rgba(99, 15, 194, 0.808) !important;"><icon>add_chart</icon><span data-i18n="insert_to_document">Insert to Document</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-area" id="chartsContentArea">
+                        <div class="dashboard-hero liquid-glass" style="margin-bottom:18px;">
+                            <h1 data-i18n="charts_page_title">Chart Editor</h1>
+                            <p data-i18n="charts_page_desc">Build a chart and insert it into the current document.</p>
+                        </div>
+                        <div class="omni-charts-page-grid">
+                            <div class="omni-chart-editor-panel liquid-glass">
+                                <div class="omni-chart-form-grid">
+                                    <div>
+                                        <label style="display:block;margin-bottom:8px;font-weight:700;" data-i18n="chart_title">Chart Title</label>
+                                        <input id="chartsPageTitleInput" type="text" value="Workspace Overview">
+                                    </div>
+                                    <div>
+                                        <label style="display:block;margin-bottom:8px;font-weight:700;" data-i18n="chart_type">Chart Type</label>
+                                        <select id="chartsPageTypeSelect" class="custom-font-input">
+                                            <option value="bar">Bar</option>
+                                            <option value="line">Line</option>
+                                            <option value="pie">Pie</option>
+                                            <option value="doughnut">Doughnut</option>
+                                            <option value="radar">Radar</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top:14px;">
+                                    <label style="display:block;margin-bottom:8px;font-weight:700;" data-i18n="chart_data">Chart Data</label>
+                                    <textarea id="chartsPageDataInput">Documents: 12
+Folders: 4
+Images: 8
+Notes: 6</textarea>
+                                </div>
+                                <div class="omni-chart-page-actions" style="margin-top:14px;">
+                                    <button id="chartsPageWorkspaceTemplateBtn" type="button"><icon>dashboard_customize</icon><span data-i18n="workspace_template">Workspace Template</span></button>
+                                    <button id="chartsPageRefreshBtn" type="button"><icon>refresh</icon><span data-i18n="preview">Preview</span></button>
+                                </div>
+                            </div>
+                            <div class="omni-chart-preview-panel liquid-glass">
+                                <h3 id="chartsPagePreviewTitle">Workspace Overview</h3>
+                                <canvas id="chartsPagePreviewCanvas" width="640" height="360" style="height:auto;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="trashApp" class="page">
                     <div class="navbar-container">
                         <div class="navbar">
@@ -4701,6 +4897,7 @@ if ('serviceWorker' in navigator) {
                         <icon>zoom_in</icon>
                         <div class="menu-text" contenteditable="true" id="documentZoomDisplay">100</div>
                     </div>
+                 
                     <div class="toolbar-item" id="boldBtn" title="Bold">
                         <icon>format_bold</icon>
                     </div>
@@ -4781,7 +4978,9 @@ if ('serviceWorker' in navigator) {
                         </div>
                         <div class="toolbar-item" id="insertQuoteBtn" title="Insert Quote">
                             <icon>format_quote</icon>
-                        </div>
+                        </div>   <div class="toolbar-item" id="insertDropdownBtn" title="Insert Dropdown" data-i18n-title="insert_dropdown">
+                        <icon>add_box</icon>
+                    </div>
                         <div class="toolbar-item" id="insertCodeBlockBtn" title="Insert Code Block">
                             <icon>code</icon>
                         </div>
@@ -7526,7 +7725,7 @@ if ('serviceWorker' in navigator) {
     // and #/document/{docId} → #/profile/{workspaceName}/document/{docId}
     function redirectLegacyHash() {
         const hash = window.location.hash;
-        const legacyPages = { '#/tasks': 'tasks', '#/images': 'images', '#/templates': 'templates', '#/notes': 'notes', '#/trash': 'trash' };
+        const legacyPages = { '#/tasks': 'tasks', '#/images': 'images', '#/templates': 'templates', '#/notes': 'notes', '#/charts': 'charts', '#/folders': 'folders', '#/trash': 'trash' };
         if (legacyPages[hash]) {
             window.location.replace(getWorkspaceHashPrefix() + '/' + legacyPages[hash]);
             return true;
@@ -7643,6 +7842,12 @@ if ('serviceWorker' in navigator) {
                 } else if (page === 'notes' || hash === '#/notes') {
                     switchPage('notesApp');
                     if (typeof renderNotes === 'function') renderNotes();
+                } else if (page === 'charts' || hash === '#/charts') {
+                    switchPage('chartsApp');
+                    if (typeof renderChartsPage === 'function') renderChartsPage();
+                } else if (page === 'folders' || hash === '#/folders') {
+                    switchPage('foldersApp');
+                    if (typeof renderFoldersPage === 'function') renderFoldersPage();
                 } else if (page === 'trash' || hash === '#/trash') {
                     switchPage('trashApp');
                     if (typeof renderTrashDocuments === 'function') renderTrashDocuments();
@@ -13314,59 +13519,311 @@ try {
             showToast(_t('headers_footers_updated'), { type: 'success' });
         }
 
-        function openInsertCommandPicker(anchor) {
-            const picker = document.getElementById('insertCommandPicker');
-            if (!picker) return;
-            if (document.body.contains(picker) && picker.style.display === 'block') {
-                closeFloatingDropdown(picker);
+        function getDocumentDropdownActionGroups() {
+            return {
+                value: [{ value: '', label: _t('dropdown_target_none') }],
+                page: [
+                    { value: 'home', label: _t('home') },
+                    { value: 'images', label: _t('images') },
+                    { value: 'templates', label: _t('templates') },
+                    { value: 'tasks', label: _t('tasks') },
+                    { value: 'notes', label: _t('notes') },
+                    { value: 'charts', label: _t('charts') },
+                    { value: 'folders', label: _t('folders') },
+                    { value: 'trash', label: _t('trash') }
+                ],
+                format: [
+                    { value: 'boldBtn', label: _t('Bold') || 'Bold' },
+                    { value: 'italicBtn', label: _t('Italic') || 'Italic' },
+                    { value: 'underlineBtn', label: _t('Underline') || 'Underline' },
+                    { value: 'strikethroughBtn', label: _t('strikethrough') || 'Strikethrough' },
+                    { value: 'highlightBtn', label: _t('highlight') },
+                    { value: 'clearFormattingBtn', label: _t('Clear Formatting') || 'Clear Formatting' },
+                    { value: 'heading1Btn', label: _t('Heading 1') || 'Heading 1' },
+                    { value: 'heading2Btn', label: _t('Heading 2') || 'Heading 2' },
+                    { value: 'heading3Btn', label: _t('Heading 3') || 'Heading 3' },
+                    { value: 'paragraphBtn', label: _t('normal_text') }
+                ],
+                action: [
+                    { value: 'insertTableBtn', label: _t('insert_table') },
+                    { value: 'insertChartBtn', label: _t('insert_chart') },
+                    { value: 'insertImageBtn', label: _t('insert_image') },
+                    { value: 'insertVideoBtn', label: _t('insert_video') },
+                    { value: 'insertMusicBtn', label: _t('insert_music') },
+                    { value: 'insertQuoteBtn', label: _t('insert_quote') },
+                    { value: 'insertCodeBlockBtn', label: _t('insert_code_block') },
+                    { value: 'insertCalloutBtn', label: _t('insert_callout') },
+                    { value: 'insertColumnsBtn', label: _t('insert_columns') },
+                    { value: 'insertTableOfContentsBtn', label: _t('Table of Contents') },
+                    { value: 'insertPageBreakBtn', label: _t('page_break') },
+                    { value: 'promptWatermark', label: _t('watermark') },
+                    { value: 'toggleHeadersFooters', label: _t('insert_header_footer') }
+                ]
+            };
+        }
+
+        function createDocumentDropdownNode(labelText, options) {
+            const wrapper = document.createElement('span');
+            wrapper.className = 'omni-document-dropdown-field';
+            wrapper.contentEditable = 'false';
+            wrapper.style.cssText = 'display:inline-flex;align-items:center;gap:8px;margin:4px 6px;padding:6px 8px;border-radius:14px;background:rgba(143,92,255,0.18);border:1px solid rgba(255,255,255,0.14);vertical-align:middle;';
+            const label = document.createElement('span');
+            label.textContent = labelText || _t('insert_dropdown');
+            label.style.cssText = 'font-weight:700;font-size:14px;';
+            const select = document.createElement('select');
+            select.setAttribute('data-omni-document-dropdown', 'true');
+            select.style.cssText = 'width:auto;min-width:150px;padding:8px 28px 8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.16);background:rgba(17,7,54,0.78);color:#fff;font:inherit;outline:none;';
+            options.forEach(optionConfig => {
+                const option = document.createElement('option');
+                option.value = optionConfig.label;
+                option.textContent = optionConfig.label;
+                option.dataset.dropdownAction = optionConfig.action || 'value';
+                option.dataset.dropdownTarget = optionConfig.target || '';
+                select.appendChild(option);
+            });
+            wrapper.appendChild(label);
+            wrapper.appendChild(select);
+            return wrapper;
+        }
+
+        function runDocumentDropdownOption(select) {
+            const option = select?.selectedOptions?.[0];
+            if (!option) return;
+            const action = option.dataset.dropdownAction || 'value';
+            const target = option.dataset.dropdownTarget || '';
+            if (action === 'page') {
+                if (target === 'home') window.location.hash = '';
+                else if (target) window.location.hash = getWorkspaceHashPrefix() + '/' + target;
                 return;
             }
-            const commands = [
+            if (action === 'format' && target) {
+                document.getElementById(target)?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                return;
+            }
+            if (action === 'action') {
+                if (target === 'promptWatermark') {
+                    promptForWatermark();
+                } else if (target === 'toggleHeadersFooters') {
+                    toggleHeadersFootersForCurrentDocument();
+                } else if (target) {
+                    document.getElementById(target)?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                }
+            }
+        }
+
+        if (!document.body.dataset.omniDocumentDropdownActionsReady) {
+            document.body.dataset.omniDocumentDropdownActionsReady = 'true';
+            document.addEventListener('change', event => {
+                const select = event.target.closest && event.target.closest('select[data-omni-document-dropdown="true"]');
+                if (!select) return;
+                runDocumentDropdownOption(select);
+            });
+        }
+
+        function openInsertDropdownModal() {
+            document.getElementById('insertDropdownModal')?.remove();
+            const editor = getActiveEditorSurface();
+            if (!editor) return;
+            const savedSelection = saveEditorSelection(editor);
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'insertDropdownModal';
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;max-width:520px;max-height:84vh;overflow-y:auto;">
+                    <span class="modal-content-close" id="closeInsertDropdownModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                    <h2 style="display:flex;align-items:center;gap:10px;"><icon>arrow_drop_down_circle</icon>${escapeHtml(_t('insert_dropdown'))}</h2>
+                    <p style="opacity:.72;margin:0 0 14px;">${escapeHtml(_t('insert_dropdown_desc'))}</p>
+                    <label style="display:block;font-weight:700;margin-bottom:8px;">${escapeHtml(_t('dropdown_label'))}</label>
+                    <input id="documentDropdownLabelInput" type="text" value="${escapeHtml(_t('dropdown_default_label'))}" style="margin-bottom:14px;">
+                    <label style="display:block;font-weight:700;margin-bottom:8px;">${escapeHtml(_t('dropdown_options'))}</label>
+                    <div id="documentDropdownOptionsList" style="display:grid;gap:10px;margin-bottom:12px;"></div>
+                    <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;">
+                        <button id="addDocumentDropdownOptionBtn" type="button"><icon>add</icon>${escapeHtml(_t('add_option'))}</button>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <button id="cancelDocumentDropdownBtn" type="button">${escapeHtml(_t('cancel'))}</button>
+                            <button id="insertDocumentDropdownBtn" type="button"><icon>add_box</icon>${escapeHtml(_t('insert_to_document'))}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#documentDropdownOptionsList');
+            let optionValues = [
+                { label: _t('dropdown_option_one'), action: 'value', target: '' },
+                { label: _t('dropdown_option_two'), action: 'page', target: 'home' },
+                { label: _t('dropdown_option_three'), action: 'format', target: 'boldBtn' }
+            ];
+            const actionGroups = getDocumentDropdownActionGroups();
+            const actionTypeOptions = [
+                { value: 'value', label: _t('dropdown_action_value') },
+                { value: 'page', label: _t('dropdown_action_page') },
+                { value: 'format', label: _t('dropdown_action_format') },
+                { value: 'action', label: _t('dropdown_action_action') }
+            ];
+            function renderOptionInputs() {
+                list.innerHTML = optionValues.map((value, index) => `
+                    <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(110px,.7fr) minmax(130px,.8fr) auto;gap:8px;align-items:center;">
+                        <input class="document-dropdown-option-input" type="text" value="${escapeHtml(value.label || '')}" data-option-index="${index}" aria-label="${escapeHtml(_t('dropdown_option_label'))}">
+                        <select class="document-dropdown-action-type" data-option-index="${index}" aria-label="${escapeHtml(_t('dropdown_action_type'))}">
+                            ${actionTypeOptions.map(option => `<option value="${option.value}"${(value.action || 'value') === option.value ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                        </select>
+                        <select class="document-dropdown-action-target" data-option-index="${index}" aria-label="${escapeHtml(_t('dropdown_action_target'))}">
+                            ${(actionGroups[value.action || 'value'] || actionGroups.value).map(option => `<option value="${option.value}"${(value.target || '') === option.value ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                        </select>
+                        <button type="button" data-remove-option="${index}" title="${escapeHtml(_t('remove'))}" aria-label="${escapeHtml(_t('remove'))}"><icon>close</icon></button>
+                    </div>
+                `).join('');
+                list.querySelectorAll('.document-dropdown-option-input').forEach(input => {
+                    input.addEventListener('input', () => {
+                        optionValues[Number(input.dataset.optionIndex)].label = input.value;
+                    });
+                    input.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            modal.querySelector('#addDocumentDropdownOptionBtn').click();
+                        }
+                    });
+                });
+                list.querySelectorAll('.document-dropdown-action-type').forEach(select => {
+                    select.addEventListener('change', () => {
+                        const item = optionValues[Number(select.dataset.optionIndex)];
+                        item.action = select.value;
+                        item.target = (actionGroups[item.action] || actionGroups.value)[0]?.value || '';
+                        renderOptionInputs();
+                    });
+                });
+                list.querySelectorAll('.document-dropdown-action-target').forEach(select => {
+                    select.addEventListener('change', () => {
+                        optionValues[Number(select.dataset.optionIndex)].target = select.value;
+                    });
+                });
+                list.querySelectorAll('[data-remove-option]').forEach(button => {
+                    button.onclick = () => {
+                        optionValues.splice(Number(button.dataset.removeOption), 1);
+                        if (!optionValues.length) optionValues.push({ label: '', action: 'value', target: '' });
+                        renderOptionInputs();
+                    };
+                });
+            }
+            renderOptionInputs();
+            modal.querySelector('#addDocumentDropdownOptionBtn').onclick = () => {
+                optionValues.push({ label: '', action: 'value', target: '' });
+                renderOptionInputs();
+                const inputs = list.querySelectorAll('.document-dropdown-option-input');
+                inputs[inputs.length - 1]?.focus();
+            };
+            const closeModal = () => modal.remove();
+            modal.querySelector('#closeInsertDropdownModal').onclick = closeModal;
+            modal.querySelector('#cancelDocumentDropdownBtn').onclick = closeModal;
+            modal.addEventListener('mousedown', event => { if (event.target === modal) closeModal(); });
+            modal.querySelector('#insertDocumentDropdownBtn').onclick = () => {
+                const cleanOptions = optionValues.map(value => ({
+                    label: String(value.label || '').trim(),
+                    action: value.action || 'value',
+                    target: value.target || ''
+                })).filter(value => value.label);
+                if (!cleanOptions.length) {
+                    showToast(_t('dropdown_options_required'), { type: 'error' });
+                    return;
+                }
+                const activeEditor = getActiveEditorSurface();
+                restoreEditorSelection(activeEditor, savedSelection);
+                const node = createDocumentDropdownNode(modal.querySelector('#documentDropdownLabelInput').value.trim(), cleanOptions);
+                placeNodeAtSelectionOrEnd(activeEditor, node);
+                saveEditorSurfaceContent(activeEditor);
+                closeModal();
+                showToast(_t('dropdown_inserted'), { type: 'success' });
+            };
+            setTimeout(() => modal.querySelector('#documentDropdownLabelInput')?.focus(), 30);
+        }
+
+        function getInsertCommandActions() {
+            return [
                 { icon: 'title', label: _t('insert_header_footer'), hint: '/header', action: toggleHeadersFootersForCurrentDocument },
                 { icon: 'branding_watermark', label: _t('watermark'), hint: '/watermark', action: promptForWatermark },
+                { icon: 'arrow_drop_down_circle', label: _t('insert_dropdown'), hint: '/dropdown', action: openInsertDropdownModal },
                 { icon: 'horizontal_rule', label: _t('insert_hr'), hint: '/hr', action: () => document.getElementById('insertHrBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'link', label: _t('insert_link'), hint: '/link', action: () => document.getElementById('insertLinkBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'image', label: _t('insert_image'), hint: '/image', action: () => document.getElementById('insertImageBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'smart_display', label: _t('insert_video'), hint: '/video', action: () => document.getElementById('insertVideoBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'music_note', label: _t('insert_music'), hint: '/music', action: () => document.getElementById('insertMusicBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'table_chart', label: _t('insert_table'), hint: '/table', action: () => document.getElementById('insertTableBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'add_chart', label: _t('insert_chart_from_editor'), hint: '/chart', action: () => openChartsPageForCurrentDocument() },
                 { icon: 'format_quote', label: _t('insert_quote'), hint: '/quote', action: () => document.getElementById('insertQuoteBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'code', label: _t('insert_code_block'), hint: '/code', action: () => document.getElementById('insertCodeBlockBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'data_object', label: _t('inline_code'), hint: '/inline', action: () => document.getElementById('insertInlineCodeBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'note_stack', label: _t('insert_callout'), hint: '/callout', action: () => document.getElementById('insertCalloutBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
+                { icon: 'view_column', label: _t('insert_columns'), hint: '/columns', action: () => document.getElementById('insertColumnsBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'toc', label: _t('Table of Contents'), hint: '/toc', action: () => document.getElementById('insertTableOfContentsBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'insert_page_break', label: _t('page_break'), hint: '/page', action: () => document.getElementById('insertPageBreakBtn')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })) },
                 { icon: 'swap_horiz', label: _t('command_switch_document_workspace'), hint: '/switch', action: () => showMoveToWorkspaceModal(getCurrentDocIdFromHash()) }
             ];
-            picker._savedSelection = saveEditorSelection(getActiveEditorSurface());
-            picker.innerHTML = '<div class="omni-menu-field"><label>' + escapeHtml(_t('insert_command')) + '</label><input id="insertCommandSearch" type="text" placeholder="/switch, /table, /watermark"></div><div id="insertCommandList"></div>';
-            const list = picker.querySelector('#insertCommandList');
-            const search = picker.querySelector('#insertCommandSearch');
+        }
+
+        function openInsertCommandPicker() {
+            openInsertCommandModal();
+        }
+
+        function openInsertCommandModal() {
+            document.getElementById('insertCommandModal')?.remove();
+            const editor = getActiveEditorSurface();
+            const savedSelection = saveEditorSelection(editor);
+            const commands = getInsertCommandActions();
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'insertCommandModal';
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;max-width:min(92vw,760px);max-height:84vh;overflow-y:auto;">
+                    <span class="modal-content-close" id="closeInsertCommandModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:24px;">&times;</span>
+                    <h2 style="display:flex;align-items:center;gap:10px;"><icon>add_box</icon>${escapeHtml(_t('insert_modal_title'))}</h2>
+                    <p style="opacity:.72;margin:0 0 14px;">${escapeHtml(_t('insert_modal_desc'))}</p>
+                    <input id="insertCommandModalSearch" type="text" placeholder="${escapeHtml(_t('insert_modal_search'))}" style="margin-bottom:14px;">
+                    <div id="insertCommandModalList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#insertCommandModalList');
+            const search = modal.querySelector('#insertCommandModalSearch');
+            function runCommand(index) {
+                const command = commands[index];
+                if (!command) return;
+                const activeEditor = getActiveEditorSurface();
+                restoreEditorSelection(activeEditor, savedSelection);
+                modal.remove();
+                command.action();
+            }
             function render(filter = '') {
                 const normalized = filter.trim().toLowerCase();
-                list.innerHTML = commands.filter(command => !normalized || command.label.toLowerCase().includes(normalized) || command.hint.includes(normalized)).map((command, index) => `
-                    <div class="dropdown-item" data-command-index="${index}">
+                const filtered = commands
+                    .map((command, index) => ({ ...command, index }))
+                    .filter(command => !normalized || command.label.toLowerCase().includes(normalized) || command.hint.includes(normalized));
+                list.innerHTML = filtered.length ? filtered.map(command => `
+                    <button type="button" class="sidebarnav__item liquid-glass" data-command-index="${command.index}" style="margin:0;justify-content:flex-start;min-height:58px;">
                         <icon>${command.icon}</icon>
-                        <div class="menu-text">${escapeHtml(command.label)}</div>
-                        <span class="omni-command-hint">${escapeHtml(command.hint)}</span>
-                    </div>
-                `).join('');
-                list.querySelectorAll('[data-command-index]').forEach(item => {
-                    item.addEventListener('mousedown', event => {
-                        event.preventDefault();
-                        const editor = getActiveEditorSurface();
-                        restoreEditorSelection(editor, picker._savedSelection);
-                        commands[Number(item.dataset.commandIndex)].action();
-                        closeFloatingDropdown(picker);
-                    });
+                        <div class="menu-text" style="min-width:0;text-align:left;">
+                            <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(command.label)}</strong>
+                            <small style="opacity:.62;">${escapeHtml(command.hint)}</small>
+                        </div>
+                    </button>
+                `).join('') : '<p style="grid-column:1/-1;opacity:.66;padding:8px;">' + escapeHtml(_t('insert_modal_no_results')) + '</p>';
+                list.querySelectorAll('[data-command-index]').forEach(button => {
+                    button.addEventListener('click', () => runCommand(Number(button.dataset.commandIndex)));
                 });
             }
-            search.addEventListener('mousedown', event => event.stopPropagation());
             search.addEventListener('input', () => render(search.value));
             search.addEventListener('keydown', event => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    list.querySelector('.dropdown-item')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                    const first = list.querySelector('[data-command-index]');
+                    if (first) runCommand(Number(first.dataset.commandIndex));
                 }
+                if (event.key === 'Escape') modal.remove();
+            });
+            modal.querySelector('#closeInsertCommandModal').onclick = () => modal.remove();
+            modal.addEventListener('mousedown', event => {
+                if (event.target === modal) modal.remove();
             });
             render();
-            positionDropdownNear(picker, anchor);
             setTimeout(() => search.focus({ preventScroll: true }), 20);
         }
 
@@ -13421,6 +13878,14 @@ try {
             if (insertBtn && insertBtn.dataset.ready !== 'true') {
                 insertBtn.dataset.ready = 'true';
                 insertBtn.addEventListener('mousedown', event => { event.preventDefault(); openInsertCommandPicker(insertBtn); });
+            }
+            const toolbarInsertBtn = document.getElementById('insertDropdownBtn');
+            if (toolbarInsertBtn && toolbarInsertBtn.dataset.ready !== 'true') {
+                toolbarInsertBtn.dataset.ready = 'true';
+                toolbarInsertBtn.addEventListener('mousedown', event => {
+                    event.preventDefault();
+                    openInsertDropdownModal();
+                });
             }
             if (!document.body.dataset.omniDocumentDropdownCloseReady) {
                 document.body.dataset.omniDocumentDropdownCloseReady = 'true';
@@ -14701,6 +15166,8 @@ try {
         else if (action === 'tasks') window.location.hash = getWorkspaceHashPrefix() + '/tasks';
         else if (action === 'templates') window.location.hash = getWorkspaceHashPrefix() + '/templates';
         else if (action === 'notes') { window.location.hash = '#/notes'; switchPage('notesApp'); if (typeof renderNotes === 'function') renderNotes(); }
+        else if (action === 'charts') { window.location.hash = getWorkspaceHashPrefix() + '/charts'; switchPage('chartsApp'); if (typeof renderChartsPage === 'function') renderChartsPage(); }
+        else if (action === 'folders') { window.location.hash = getWorkspaceHashPrefix() + '/folders'; switchPage('foldersApp'); if (typeof renderFoldersPage === 'function') renderFoldersPage(); }
         else if (action === 'trash') { window.location.hash = '#/trash'; switchPage('trashApp'); if (typeof renderTrashDocuments === 'function') renderTrashDocuments(); }
         else if (action === 'help') {
             const helpItem = document.querySelector('.help-item');
@@ -14735,7 +15202,16 @@ try {
             const icon = item.querySelector('icon')?.textContent || 'circle';
             const label = item.querySelector('.menu-text')?.textContent || action;
             return '<div class="sidebarnav__item" data-more-nav="' + action + '"><icon>' + icon + '</icon><div class="menu-text">' + escapeHtml(label) + '</div></div>';
-        }).join('') || '<div style="padding:12px 14px;opacity:0.65;" data-i18n="no_results">' + _t('no_results') + '</div>';
+        }).join('');
+        try {
+            const savedSidebarConfig = JSON.parse(localStorage.getItem('omniwrite-sidebar-customization') || '[]');
+            if (Array.isArray(savedSidebarConfig) && savedSidebarConfig.some(item => item && item.key === 'workspaceProfile' && item.location === 'more')) {
+                menu.appendChild(createWorkspaceProfileMoreProxy());
+            }
+        } catch(e) {}
+        if (!menu.children.length) {
+            menu.innerHTML = '<div style="padding:12px 14px;opacity:0.65;" data-i18n="no_results">' + _t('no_results') + '</div>';
+        }
         const rect = btn.getBoundingClientRect();
         menu.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
         menu.style.top = Math.max(12, rect.top - Math.min(260, menu.scrollHeight || 220) - 8) + 'px';
@@ -14748,6 +15224,10 @@ try {
             event.preventDefault();
             event.stopImmediatePropagation();
             document.getElementById('sidebarMoreMenu')?.classList.remove('open');
+            if (moreItem.dataset.moreNav === 'workspaceProfile') {
+                document.querySelector('#workspaceProfileSlot .workspace-top-trigger')?.click();
+                return;
+            }
             handleSidebarNavAction(moreItem.dataset.moreNav);
             return;
         }
@@ -14765,14 +15245,36 @@ try {
     });
     function updateSidebarOverflowNavigation() {
         const alwaysVisible = new Set(['images', 'templates']);
-        const overflowPriority = ['help', 'apps', 'trash', 'tasks', 'notes'];
+        const overflowPriority = ['help', 'apps', 'trash', 'folders', 'charts', 'tasks', 'notes'];
+        let savedSidebarLocations = new Map();
+        try {
+            const savedSidebarConfig = JSON.parse(localStorage.getItem('omniwrite-sidebar-customization') || '[]');
+            if (Array.isArray(savedSidebarConfig)) {
+                savedSidebarLocations = new Map(savedSidebarConfig.filter(item => item && item.key).map(item => [item.key, item.location]));
+            }
+        } catch(e) {}
         const optional = Array.from(document.querySelectorAll('.sidebarnav__item[data-nav]'))
-            .filter(item => !alwaysVisible.has(item.dataset.nav) && item.dataset.nav !== 'more')
+            .filter(item => item.dataset.nav !== 'more')
             .sort((a, b) => overflowPriority.indexOf(a.dataset.nav) - overflowPriority.indexOf(b.dataset.nav));
         const moreBtn = document.getElementById('sidebarMoreBtn');
         optional.forEach(item => {
+            const savedLocation = savedSidebarLocations.get(item.dataset.nav);
+            if (savedLocation === 'more') {
+                item.style.display = 'none';
+                item.dataset.overflowHidden = 'true';
+                item.dataset.sidebarUserMore = 'true';
+                return;
+            }
+            if (savedLocation === 'hidden') {
+                item.style.display = 'none';
+                item.dataset.sidebarHidden = 'true';
+                item.removeAttribute('data-overflow-hidden');
+                item.removeAttribute('data-sidebar-user-more');
+                return;
+            }
             item.style.display = '';
             item.removeAttribute('data-overflow-hidden');
+            item.removeAttribute('data-sidebar-user-more');
         });
         if (!moreBtn) return;
         const sidebar = document.getElementById('sidebar');
@@ -14782,6 +15284,17 @@ try {
         let used = 0;
         let hidden = 0;
         optional.forEach(item => {
+            const savedLocation = savedSidebarLocations.get(item.dataset.nav);
+            if (savedLocation === 'more') {
+                hidden += 1;
+                return;
+            }
+            if (!savedLocation && alwaysVisible.has(item.dataset.nav)) {
+                return;
+            }
+            if (savedLocation === 'hidden' || ['top', 'main', 'bottom'].includes(savedLocation)) {
+                return;
+            }
             used += item.offsetHeight || 52;
             const shouldHide = window.innerHeight < 720 && used > available;
             if (shouldHide) {
@@ -14942,6 +15455,12 @@ try {
             } else if (page === 'notes') {
                 switchPage('notesApp');
                 if (typeof renderNotes === 'function') renderNotes();
+            } else if (page === 'charts') {
+                switchPage('chartsApp');
+                if (typeof renderChartsPage === 'function') renderChartsPage();
+            } else if (page === 'folders') {
+                switchPage('foldersApp');
+                if (typeof renderFoldersPage === 'function') renderFoldersPage();
             } else if (page === 'trash') {
                 switchPage('trashApp');
                 if (typeof renderTrashDocuments === 'function') renderTrashDocuments();
@@ -14954,10 +15473,9 @@ try {
         handleHashChange();
 
         // Sidebar navigation click handlers
-        const sidebarPrimaryItems = document.querySelectorAll('.sidebarnav__items .sidebarnav__item');
-        if (sidebarPrimaryItems[0]) sidebarPrimaryItems[0].addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/images'; });
-        if (sidebarPrimaryItems[1]) sidebarPrimaryItems[1].addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/tasks'; });
-        if (sidebarPrimaryItems[2]) sidebarPrimaryItems[2].addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/templates'; });
+        document.querySelector('.sidebarnav__item[data-nav="images"]')?.addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/images'; });
+        document.querySelector('.sidebarnav__item[data-nav="tasks"]')?.addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/tasks'; });
+        document.querySelector('.sidebarnav__item[data-nav="templates"]')?.addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/templates'; });
 
         // Logo/title click returns to selectArea
         document.querySelector('.sidebar__header h3').addEventListener('click', () => {
@@ -16510,6 +17028,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                     <li>v1.14.10 - Added insert dropdown feature, Added sidebar customization.</li>
                           <li>v1.14.4 - Added watermark feature, improved font family/size, added zoom, and added move to workspace feature.</li>
                         <li>v1.14.3 - Improved importing PDFs and DOCX files, fixed a font bug that Google Sans Flex wouldn't load on Chromebooks.</li>
                         <li>v1.14.2 - Improved version history, redesigned the font picker, improved languages and more</li>
@@ -16974,16 +17493,24 @@ try {
                         <icon>${nextPosition === 'right' ? 'right_panel_open' : 'left_panel_open'}</icon>
                         <span>${nextPosition === 'right' ? 'Move to right' : 'Move to left'}</span>
                     </div>
+                    <div class="omni-ctx-item" data-sidebar-customize="true">
+                        <icon>tune</icon>
+                        <span>${_t('customize_sidebar')}</span>
+                    </div>
                 `;
                 menu.style.left = Math.min(e.clientX, window.innerWidth - 220) + 'px';
                 menu.style.top = Math.min(e.clientY, window.innerHeight - 80) + 'px';
                 document.body.appendChild(menu);
-                menu.querySelector('.omni-ctx-item').onclick = function() {
+                menu.querySelector('[data-position]').onclick = function() {
                     const position = this.dataset.position;
                     try { localStorage.setItem('omniwrite-sidebar-position', position); } catch(err) { console.warn('localStorage unavailable:', err); }
                     applySidebarPosition(position);
                     showToast(position === 'right' ? 'Sidebar moved to right.' : 'Sidebar moved to left.', { type: 'success' });
                     menu.remove();
+                };
+                menu.querySelector('[data-sidebar-customize]').onclick = function() {
+                    menu.remove();
+                    if (typeof window.openSidebarCustomizerModal === 'function') window.openSidebarCustomizerModal();
                 };
                 const removeMenu = ev => {
                     if (!menu.contains(ev.target)) {
@@ -24840,6 +25367,7 @@ try {
                 'alignCenterBtn':'Align Center','alignRightBtn':'Align Right',
                 'alignJustifyBtn':'justify','undoBtn':'Undo','redoBtn':'Redo',
                 'insertHrBtn':'insert_hr','insertLinkBtn':'insert_link',
+                'insertDropdownBtn':'insert_dropdown',
                 'insertImageBtn':'Insert Image','insertVideoBtn':'Insert Video',
                 'insertMusicBtn':'Insert Music','insertQuoteBtn':'Insert Quote',
                 'insertCodeBlockBtn':'Insert Code Block',
@@ -25120,6 +25648,13 @@ try {
                                     <div class="settings-row-subtitle">${_t('customize_editor_toolbar_desc')}</div>
                                 </div>
                                 <button id="customizeToolbarBtn" class="settings-select-btn">${_t('open')}</button>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('customize_sidebar')}</div>
+                                    <div class="settings-row-subtitle">${_t('customize_sidebar_desc')}</div>
+                                </div>
+                                <button id="customizeSidebarBtn" class="settings-select-btn">${_t('open')}</button>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-row-info">
@@ -25745,6 +26280,10 @@ try {
                 e.preventDefault();
                 openToolbarCustomizerModal();
             };
+            settingsModal.querySelector('#customizeSidebarBtn').onclick = function(e) {
+                e.preventDefault();
+                if (typeof window.openSidebarCustomizerModal === 'function') window.openSidebarCustomizerModal();
+            };
 
             const editorWidthOptions = [
                 { value: 'compact', label: _t('editor_width_compact') },
@@ -25915,8 +26454,12 @@ try {
                     const backup = {
                         documents: documents,
                         folders: folders,
-                        workspaces: workspaces,
+                        workspaces: Array.isArray(workspaces) ? workspaces.map(workspace => ({ ...workspace })) : [],
                         activeWorkspaceId: getActiveWorkspaceId(),
+                        sidebarCustomization: typeof getSidebarCustomization === 'function' ? getSidebarCustomization() : null,
+                        sidebarOrganization: localStorage.getItem('omniwrite-sidebar-organization') || 'folder-list',
+                        sidebarPosition: localStorage.getItem('omniwrite-sidebar-position') || 'left',
+                        sidebarWidth: localStorage.getItem('omniwrite-sidebar-width') || '',
                         time: Date.now()
                     };
                     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -25981,10 +26524,27 @@ try {
                         if (backup.activeWorkspaceId && workspaces.some(ws => ws.id === backup.activeWorkspaceId)) {
                             localStorage.setItem(ACTIVE_WORKSPACE_KEY, backup.activeWorkspaceId);
                         }
+                        if (backup.sidebarCustomization && typeof saveSidebarCustomization === 'function') {
+                            saveSidebarCustomization(backup.sidebarCustomization);
+                        }
+                        if (backup.sidebarOrganization) {
+                            localStorage.setItem('omniwrite-sidebar-organization', backup.sidebarOrganization);
+                        }
+                        if (backup.sidebarPosition) {
+                            localStorage.setItem('omniwrite-sidebar-position', backup.sidebarPosition);
+                            if (typeof applySidebarPosition === 'function') applySidebarPosition(backup.sidebarPosition);
+                        }
+                        if (backup.sidebarWidth) {
+                            localStorage.setItem('omniwrite-sidebar-width', backup.sidebarWidth);
+                            document.getElementById('app')?.style.setProperty('--sidebar-width', backup.sidebarWidth + 'px');
+                        }
                         await saveDocuments();
                         renderWorkspacesSidebar();
+                        if (typeof applySidebarCustomization === 'function') applySidebarCustomization();
                         renderDocumentsList();
                         renderFoldersList();
+                        if (typeof renderFoldersPage === 'function') renderFoldersPage();
+                        if (typeof renderChartsPage === 'function') renderChartsPage();
                         showToast(_t('backup_imported'), { type: 'success' });
                     } catch (err) {
                         console.error('Failed to import backup:', err);
@@ -27928,10 +28488,11 @@ try {
         });
 
         function setupNavigationExtensions() {
-            const navItems = document.querySelectorAll('.sidebarnav__items .sidebarnav__item');
-            if (navItems[3] && navItems[3].dataset.omniReady !== 'true') {
-                navItems[3].dataset.omniReady = 'true';
-                navItems[3].addEventListener('click', event => {
+            const notesNav = document.querySelector('.sidebarnav__item[data-nav="notes"]');
+            const trashNav = document.querySelector('.sidebarnav__item[data-nav="trash"]');
+            if (notesNav && notesNav.dataset.omniReady !== 'true') {
+                notesNav.dataset.omniReady = 'true';
+                notesNav.addEventListener('click', event => {
                     event.stopImmediatePropagation();
                     window.location.hash = '#/notes';
                     switchPage('notesApp');
@@ -27939,9 +28500,9 @@ try {
                     hideSidebarIfMobile();
                 }, true);
             }
-            if (navItems[4] && navItems[4].dataset.omniReady !== 'true') {
-                navItems[4].dataset.omniReady = 'true';
-                navItems[4].addEventListener('click', event => {
+            if (trashNav && trashNav.dataset.omniReady !== 'true') {
+                trashNav.dataset.omniReady = 'true';
+                trashNav.addEventListener('click', event => {
                     event.stopImmediatePropagation();
                     window.location.hash = '#/trash';
                     switchPage('trashApp');
@@ -29685,6 +30246,1257 @@ try {
                 showToast(_t('language_updated'), { type: 'success' });
             });
         }
+        const OMNI_SIDEBAR_CUSTOMIZATION_KEY = 'omniwrite-sidebar-customization';
+        const OMNI_SIDEBAR_ORGANIZATION_KEY = 'omniwrite-sidebar-organization';
+        const omniSidebarFeatureTranslations = {
+            charts: 'Charts',
+            charts_page_title: 'Chart Editor',
+            charts_page_desc: 'Build a chart and insert it into the current document.',
+            chart_title: 'Chart Title',
+            chart_type: 'Chart Type',
+            chart_data: 'Chart Data',
+            insert_to_document: 'Insert to Document',
+            workspace_template: 'Workspace Template',
+            insert_chart_from_editor: 'Chart Editor',
+            chart_inserted_document: 'Chart inserted into document.',
+            no_document_for_chart_insert: 'Open a document before inserting a chart.',
+            folders_page_title: 'Folders',
+            folders_page_desc: 'Browse folders and open documents without expanding the sidebar.',
+            folder_empty: 'This folder has no documents.',
+            customize_sidebar: 'Customize Sidebar',
+            customize_sidebar_desc: 'Reorder sidebar items, move items to More, and choose how folders are organized.',
+            sidebar_customization_saved: 'Sidebar customization saved.',
+            sidebar_organization: 'Sidebar Organization',
+            sidebar_organization_desc: 'Choose whether folders appear inline or as their own page.',
+            organize_by_folder_list: 'Folder list',
+            organize_by_document_list: 'Document list',
+            sidebar_location_top: 'Top',
+            sidebar_location_main: 'Main',
+            sidebar_location_bottom: 'Bottom',
+            sidebar_location_more: 'More',
+            sidebar_location_topbar_right: 'Topbar right',
+            sidebar_location_hidden: 'Hidden',
+            workspace_profile: 'Workspace Profile',
+            reset_sidebar: 'Reset Sidebar',
+            move_up: 'Move up',
+            move_down: 'Move down',
+            insert_modal_title: 'Insert',
+            insert_modal_desc: 'Choose what to add to the current document.',
+            insert_modal_search: 'Search insert actions',
+            insert_modal_no_results: 'No insert actions found.',
+            insert_dropdown: 'Insert Dropdown',
+            insert_dropdown_desc: 'Create a dropdown field with selectable options inside the document.',
+            dropdown_label: 'Dropdown Label',
+            dropdown_default_label: 'Choose',
+            dropdown_options: 'Options',
+            dropdown_option_one: 'Option 1',
+            dropdown_option_two: 'Option 2',
+            dropdown_option_three: 'Option 3',
+            dropdown_option_label: 'Option Label',
+            dropdown_action_type: 'Option Type',
+            dropdown_action_target: 'Target',
+            dropdown_action_value: 'Value',
+            dropdown_action_page: 'Go to Page',
+            dropdown_action_format: 'Format',
+            dropdown_action_action: 'Action',
+            dropdown_target_none: 'No action',
+            add_option: 'Add Option',
+            dropdown_options_required: 'Add at least one dropdown option.',
+            dropdown_inserted: 'Dropdown inserted.'
+        };
+        if (typeof TRANSLATIONS === 'object') {
+            Object.keys(TRANSLATIONS).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign({}, omniSidebarFeatureTranslations, TRANSLATIONS[lang] || {});
+            });
+            const omniSidebarFeatureLocalePatches = {
+                es: {
+                    charts: 'Gráficos',
+                    charts_page_title: 'Editor de gráficos',
+                    charts_page_desc: 'Crea un gráfico e insértalo en el documento actual.',
+                    chart_title: 'Título del gráfico',
+                    chart_type: 'Tipo de gráfico',
+                    chart_data: 'Datos del gráfico',
+                    insert_to_document: 'Insertar en el documento',
+                    workspace_template: 'Plantilla de espacio de trabajo',
+                    insert_chart_from_editor: 'Editor de gráficos',
+                    chart_inserted_document: 'Gráfico insertado en el documento.',
+                    no_document_for_chart_insert: 'Abre un documento antes de insertar un gráfico.',
+                    folders_page_title: 'Carpetas',
+                    folders_page_desc: 'Explora carpetas y abre documentos sin expandir la barra lateral.',
+                    folder_empty: 'Esta carpeta no tiene documentos.',
+                    customize_sidebar: 'Personalizar barra lateral',
+                    customize_sidebar_desc: 'Reordena elementos de la barra lateral, muévelos a Más y elige cómo se organizan las carpetas.',
+                    sidebar_customization_saved: 'Personalización de la barra lateral guardada.',
+                    sidebar_organization: 'Organización de la barra lateral',
+                    sidebar_organization_desc: 'Elige si las carpetas aparecen en línea o como su propia página.',
+                    organize_by_folder_list: 'Lista de carpetas',
+                    organize_by_document_list: 'Lista de documentos',
+                    sidebar_location_top: 'Arriba',
+                    sidebar_location_main: 'Principal',
+                    sidebar_location_bottom: 'Abajo',
+                    sidebar_location_more: 'Más',
+                    sidebar_location_topbar_right: 'Derecha de la barra superior',
+                    sidebar_location_hidden: 'Oculto',
+                    workspace_profile: 'Perfil del espacio de trabajo',
+                    reset_sidebar: 'Restablecer barra lateral',
+                    move_up: 'Subir',
+                    move_down: 'Bajar',
+                    insert_modal_title: 'Insertar',
+                    insert_modal_desc: 'Elige qué agregar al documento actual.',
+                    insert_modal_search: 'Buscar acciones de inserción',
+                    insert_modal_no_results: 'No se encontraron acciones de inserción.',
+                    insert_dropdown: 'Insertar desplegable',
+                    insert_dropdown_desc: 'Crea un campo desplegable con opciones seleccionables dentro del documento.',
+                    dropdown_label: 'Etiqueta del desplegable',
+                    dropdown_default_label: 'Elegir',
+                    dropdown_options: 'Opciones',
+                    dropdown_option_one: 'Opción 1',
+                    dropdown_option_two: 'Opción 2',
+                    dropdown_option_three: 'Opción 3',
+                    dropdown_option_label: 'Etiqueta de opción',
+                    dropdown_action_type: 'Tipo de opción',
+                    dropdown_action_target: 'Destino',
+                    dropdown_action_value: 'Valor',
+                    dropdown_action_page: 'Ir a página',
+                    dropdown_action_format: 'Formato',
+                    dropdown_action_action: 'Acción',
+                    dropdown_target_none: 'Sin acción',
+                    add_option: 'Agregar opción',
+                    dropdown_options_required: 'Agrega al menos una opción desplegable.',
+                    dropdown_inserted: 'Desplegable insertado.'
+                },
+                fr: {
+                    charts: 'Graphiques',
+                    charts_page_title: 'Éditeur de graphiques',
+                    charts_page_desc: 'Créez un graphique et insérez-le dans le document actuel.',
+                    chart_title: 'Titre du graphique',
+                    chart_type: 'Type de graphique',
+                    chart_data: 'Données du graphique',
+                    insert_to_document: 'Insérer dans le document',
+                    workspace_template: "Modèle d'espace de travail",
+                    insert_chart_from_editor: 'Éditeur de graphiques',
+                    chart_inserted_document: 'Graphique inséré dans le document.',
+                    no_document_for_chart_insert: "Ouvrez un document avant d'insérer un graphique.",
+                    folders_page_title: 'Dossiers',
+                    folders_page_desc: 'Parcourez les dossiers et ouvrez les documents sans développer la barre latérale.',
+                    folder_empty: "Ce dossier ne contient aucun document.",
+                    customize_sidebar: 'Personnaliser la barre latérale',
+                    customize_sidebar_desc: 'Réorganisez les éléments de la barre latérale, déplacez-les vers Plus et choisissez comment les dossiers sont organisés.',
+                    sidebar_customization_saved: 'Personnalisation de la barre latérale enregistrée.',
+                    sidebar_organization: 'Organisation de la barre latérale',
+                    sidebar_organization_desc: 'Choisissez si les dossiers apparaissent en ligne ou comme leur propre page.',
+                    organize_by_folder_list: 'Liste de dossiers',
+                    organize_by_document_list: 'Liste de documents',
+                    sidebar_location_top: 'Haut',
+                    sidebar_location_main: 'Principal',
+                    sidebar_location_bottom: 'Bas',
+                    sidebar_location_more: 'Plus',
+                    sidebar_location_topbar_right: 'Droite de la barre supérieure',
+                    sidebar_location_hidden: 'Masqué',
+                    workspace_profile: "Profil de l'espace de travail",
+                    reset_sidebar: 'Réinitialiser la barre latérale',
+                    move_up: 'Monter',
+                    move_down: 'Descendre',
+                    insert_modal_title: 'Insérer',
+                    insert_modal_desc: 'Choisissez quoi ajouter au document actuel.',
+                    insert_modal_search: "Rechercher des actions d'insertion",
+                    insert_modal_no_results: "Aucune action d'insertion trouvée.",
+                    insert_dropdown: 'Insérer une liste déroulante',
+                    insert_dropdown_desc: 'Créez un champ déroulant avec des options sélectionnables dans le document.',
+                    dropdown_label: 'Libellé de la liste déroulante',
+                    dropdown_default_label: 'Choisir',
+                    dropdown_options: 'Options',
+                    dropdown_option_one: 'Option 1',
+                    dropdown_option_two: 'Option 2',
+                    dropdown_option_three: 'Option 3',
+                    dropdown_option_label: "Libellé de l'option",
+                    dropdown_action_type: "Type d'option",
+                    dropdown_action_target: 'Cible',
+                    dropdown_action_value: 'Valeur',
+                    dropdown_action_page: 'Aller à la page',
+                    dropdown_action_format: 'Format',
+                    dropdown_action_action: 'Action',
+                    dropdown_target_none: 'Aucune action',
+                    add_option: 'Ajouter une option',
+                    dropdown_options_required: 'Ajoutez au moins une option à la liste déroulante.',
+                    dropdown_inserted: 'Liste déroulante insérée.'
+                },
+                de: {
+                    charts: 'Diagramme',
+                    charts_page_title: 'Diagramm-Editor',
+                    charts_page_desc: 'Erstelle ein Diagramm und füge es in das aktuelle Dokument ein.',
+                    chart_title: 'Diagrammtitel',
+                    chart_type: 'Diagrammtyp',
+                    chart_data: 'Diagrammdaten',
+                    insert_to_document: 'In Dokument einfügen',
+                    workspace_template: 'Arbeitsbereichsvorlage',
+                    insert_chart_from_editor: 'Diagramm-Editor',
+                    chart_inserted_document: 'Diagramm in das Dokument eingefügt.',
+                    no_document_for_chart_insert: 'Öffne ein Dokument, bevor du ein Diagramm einfügst.',
+                    folders_page_title: 'Ordner',
+                    folders_page_desc: 'Durchsuche Ordner und öffne Dokumente, ohne die Seitenleiste zu erweitern.',
+                    folder_empty: 'Dieser Ordner enthält keine Dokumente.',
+                    customize_sidebar: 'Seitenleiste anpassen',
+                    customize_sidebar_desc: 'Ordne Seitenleistenelemente neu an, verschiebe sie nach Mehr und wähle, wie Ordner organisiert werden.',
+                    sidebar_customization_saved: 'Seitenleistenanpassung gespeichert.',
+                    sidebar_organization: 'Seitenleistenorganisation',
+                    sidebar_organization_desc: 'Wähle, ob Ordner inline oder als eigene Seite angezeigt werden.',
+                    organize_by_folder_list: 'Ordnerliste',
+                    organize_by_document_list: 'Dokumentenliste',
+                    sidebar_location_top: 'Oben',
+                    sidebar_location_main: 'Hauptbereich',
+                    sidebar_location_bottom: 'Unten',
+                    sidebar_location_more: 'Mehr',
+                    sidebar_location_topbar_right: 'Rechts in der oberen Leiste',
+                    sidebar_location_hidden: 'Ausgeblendet',
+                    workspace_profile: 'Arbeitsbereichsprofil',
+                    reset_sidebar: 'Seitenleiste zurücksetzen',
+                    move_up: 'Nach oben',
+                    move_down: 'Nach unten',
+                    insert_modal_title: 'Einfügen',
+                    insert_modal_desc: 'Wähle aus, was dem aktuellen Dokument hinzugefügt werden soll.',
+                    insert_modal_search: 'Einfügeaktionen suchen',
+                    insert_modal_no_results: 'Keine Einfügeaktionen gefunden.',
+                    insert_dropdown: 'Dropdown einfügen',
+                    insert_dropdown_desc: 'Erstelle ein Dropdown-Feld mit auswählbaren Optionen im Dokument.',
+                    dropdown_label: 'Dropdown-Beschriftung',
+                    dropdown_default_label: 'Auswählen',
+                    dropdown_options: 'Optionen',
+                    dropdown_option_one: 'Option 1',
+                    dropdown_option_two: 'Option 2',
+                    dropdown_option_three: 'Option 3',
+                    dropdown_option_label: 'Optionsbeschriftung',
+                    dropdown_action_type: 'Optionstyp',
+                    dropdown_action_target: 'Ziel',
+                    dropdown_action_value: 'Wert',
+                    dropdown_action_page: 'Zur Seite gehen',
+                    dropdown_action_format: 'Format',
+                    dropdown_action_action: 'Aktion',
+                    dropdown_target_none: 'Keine Aktion',
+                    add_option: 'Option hinzufügen',
+                    dropdown_options_required: 'Füge mindestens eine Dropdown-Option hinzu.',
+                    dropdown_inserted: 'Dropdown eingefügt.'
+                },
+                pt: {
+                    charts: 'Gráficos',
+                    charts_page_title: 'Editor de gráficos',
+                    charts_page_desc: 'Crie um gráfico e insira-o no documento atual.',
+                    chart_title: 'Título do gráfico',
+                    chart_type: 'Tipo de gráfico',
+                    chart_data: 'Dados do gráfico',
+                    insert_to_document: 'Inserir no documento',
+                    workspace_template: 'Modelo de espaço de trabalho',
+                    insert_chart_from_editor: 'Editor de gráficos',
+                    chart_inserted_document: 'Gráfico inserido no documento.',
+                    no_document_for_chart_insert: 'Abra um documento antes de inserir um gráfico.',
+                    folders_page_title: 'Pastas',
+                    folders_page_desc: 'Navegue por pastas e abra documentos sem expandir a barra lateral.',
+                    folder_empty: 'Esta pasta não tem documentos.',
+                    customize_sidebar: 'Personalizar barra lateral',
+                    customize_sidebar_desc: 'Reordene itens da barra lateral, mova itens para Mais e escolha como as pastas são organizadas.',
+                    sidebar_customization_saved: 'Personalização da barra lateral salva.',
+                    sidebar_organization: 'Organização da barra lateral',
+                    sidebar_organization_desc: 'Escolha se as pastas aparecem em linha ou como sua própria página.',
+                    organize_by_folder_list: 'Lista de pastas',
+                    organize_by_document_list: 'Lista de documentos',
+                    sidebar_location_top: 'Topo',
+                    sidebar_location_main: 'Principal',
+                    sidebar_location_bottom: 'Inferior',
+                    sidebar_location_more: 'Mais',
+                    sidebar_location_topbar_right: 'Direita da barra superior',
+                    sidebar_location_hidden: 'Oculto',
+                    workspace_profile: 'Perfil do espaço de trabalho',
+                    reset_sidebar: 'Redefinir barra lateral',
+                    move_up: 'Mover para cima',
+                    move_down: 'Mover para baixo',
+                    insert_modal_title: 'Inserir',
+                    insert_modal_desc: 'Escolha o que adicionar ao documento atual.',
+                    insert_modal_search: 'Buscar ações de inserção',
+                    insert_modal_no_results: 'Nenhuma ação de inserção encontrada.',
+                    insert_dropdown: 'Inserir menu suspenso',
+                    insert_dropdown_desc: 'Crie um campo suspenso com opções selecionáveis dentro do documento.',
+                    dropdown_label: 'Rótulo do menu suspenso',
+                    dropdown_default_label: 'Escolher',
+                    dropdown_options: 'Opções',
+                    dropdown_option_one: 'Opção 1',
+                    dropdown_option_two: 'Opção 2',
+                    dropdown_option_three: 'Opção 3',
+                    dropdown_option_label: 'Rótulo da opção',
+                    dropdown_action_type: 'Tipo de opção',
+                    dropdown_action_target: 'Destino',
+                    dropdown_action_value: 'Valor',
+                    dropdown_action_page: 'Ir para página',
+                    dropdown_action_format: 'Formato',
+                    dropdown_action_action: 'Ação',
+                    dropdown_target_none: 'Sem ação',
+                    add_option: 'Adicionar opção',
+                    dropdown_options_required: 'Adicione pelo menos uma opção suspensa.',
+                    dropdown_inserted: 'Menu suspenso inserido.'
+                },
+                it: {
+                    charts: 'Grafici',
+                    charts_page_title: 'Editor grafici',
+                    charts_page_desc: 'Crea un grafico e inseriscilo nel documento corrente.',
+                    chart_title: 'Titolo grafico',
+                    chart_type: 'Tipo di grafico',
+                    chart_data: 'Dati del grafico',
+                    insert_to_document: 'Inserisci nel documento',
+                    workspace_template: 'Modello area di lavoro',
+                    insert_chart_from_editor: 'Editor grafici',
+                    chart_inserted_document: 'Grafico inserito nel documento.',
+                    no_document_for_chart_insert: 'Apri un documento prima di inserire un grafico.',
+                    folders_page_title: 'Cartelle',
+                    folders_page_desc: 'Sfoglia cartelle e apri documenti senza espandere la barra laterale.',
+                    folder_empty: 'Questa cartella non contiene documenti.',
+                    customize_sidebar: 'Personalizza barra laterale',
+                    customize_sidebar_desc: 'Riordina gli elementi della barra laterale, spostali in Altro e scegli come organizzare le cartelle.',
+                    sidebar_customization_saved: 'Personalizzazione della barra laterale salvata.',
+                    sidebar_organization: 'Organizzazione barra laterale',
+                    sidebar_organization_desc: 'Scegli se le cartelle appaiono in linea o come pagina dedicata.',
+                    organize_by_folder_list: 'Elenco cartelle',
+                    organize_by_document_list: 'Elenco documenti',
+                    sidebar_location_top: 'In alto',
+                    sidebar_location_main: 'Principale',
+                    sidebar_location_bottom: 'In basso',
+                    sidebar_location_more: 'Altro',
+                    sidebar_location_topbar_right: 'Destra barra superiore',
+                    sidebar_location_hidden: 'Nascosto',
+                    workspace_profile: 'Profilo area di lavoro',
+                    reset_sidebar: 'Ripristina barra laterale',
+                    move_up: 'Sposta su',
+                    move_down: 'Sposta giù',
+                    insert_modal_title: 'Inserisci',
+                    insert_modal_desc: 'Scegli cosa aggiungere al documento corrente.',
+                    insert_modal_search: 'Cerca azioni di inserimento',
+                    insert_modal_no_results: 'Nessuna azione di inserimento trovata.',
+                    insert_dropdown: 'Inserisci menu a discesa',
+                    insert_dropdown_desc: 'Crea un campo a discesa con opzioni selezionabili nel documento.',
+                    dropdown_label: 'Etichetta menu a discesa',
+                    dropdown_default_label: 'Scegli',
+                    dropdown_options: 'Opzioni',
+                    dropdown_option_one: 'Opzione 1',
+                    dropdown_option_two: 'Opzione 2',
+                    dropdown_option_three: 'Opzione 3',
+                    dropdown_option_label: 'Etichetta opzione',
+                    dropdown_action_type: 'Tipo opzione',
+                    dropdown_action_target: 'Destinazione',
+                    dropdown_action_value: 'Valore',
+                    dropdown_action_page: 'Vai alla pagina',
+                    dropdown_action_format: 'Formato',
+                    dropdown_action_action: 'Azione',
+                    dropdown_target_none: 'Nessuna azione',
+                    add_option: 'Aggiungi opzione',
+                    dropdown_options_required: 'Aggiungi almeno una opzione al menu a discesa.',
+                    dropdown_inserted: 'Menu a discesa inserito.'
+                },
+                zh: {
+                    charts: '图表',
+                    charts_page_title: '图表编辑器',
+                    charts_page_desc: '创建图表并插入到当前文档。',
+                    chart_title: '图表标题',
+                    chart_type: '图表类型',
+                    chart_data: '图表数据',
+                    insert_to_document: '插入到文档',
+                    workspace_template: '工作区模板',
+                    insert_chart_from_editor: '图表编辑器',
+                    chart_inserted_document: '图表已插入文档。',
+                    no_document_for_chart_insert: '插入图表前请先打开文档。',
+                    folders_page_title: '文件夹',
+                    folders_page_desc: '浏览文件夹并打开文档，无需展开侧边栏。',
+                    folder_empty: '此文件夹没有文档。',
+                    customize_sidebar: '自定义侧边栏',
+                    customize_sidebar_desc: '重新排列侧边栏项目，将项目移到更多，并选择文件夹的组织方式。',
+                    sidebar_customization_saved: '侧边栏自定义设置已保存。',
+                    sidebar_organization: '侧边栏组织方式',
+                    sidebar_organization_desc: '选择文件夹是内联显示还是作为独立页面显示。',
+                    organize_by_folder_list: '文件夹列表',
+                    organize_by_document_list: '文档列表',
+                    sidebar_location_top: '顶部',
+                    sidebar_location_main: '主要',
+                    sidebar_location_bottom: '底部',
+                    sidebar_location_more: '更多',
+                    sidebar_location_topbar_right: '顶栏右侧',
+                    sidebar_location_hidden: '隐藏',
+                    workspace_profile: '工作区资料',
+                    reset_sidebar: '重置侧边栏',
+                    move_up: '上移',
+                    move_down: '下移',
+                    insert_modal_title: '插入',
+                    insert_modal_desc: '选择要添加到当前文档的内容。',
+                    insert_modal_search: '搜索插入操作',
+                    insert_modal_no_results: '未找到插入操作。',
+                    insert_dropdown: '插入下拉菜单',
+                    insert_dropdown_desc: '在文档中创建带可选项的下拉字段。',
+                    dropdown_label: '下拉菜单标签',
+                    dropdown_default_label: '选择',
+                    dropdown_options: '选项',
+                    dropdown_option_one: '选项 1',
+                    dropdown_option_two: '选项 2',
+                    dropdown_option_three: '选项 3',
+                    dropdown_option_label: '选项标签',
+                    dropdown_action_type: '选项类型',
+                    dropdown_action_target: '目标',
+                    dropdown_action_value: '值',
+                    dropdown_action_page: '转到页面',
+                    dropdown_action_format: '格式',
+                    dropdown_action_action: '操作',
+                    dropdown_target_none: '无操作',
+                    add_option: '添加选项',
+                    dropdown_options_required: '请至少添加一个下拉选项。',
+                    dropdown_inserted: '下拉菜单已插入。'
+                },
+                ja: {
+                    charts: 'グラフ',
+                    charts_page_title: 'グラフエディター',
+                    charts_page_desc: 'グラフを作成して現在の文書に挿入します。',
+                    chart_title: 'グラフタイトル',
+                    chart_type: 'グラフの種類',
+                    chart_data: 'グラフデータ',
+                    insert_to_document: '文書に挿入',
+                    workspace_template: 'ワークスペーステンプレート',
+                    insert_chart_from_editor: 'グラフエディター',
+                    chart_inserted_document: 'グラフを文書に挿入しました。',
+                    no_document_for_chart_insert: 'グラフを挿入する前に文書を開いてください。',
+                    folders_page_title: 'フォルダー',
+                    folders_page_desc: 'サイドバーを展開せずにフォルダーを参照して文書を開きます。',
+                    folder_empty: 'このフォルダーには文書がありません。',
+                    customize_sidebar: 'サイドバーをカスタマイズ',
+                    customize_sidebar_desc: 'サイドバー項目の並び替え、その他への移動、フォルダーの整理方法を選択します。',
+                    sidebar_customization_saved: 'サイドバーのカスタマイズを保存しました。',
+                    sidebar_organization: 'サイドバーの整理',
+                    sidebar_organization_desc: 'フォルダーをインライン表示するか専用ページとして表示するかを選択します。',
+                    organize_by_folder_list: 'フォルダーリスト',
+                    organize_by_document_list: '文書リスト',
+                    sidebar_location_top: '上部',
+                    sidebar_location_main: 'メイン',
+                    sidebar_location_bottom: '下部',
+                    sidebar_location_more: 'その他',
+                    sidebar_location_topbar_right: 'トップバー右側',
+                    sidebar_location_hidden: '非表示',
+                    workspace_profile: 'ワークスペースプロフィール',
+                    reset_sidebar: 'サイドバーをリセット',
+                    move_up: '上へ移動',
+                    move_down: '下へ移動',
+                    insert_modal_title: '挿入',
+                    insert_modal_desc: '現在の文書に追加する内容を選択します。',
+                    insert_modal_search: '挿入アクションを検索',
+                    insert_modal_no_results: '挿入アクションが見つかりません。',
+                    insert_dropdown: 'ドロップダウンを挿入',
+                    insert_dropdown_desc: '文書内に選択可能なオプション付きのドロップダウン項目を作成します。',
+                    dropdown_label: 'ドロップダウンラベル',
+                    dropdown_default_label: '選択',
+                    dropdown_options: 'オプション',
+                    dropdown_option_one: 'オプション 1',
+                    dropdown_option_two: 'オプション 2',
+                    dropdown_option_three: 'オプション 3',
+                    dropdown_option_label: 'オプションラベル',
+                    dropdown_action_type: 'オプション種類',
+                    dropdown_action_target: 'ターゲット',
+                    dropdown_action_value: '値',
+                    dropdown_action_page: 'ページへ移動',
+                    dropdown_action_format: '書式',
+                    dropdown_action_action: 'アクション',
+                    dropdown_target_none: 'アクションなし',
+                    add_option: 'オプションを追加',
+                    dropdown_options_required: 'ドロップダウンオプションを少なくとも 1 つ追加してください。',
+                    dropdown_inserted: 'ドロップダウンを挿入しました。'
+                },
+                ko: {
+                    charts: '차트',
+                    charts_page_title: '차트 편집기',
+                    charts_page_desc: '차트를 만들고 현재 문서에 삽입합니다.',
+                    chart_title: '차트 제목',
+                    chart_type: '차트 유형',
+                    chart_data: '차트 데이터',
+                    insert_to_document: '문서에 삽입',
+                    workspace_template: '작업공간 템플릿',
+                    insert_chart_from_editor: '차트 편집기',
+                    chart_inserted_document: '차트가 문서에 삽입되었습니다.',
+                    no_document_for_chart_insert: '차트를 삽입하기 전에 문서를 여세요.',
+                    folders_page_title: '폴더',
+                    folders_page_desc: '사이드바를 펼치지 않고 폴더를 탐색하고 문서를 엽니다.',
+                    folder_empty: '이 폴더에는 문서가 없습니다.',
+                    customize_sidebar: '사이드바 사용자 지정',
+                    customize_sidebar_desc: '사이드바 항목을 다시 정렬하고, 더보기로 이동하고, 폴더 구성 방식을 선택합니다.',
+                    sidebar_customization_saved: '사이드바 사용자 지정이 저장되었습니다.',
+                    sidebar_organization: '사이드바 구성',
+                    sidebar_organization_desc: '폴더를 인라인으로 표시할지 별도 페이지로 표시할지 선택합니다.',
+                    organize_by_folder_list: '폴더 목록',
+                    organize_by_document_list: '문서 목록',
+                    sidebar_location_top: '상단',
+                    sidebar_location_main: '메인',
+                    sidebar_location_bottom: '하단',
+                    sidebar_location_more: '더보기',
+                    sidebar_location_topbar_right: '상단바 오른쪽',
+                    sidebar_location_hidden: '숨김',
+                    workspace_profile: '작업공간 프로필',
+                    reset_sidebar: '사이드바 초기화',
+                    move_up: '위로 이동',
+                    move_down: '아래로 이동',
+                    insert_modal_title: '삽입',
+                    insert_modal_desc: '현재 문서에 추가할 항목을 선택합니다.',
+                    insert_modal_search: '삽입 작업 검색',
+                    insert_modal_no_results: '삽입 작업을 찾을 수 없습니다.',
+                    insert_dropdown: '드롭다운 삽입',
+                    insert_dropdown_desc: '문서 안에 선택 가능한 옵션이 있는 드롭다운 필드를 만듭니다.',
+                    dropdown_label: '드롭다운 레이블',
+                    dropdown_default_label: '선택',
+                    dropdown_options: '옵션',
+                    dropdown_option_one: '옵션 1',
+                    dropdown_option_two: '옵션 2',
+                    dropdown_option_three: '옵션 3',
+                    dropdown_option_label: '옵션 레이블',
+                    dropdown_action_type: '옵션 유형',
+                    dropdown_action_target: '대상',
+                    dropdown_action_value: '값',
+                    dropdown_action_page: '페이지로 이동',
+                    dropdown_action_format: '서식',
+                    dropdown_action_action: '작업',
+                    dropdown_target_none: '작업 없음',
+                    add_option: '옵션 추가',
+                    dropdown_options_required: '드롭다운 옵션을 하나 이상 추가하세요.',
+                    dropdown_inserted: '드롭다운이 삽입되었습니다.'
+                },
+                hi: {
+                    charts: 'चार्ट',
+                    charts_page_title: 'चार्ट संपादक',
+                    charts_page_desc: 'चार्ट बनाएं और उसे वर्तमान दस्तावेज़ में डालें।',
+                    chart_title: 'चार्ट शीर्षक',
+                    chart_type: 'चार्ट प्रकार',
+                    chart_data: 'चार्ट डेटा',
+                    insert_to_document: 'दस्तावेज़ में डालें',
+                    workspace_template: 'कार्यस्थान टेम्पलेट',
+                    insert_chart_from_editor: 'चार्ट संपादक',
+                    chart_inserted_document: 'चार्ट दस्तावेज़ में डाल दिया गया।',
+                    no_document_for_chart_insert: 'चार्ट डालने से पहले दस्तावेज़ खोलें।',
+                    folders_page_title: 'फ़ोल्डर',
+                    folders_page_desc: 'साइडबार फैलाए बिना फ़ोल्डर ब्राउज़ करें और दस्तावेज़ खोलें।',
+                    folder_empty: 'इस फ़ोल्डर में कोई दस्तावेज़ नहीं है।',
+                    customize_sidebar: 'साइडबार अनुकूलित करें',
+                    customize_sidebar_desc: 'साइडबार आइटम क्रमबद्ध करें, आइटम को अधिक में ले जाएं, और फ़ोल्डर व्यवस्थित करने का तरीका चुनें।',
+                    sidebar_customization_saved: 'साइडबार अनुकूलन सहेजा गया।',
+                    sidebar_organization: 'साइडबार संगठन',
+                    sidebar_organization_desc: 'चुनें कि फ़ोल्डर इनलाइन दिखें या अपनी अलग पेज के रूप में।',
+                    organize_by_folder_list: 'फ़ोल्डर सूची',
+                    organize_by_document_list: 'दस्तावेज़ सूची',
+                    sidebar_location_top: 'ऊपर',
+                    sidebar_location_main: 'मुख्य',
+                    sidebar_location_bottom: 'नीचे',
+                    sidebar_location_more: 'अधिक',
+                    sidebar_location_topbar_right: 'शीर्ष बार दाईं ओर',
+                    sidebar_location_hidden: 'छिपा हुआ',
+                    workspace_profile: 'कार्यस्थान प्रोफ़ाइल',
+                    reset_sidebar: 'साइडबार रीसेट करें',
+                    move_up: 'ऊपर ले जाएं',
+                    move_down: 'नीचे ले जाएं',
+                    insert_modal_title: 'डालें',
+                    insert_modal_desc: 'वर्तमान दस्तावेज़ में क्या जोड़ना है चुनें।',
+                    insert_modal_search: 'डालने की क्रियाएं खोजें',
+                    insert_modal_no_results: 'कोई डालने की क्रिया नहीं मिली।',
+                    insert_dropdown: 'ड्रॉपडाउन डालें',
+                    insert_dropdown_desc: 'दस्तावेज़ में चयन योग्य विकल्पों वाला ड्रॉपडाउन फ़ील्ड बनाएं।',
+                    dropdown_label: 'ड्रॉपडाउन लेबल',
+                    dropdown_default_label: 'चुनें',
+                    dropdown_options: 'विकल्प',
+                    dropdown_option_one: 'विकल्प 1',
+                    dropdown_option_two: 'विकल्प 2',
+                    dropdown_option_three: 'विकल्प 3',
+                    dropdown_option_label: 'विकल्प लेबल',
+                    dropdown_action_type: 'विकल्प प्रकार',
+                    dropdown_action_target: 'लक्ष्य',
+                    dropdown_action_value: 'मान',
+                    dropdown_action_page: 'पेज पर जाएं',
+                    dropdown_action_format: 'फ़ॉर्मेट',
+                    dropdown_action_action: 'क्रिया',
+                    dropdown_target_none: 'कोई क्रिया नहीं',
+                    add_option: 'विकल्प जोड़ें',
+                    dropdown_options_required: 'कम से कम एक ड्रॉपडाउन विकल्प जोड़ें।',
+                    dropdown_inserted: 'ड्रॉपडाउन डाल दिया गया।'
+                },
+                ru: {
+                    charts: 'Диаграммы',
+                    charts_page_title: 'Редактор диаграмм',
+                    charts_page_desc: 'Создайте диаграмму и вставьте ее в текущий документ.',
+                    chart_title: 'Название диаграммы',
+                    chart_type: 'Тип диаграммы',
+                    chart_data: 'Данные диаграммы',
+                    insert_to_document: 'Вставить в документ',
+                    workspace_template: 'Шаблон рабочей области',
+                    insert_chart_from_editor: 'Редактор диаграмм',
+                    chart_inserted_document: 'Диаграмма вставлена в документ.',
+                    no_document_for_chart_insert: 'Откройте документ перед вставкой диаграммы.',
+                    folders_page_title: 'Папки',
+                    folders_page_desc: 'Просматривайте папки и открывайте документы без раскрытия боковой панели.',
+                    folder_empty: 'В этой папке нет документов.',
+                    customize_sidebar: 'Настроить боковую панель',
+                    customize_sidebar_desc: 'Меняйте порядок элементов боковой панели, перемещайте их в Еще и выбирайте организацию папок.',
+                    sidebar_customization_saved: 'Настройки боковой панели сохранены.',
+                    sidebar_organization: 'Организация боковой панели',
+                    sidebar_organization_desc: 'Выберите, показывать папки встроенно или как отдельную страницу.',
+                    organize_by_folder_list: 'Список папок',
+                    organize_by_document_list: 'Список документов',
+                    sidebar_location_top: 'Сверху',
+                    sidebar_location_main: 'Основная',
+                    sidebar_location_bottom: 'Снизу',
+                    sidebar_location_more: 'Еще',
+                    sidebar_location_topbar_right: 'Справа в верхней панели',
+                    sidebar_location_hidden: 'Скрыто',
+                    workspace_profile: 'Профиль рабочей области',
+                    reset_sidebar: 'Сбросить боковую панель',
+                    move_up: 'Переместить вверх',
+                    move_down: 'Переместить вниз',
+                    insert_modal_title: 'Вставить',
+                    insert_modal_desc: 'Выберите, что добавить в текущий документ.',
+                    insert_modal_search: 'Поиск действий вставки',
+                    insert_modal_no_results: 'Действия вставки не найдены.',
+                    insert_dropdown: 'Вставить раскрывающийся список',
+                    insert_dropdown_desc: 'Создайте в документе раскрывающееся поле с выбираемыми вариантами.',
+                    dropdown_label: 'Метка списка',
+                    dropdown_default_label: 'Выбрать',
+                    dropdown_options: 'Параметры',
+                    dropdown_option_one: 'Вариант 1',
+                    dropdown_option_two: 'Вариант 2',
+                    dropdown_option_three: 'Вариант 3',
+                    dropdown_option_label: 'Метка варианта',
+                    dropdown_action_type: 'Тип варианта',
+                    dropdown_action_target: 'Цель',
+                    dropdown_action_value: 'Значение',
+                    dropdown_action_page: 'Перейти на страницу',
+                    dropdown_action_format: 'Формат',
+                    dropdown_action_action: 'Действие',
+                    dropdown_target_none: 'Нет действия',
+                    add_option: 'Добавить вариант',
+                    dropdown_options_required: 'Добавьте хотя бы один вариант раскрывающегося списка.',
+                    dropdown_inserted: 'Раскрывающийся список вставлен.'
+                }
+            };
+            Object.keys(omniSidebarFeatureLocalePatches).forEach(lang => {
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniSidebarFeatureLocalePatches[lang]);
+            });
+            Object.keys(TRANSLATIONS).forEach(locale => {
+                const base = String(locale).split('-')[0];
+                if (omniSidebarFeatureLocalePatches[base]) {
+                    TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[locale] || {}, omniSidebarFeatureLocalePatches[base]);
+                }
+            });
+        }
+
+        function getSidebarDefaultConfig() {
+            return [
+                { key: 'images', label: _t('images'), icon: 'filter', location: 'top' },
+                { key: 'folders', label: _t('folders'), icon: 'folder_open', location: 'top' },
+                { key: 'templates', label: _t('templates'), icon: 'browse', location: 'top' },
+                { key: 'tasks', label: _t('tasks'), icon: 'task_alt', location: 'main' },
+                { key: 'notes', label: _t('notes'), icon: 'edit_note', location: 'main' },
+                { key: 'charts', label: _t('charts'), icon: 'bar_chart', location: 'main' },
+                { key: 'help', label: _t('help'), icon: 'help', location: 'bottom' },
+                { key: 'apps', label: _t('apps'), icon: 'apps', location: 'bottom' },
+                { key: 'trash', label: _t('trash'), icon: 'delete', location: 'bottom' },
+                { key: 'workspaceProfile', label: _t('workspace_profile'), icon: 'account_circle', location: 'bottom' }
+            ];
+        }
+
+        function getSidebarCustomization() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(OMNI_SIDEBAR_CUSTOMIZATION_KEY) || 'null');
+                if (Array.isArray(parsed)) {
+                    const defaults = getSidebarDefaultConfig();
+                    const merged = defaults.map(item => Object.assign({}, item, parsed.find(saved => saved && saved.key === item.key) || {}));
+                    parsed.forEach(item => {
+                        if (item && item.key && !merged.some(existing => existing.key === item.key)) merged.push(item);
+                    });
+                    return normalizeSidebarCustomization(merged);
+                }
+            } catch(e) {}
+            return normalizeSidebarCustomization(getSidebarDefaultConfig());
+        }
+
+        function normalizeSidebarCustomization(config) {
+            const validLocations = new Set(['top', 'main', 'bottom', 'more', 'topbar-right', 'hidden']);
+            const defaultsByKey = new Map(getSidebarDefaultConfig().map(item => [item.key, item]));
+            return (Array.isArray(config) ? config : getSidebarDefaultConfig()).map(item => {
+                const fallback = defaultsByKey.get(item?.key) || {};
+                let location = validLocations.has(item?.location) ? item.location : (fallback.location || 'main');
+                if (location === 'topbar-right' && item?.key !== 'workspaceProfile') location = 'main';
+                return {
+                    key: item?.key || fallback.key,
+                    label: item?.label || fallback.label || item?.key || '',
+                    icon: item?.icon || fallback.icon || 'circle',
+                    location
+                };
+            }).filter(item => item.key);
+        }
+
+        function saveSidebarCustomization(config) {
+            localStorage.setItem(OMNI_SIDEBAR_CUSTOMIZATION_KEY, JSON.stringify(normalizeSidebarCustomization(config)));
+        }
+
+        function getSidebarItemElement(key) {
+            if (key === 'workspaceProfile') return document.getElementById('workspaceProfileSlot');
+            if (key === 'apps') return document.querySelector('.apps-menu-anchor') || document.getElementById('appsMenuBtn');
+            return document.querySelector('.sidebarnav__item[data-nav="' + key + '"]');
+        }
+
+        function getSidebarInteractiveItem(node) {
+            return node?.classList?.contains('sidebarnav__item') ? node : node?.querySelector?.('.sidebarnav__item');
+        }
+
+        function ensureWorkspaceProfileSlot() {
+            let slot = document.getElementById('workspaceProfileSlot');
+            if (!slot) {
+                slot = document.createElement('div');
+                slot.className = 'workspace-profile-slot';
+                slot.id = 'workspaceProfileSlot';
+            }
+            return slot;
+        }
+
+        function getActiveTopbarRightTarget() {
+            const activePage = document.querySelector('.page.active') || document.getElementById('selectArea');
+            const navbar = activePage?.querySelector('.navbar');
+            if (!navbar) return null;
+            let right = navbar.querySelector('.navbar__right');
+            if (!right) {
+                right = document.createElement('div');
+                right.className = 'navbar__right liquid-glass';
+                right.style.cssText = 'padding:6px 12px;display:flex;align-items:center;gap:12px;';
+                navbar.appendChild(right);
+            }
+            return right;
+        }
+
+        function createWorkspaceProfileMoreProxy() {
+            const proxy = document.createElement('div');
+            proxy.className = 'sidebarnav__item';
+            proxy.dataset.moreNav = 'workspaceProfile';
+            proxy.innerHTML = '<icon>account_circle</icon><div class="menu-text">' + escapeHtml(_t('workspace_profile')) + '</div>';
+            proxy.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const trigger = document.querySelector('#workspaceProfileSlot .workspace-top-trigger');
+                if (trigger) trigger.click();
+            });
+            return proxy;
+        }
+
+        function applySidebarOrganization() {
+            const organization = localStorage.getItem(OMNI_SIDEBAR_ORGANIZATION_KEY) || 'folder-list';
+            const foldersSection = document.getElementById('foldersSection');
+            const foldersNav = document.getElementById('sidebarFoldersPageBtn');
+            const priorityNav = document.getElementById('sidebarPriorityNav');
+            const imagesNav = document.querySelector('.sidebarnav__item[data-nav="images"]');
+            document.body.classList.toggle('omni-sidebar-folder-list-mode', organization !== 'document-list');
+            document.body.classList.toggle('omni-sidebar-document-list-mode', organization === 'document-list');
+            if (foldersSection) foldersSection.style.display = organization === 'document-list' ? 'none' : '';
+            if (foldersNav && !foldersNav.dataset.sidebarHidden && foldersNav.dataset.sidebarUserMore !== 'true') {
+                if (organization === 'document-list' && priorityNav && imagesNav && foldersNav.previousElementSibling !== imagesNav) {
+                    imagesNav.insertAdjacentElement('afterend', foldersNav);
+                }
+                foldersNav.style.display = organization === 'document-list' ? '' : 'none';
+                foldersNav.dataset.sidebarOrganizationHidden = organization === 'document-list' ? 'false' : 'true';
+            }
+        }
+
+        function applySidebarCustomization(config = getSidebarCustomization()) {
+            const top = document.getElementById('sidebarPriorityNav');
+            const main = document.getElementById('sidebarMainNav');
+            const bottom = document.querySelector('.sidebar__bottom-actions');
+            const moreBtn = document.getElementById('sidebarMoreBtn');
+            if (!top || !main || !bottom || !moreBtn) return;
+            const containers = { top, main, bottom };
+            config.forEach(item => {
+                const node = getSidebarItemElement(item.key);
+                const interactive = getSidebarInteractiveItem(node);
+                if (!node) return;
+                if (item.key === 'workspaceProfile') {
+                    const slot = ensureWorkspaceProfileSlot();
+                    slot.style.display = '';
+                    slot.classList.remove('omni-workspace-profile-topbar');
+                    slot.removeAttribute('data-overflow-hidden');
+                    slot.removeAttribute('data-sidebar-user-more');
+                    slot.removeAttribute('data-sidebar-hidden');
+                    if (item.location === 'hidden' || item.location === 'more') {
+                        slot.style.display = 'none';
+                        if (item.location === 'hidden') slot.dataset.sidebarHidden = 'true';
+                        if (item.location === 'more') {
+                            slot.dataset.overflowHidden = 'true';
+                            slot.dataset.sidebarUserMore = 'true';
+                        }
+                        return;
+                    }
+                    if (item.location === 'topbar-right') {
+                        const topbarRight = getActiveTopbarRightTarget();
+                        slot.classList.add('omni-workspace-profile-topbar');
+                        if (topbarRight && slot.parentElement !== topbarRight) topbarRight.appendChild(slot);
+                        return;
+                    }
+                    const container = containers[item.location] || bottom;
+                    if (slot.parentElement !== container) container.appendChild(slot);
+                    return;
+                }
+                if (!interactive) return;
+                interactive.style.display = item.key === 'folders' && (localStorage.getItem(OMNI_SIDEBAR_ORGANIZATION_KEY) || 'folder-list') !== 'document-list' ? 'none' : '';
+                interactive.removeAttribute('data-overflow-hidden');
+                interactive.removeAttribute('data-sidebar-user-more');
+                interactive.removeAttribute('data-sidebar-hidden');
+                interactive.removeAttribute('data-sidebar-organization-hidden');
+                if (item.location === 'hidden') {
+                    interactive.style.display = 'none';
+                    interactive.dataset.sidebarHidden = 'true';
+                    return;
+                }
+                if (item.location === 'more') {
+                    interactive.style.display = 'none';
+                    interactive.dataset.overflowHidden = 'true';
+                    interactive.dataset.sidebarUserMore = 'true';
+                    if (node.parentElement !== main && node !== moreBtn) main.insertBefore(node, moreBtn);
+                    return;
+                }
+                const container = containers[item.location] || main;
+                if (container === main && node !== moreBtn) {
+                    main.insertBefore(node, moreBtn);
+                } else if (node.parentElement !== container) {
+                    container.appendChild(node);
+                }
+            });
+            if (moreBtn.parentElement !== main) main.appendChild(moreBtn);
+            applySidebarOrganization();
+            if (typeof updateSidebarOverflowNavigation === 'function' && !window.__omniSidebarApplyingOverflow) {
+                window.__omniSidebarApplyingOverflow = true;
+                try { updateSidebarOverflowNavigation(); } catch(e) {}
+                window.__omniSidebarApplyingOverflow = false;
+            }
+            let hasUserMoreItem = false;
+            config.forEach(item => {
+                const interactive = getSidebarInteractiveItem(getSidebarItemElement(item.key));
+                if (item.key === 'workspaceProfile') {
+                    const slot = ensureWorkspaceProfileSlot();
+                    if (item.location === 'hidden') {
+                        slot.style.display = 'none';
+                        slot.dataset.sidebarHidden = 'true';
+                        slot.removeAttribute('data-overflow-hidden');
+                        return;
+                    }
+                    if (item.location === 'more') {
+                        hasUserMoreItem = true;
+                        slot.style.display = 'none';
+                        slot.dataset.overflowHidden = 'true';
+                        slot.dataset.sidebarUserMore = 'true';
+                    }
+                    return;
+                }
+                if (!interactive) return;
+                if (item.location === 'hidden') {
+                    interactive.style.display = 'none';
+                    interactive.dataset.sidebarHidden = 'true';
+                    interactive.removeAttribute('data-overflow-hidden');
+                    return;
+                }
+                if (item.location === 'more') {
+                    hasUserMoreItem = true;
+                    interactive.style.display = 'none';
+                    interactive.dataset.overflowHidden = 'true';
+                    interactive.dataset.sidebarUserMore = 'true';
+                }
+            });
+            if (hasUserMoreItem) moreBtn.style.display = '';
+        }
+
+        function openSidebarCustomizerModal() {
+            document.getElementById('sidebarCustomizerModal')?.remove();
+            let workingConfig = getSidebarCustomization().map(item => ({ ...item }));
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'sidebarCustomizerModal';
+            modal.innerHTML = `
+                <div class="modal-content liquid-glass" style="position:relative;max-width:720px;max-height:84vh;overflow-y:auto;">
+                    <span class="modal-content-close" id="closeSidebarCustomizerModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
+                    <h2>${_t('customize_sidebar')}</h2>
+                    <div class="settings-row" style="margin:14px 0;">
+                        <div class="settings-row-info">
+                            <div class="settings-row-title">${_t('sidebar_organization')}</div>
+                            <div class="settings-row-subtitle">${_t('sidebar_organization_desc')}</div>
+                        </div>
+                        <button id="sidebarOrganizationBtn" class="settings-select-btn"></button>
+                    </div>
+                    <div class="toolbar-customizer-actions">
+                        <button id="sidebarResetBtn" type="button">${_t('reset_sidebar')}</button>
+                        <button id="sidebarSaveBtn" type="button"><icon>save</icon>${_t('save')}</button>
+                    </div>
+                    <div class="toolbar-customizer-list" id="sidebarCustomizerList"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#sidebarCustomizerList');
+            const locationOptions = [
+                { value: 'top', label: _t('sidebar_location_top') },
+                { value: 'main', label: _t('sidebar_location_main') },
+                { value: 'bottom', label: _t('sidebar_location_bottom') },
+                { value: 'more', label: _t('sidebar_location_more') },
+                { value: 'topbar-right', label: _t('sidebar_location_topbar_right') },
+                { value: 'hidden', label: _t('sidebar_location_hidden') }
+            ];
+            function renderRows() {
+                list.innerHTML = workingConfig.map((item, index) => `
+                    <div class="toolbar-customizer-row omni-sidebar-customizer-row" draggable="true" data-key="${escapeHtml(item.key)}">
+                        <icon>${escapeHtml(item.icon || 'circle')}</icon>
+                        <div class="toolbar-customizer-title">${escapeHtml(item.label || item.key)}</div>
+                        <select data-role="location">
+                            ${locationOptions.filter(option => item.key === 'workspaceProfile' || option.value !== 'topbar-right').map(option => `<option value="${option.value}"${(item.location || 'main') === option.value ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                        </select>
+                        <button type="button" data-action="up" title="${escapeHtml(_t('move_up'))}"><icon>arrow_upward</icon></button>
+                        <button type="button" data-action="down" title="${escapeHtml(_t('move_down'))}"><icon>arrow_downward</icon></button>
+                    </div>
+                `).join('');
+            }
+            function syncSidebarCustomizerRows() {
+                list.querySelectorAll('.toolbar-customizer-row[data-key]').forEach(row => {
+                    const item = workingConfig.find(entry => entry.key === row.dataset.key);
+                    const select = row.querySelector('select[data-role="location"]');
+                    if (item && select) item.location = select.value;
+                });
+                workingConfig = normalizeSidebarCustomization(workingConfig);
+            }
+            renderRows();
+            let draggedKey = null;
+            list.addEventListener('dragstart', event => {
+                syncSidebarCustomizerRows();
+                const row = event.target.closest('.toolbar-customizer-row');
+                if (!row) return;
+                draggedKey = row.dataset.key;
+                row.classList.add('is-dragging');
+            });
+            list.addEventListener('dragend', event => {
+                event.target.closest('.toolbar-customizer-row')?.classList.remove('is-dragging');
+                draggedKey = null;
+            });
+            list.addEventListener('dragover', event => {
+                event.preventDefault();
+                syncSidebarCustomizerRows();
+                const row = event.target.closest('.toolbar-customizer-row');
+                if (!row || !draggedKey || row.dataset.key === draggedKey) return;
+                const from = workingConfig.findIndex(item => item.key === draggedKey);
+                const to = workingConfig.findIndex(item => item.key === row.dataset.key);
+                if (from < 0 || to < 0) return;
+                const [item] = workingConfig.splice(from, 1);
+                workingConfig.splice(to, 0, item);
+                renderRows();
+            });
+            list.addEventListener('change', event => {
+                const row = event.target.closest('.toolbar-customizer-row');
+                const item = workingConfig.find(entry => entry.key === row?.dataset.key);
+                if (item && event.target.matches('[data-role="location"]')) item.location = event.target.value;
+            });
+            list.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                syncSidebarCustomizerRows();
+                const row = button.closest('.toolbar-customizer-row');
+                const index = workingConfig.findIndex(item => item.key === row.dataset.key);
+                const direction = button.dataset.action === 'up' ? -1 : 1;
+                const next = index + direction;
+                if (index < 0 || next < 0 || next >= workingConfig.length) return;
+                const [item] = workingConfig.splice(index, 1);
+                workingConfig.splice(next, 0, item);
+                renderRows();
+            });
+            const organizationOptions = [
+                { value: 'folder-list', label: _t('organize_by_folder_list') },
+                { value: 'document-list', label: _t('organize_by_document_list') }
+            ];
+            const organizationBtn = modal.querySelector('#sidebarOrganizationBtn');
+            const organizationDropdown = document.createElement('div');
+            organizationDropdown.className = 'dropdown-wrapper liquid-glass';
+            organizationDropdown.style.cssText = 'position:absolute;min-width:220px;display:none;z-index:1000000;';
+            organizationDropdown.innerHTML = organizationOptions.map(option => `<div class="dropdown-item" data-value="${option.value}">${escapeHtml(option.label)}</div>`).join('');
+            document.body.appendChild(organizationDropdown);
+            let selectedOrganization = localStorage.getItem(OMNI_SIDEBAR_ORGANIZATION_KEY) || 'folder-list';
+            setSettingsButtonLabel(organizationBtn, (organizationOptions.find(option => option.value === selectedOrganization) || organizationOptions[0]).label);
+            organizationBtn.onclick = event => {
+                event.preventDefault();
+                const rect = organizationBtn.getBoundingClientRect();
+                organizationDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                organizationDropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                organizationDropdown.style.display = organizationDropdown.style.display === 'block' ? 'none' : 'block';
+            };
+            organizationDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.onclick = function() {
+                    selectedOrganization = this.dataset.value;
+                    setSettingsButtonLabel(organizationBtn, this.textContent);
+                    organizationDropdown.style.display = 'none';
+                };
+            });
+            modal.querySelector('#sidebarResetBtn').onclick = () => {
+                workingConfig = getSidebarDefaultConfig().map(item => ({ ...item }));
+                selectedOrganization = 'folder-list';
+                setSettingsButtonLabel(organizationBtn, _t('organize_by_folder_list'));
+                renderRows();
+            };
+            modal.querySelector('#sidebarSaveBtn').onclick = () => {
+                syncSidebarCustomizerRows();
+                saveSidebarCustomization(workingConfig);
+                localStorage.setItem(OMNI_SIDEBAR_ORGANIZATION_KEY, selectedOrganization);
+                applySidebarCustomization(workingConfig);
+                renderFoldersList();
+                renderFoldersPage();
+                showToast(_t('sidebar_customization_saved'), { type: 'success' });
+                organizationDropdown.remove();
+                modal.remove();
+            };
+            modal.querySelector('#closeSidebarCustomizerModal').onclick = () => { organizationDropdown.remove(); modal.remove(); };
+        }
+
+        let selectedFoldersPageFolderId = null;
+        function renderFoldersPage() {
+            const folderList = document.getElementById('foldersPageList');
+            const docsList = document.getElementById('foldersPageDocsList');
+            const docsTitle = document.getElementById('foldersPageDocsTitle');
+            if (!folderList || !docsList) return;
+            const workspaceFolders = (typeof getWorkspaceFolders === 'function' ? getWorkspaceFolders() : folders).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            if (!workspaceFolders.length) {
+                folderList.innerHTML = '<p style="padding:8px;opacity:.66;">' + escapeHtml(_t('no_folders')) + '</p>';
+                docsList.innerHTML = '';
+                if (docsTitle) docsTitle.textContent = _t('documents_section');
+                return;
+            }
+            if (!selectedFoldersPageFolderId || !workspaceFolders.some(folder => folder.id === selectedFoldersPageFolderId)) {
+                selectedFoldersPageFolderId = workspaceFolders[0].id;
+            }
+            folderList.innerHTML = workspaceFolders.map(folder => {
+                const count = (folder.documentIds || []).length;
+                return '<button class="omni-folder-page-item' + (folder.id === selectedFoldersPageFolderId ? ' active' : '') + '" type="button" data-folder-id="' + escapeHtml(folder.id) + '"><icon>folder</icon><span><strong>' + escapeHtml(folder.name || _t('folders')) + '</strong><small style="display:block;opacity:.66;">' + count + ' ' + escapeHtml(_t('documents_section')) + '</small></span></button>';
+            }).join('');
+            const selected = workspaceFolders.find(folder => folder.id === selectedFoldersPageFolderId);
+            if (docsTitle) docsTitle.textContent = selected?.name || _t('documents_section');
+            const docs = (selected?.documentIds || []).map(id => documents.find(doc => doc.id === id)).filter(Boolean);
+            docsList.innerHTML = docs.length ? docs.map(doc => '<div class="omni-folder-doc-card"><span style="min-width:0;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(doc.title || documentTitleDefault()) + '</strong><small style="opacity:.66;">' + escapeHtml(new Date(doc.timestamp || doc.updatedAt || doc.createdAt || Date.now()).toLocaleString()) + '</small></span><button type="button" data-open-doc="' + escapeHtml(doc.id) + '"><icon>open_in_new</icon>' + escapeHtml(_t('open')) + '</button></div>').join('') : '<p style="opacity:.66;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            folderList.querySelectorAll('[data-folder-id]').forEach(item => {
+                item.onclick = () => {
+                    selectedFoldersPageFolderId = item.dataset.folderId;
+                    renderFoldersPage();
+                };
+            });
+            docsList.querySelectorAll('[data-open-doc]').forEach(button => {
+                button.onclick = () => openDocument(button.dataset.openDoc);
+            });
+        }
+
+        let chartsPageChartInstance = null;
+        function parseChartsPageRows() {
+            const input = document.getElementById('chartsPageDataInput');
+            return String(input?.value || '').split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+                const parts = line.split(':');
+                return { label: (parts.shift() || '').trim(), value: Number((parts.join(':') || '').trim()) };
+            }).filter(row => row.label && Number.isFinite(row.value));
+        }
+
+        function buildChartsPageDataset(type, rows) {
+            const colors = typeof getOmniChartColors === 'function' ? getOmniChartColors() : { accent: '#8f5cff', series: ['#8f5cff', '#ff9b50', '#67d6ff', '#6ff3c5', '#ff7fbf', '#ffe066'] };
+            return [{
+                data: rows.map(row => row.value),
+                borderColor: colors.accent,
+                backgroundColor: colors.series,
+                borderWidth: type === 'line' ? 3 : 2,
+                tension: 0.35,
+                fill: type === 'line',
+                pointRadius: type === 'line' ? 4 : undefined
+            }];
+        }
+
+        function renderChartsPage() {
+            const canvas = document.getElementById('chartsPagePreviewCanvas');
+            const type = document.getElementById('chartsPageTypeSelect')?.value || 'bar';
+            const title = document.getElementById('chartsPageTitleInput')?.value || _t('charts_page_title');
+            const titleEl = document.getElementById('chartsPagePreviewTitle');
+            if (titleEl) titleEl.textContent = title;
+            if (!canvas || typeof Chart === 'undefined') return;
+            const rows = parseChartsPageRows();
+            if (chartsPageChartInstance) chartsPageChartInstance.destroy();
+            chartsPageChartInstance = new Chart(canvas, {
+                type,
+                data: { labels: rows.map(row => row.label), datasets: buildChartsPageDataset(type, rows) },
+                options: typeof createOmniChartOptions === 'function' ? createOmniChartOptions({ type }) : { responsive: false, maintainAspectRatio: false }
+            });
+        }
+
+        async function getChartsPageDataUrl() {
+            const rows = parseChartsPageRows();
+            if (!rows.length) {
+                showToast(_t('invalid_chart_rows'), { type: 'error' });
+                return '';
+            }
+            const type = document.getElementById('chartsPageTypeSelect')?.value || 'bar';
+            const canvas = document.createElement('canvas');
+            canvas.width = 1280;
+            canvas.height = 720;
+            const chart = new Chart(canvas, {
+                type,
+                data: { labels: rows.map(row => row.label), datasets: buildChartsPageDataset(type, rows) },
+                options: typeof createOmniChartOptions === 'function' ? createOmniChartOptions({ type, exportMode: true }) : { responsive: false, maintainAspectRatio: false, animation: false }
+            });
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            chart.update('none');
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = document.body.classList.contains('omni-light-mode') ? '#ffffff' : '#130d2f';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            const dataUrl = canvas.toDataURL('image/png');
+            chart.destroy();
+            return dataUrl;
+        }
+
+        function getChartTargetDocument() {
+            const storedId = localStorage.getItem('omniwrite-chart-target-document') || '';
+            const hashId = typeof getCurrentDocIdFromHash === 'function' ? getCurrentDocIdFromHash() : '';
+            return documents.find(doc => doc.id === storedId) || documents.find(doc => doc.id === hashId) || null;
+        }
+
+        async function insertChartsPageIntoDocument() {
+            const doc = getChartTargetDocument();
+            if (!doc) {
+                showToast(_t('no_document_for_chart_insert'), { type: 'error' });
+                return;
+            }
+            if (typeof isLockedDoc === 'function' && isLockedDoc(doc)) {
+                showToast(_t('doc_locked_no_download'), { type: 'error' });
+                return;
+            }
+            let dataUrl = '';
+            try {
+                dataUrl = await getChartsPageDataUrl();
+            } catch(error) {
+                console.error('Failed to render chart page image:', error);
+                showToast(_t('chart_render_failed'), { type: 'error' });
+                return;
+            }
+            if (!dataUrl) return;
+            const title = document.getElementById('chartsPageTitleInput')?.value || _t('charts');
+            const type = document.getElementById('chartsPageTypeSelect')?.value || 'bar';
+            const html = '<figure class="callout-block"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;"><strong>' + escapeHtml(title) + '</strong><span style="opacity:0.6;font-size:12px;">' + escapeHtml(type) + '</span></div><div class="editor-canvas-shell"><img src="' + dataUrl + '" alt="' + escapeHtml(title) + '" style="display:block;max-width:none;width:640px;border-radius:16px;background:#130d2f;"></div></figure>';
+            appendHtmlToDocumentContent(doc, html);
+            doc.timestamp = Date.now();
+            await saveDocuments();
+            renderDocumentsList();
+            showToast(_t('chart_inserted_document'), { type: 'success' });
+            openDocument(doc.id);
+        }
+
+        function openChartsPageForCurrentDocument() {
+            const docId = typeof getCurrentDocIdFromHash === 'function' ? getCurrentDocIdFromHash() : '';
+            if (docId) localStorage.setItem('omniwrite-chart-target-document', docId);
+            window.location.hash = getWorkspaceHashPrefix() + '/charts';
+            switchPage('chartsApp');
+            renderChartsPage();
+        }
+
+        window.getSidebarCustomization = getSidebarCustomization;
+        window.saveSidebarCustomization = saveSidebarCustomization;
+        window.applySidebarCustomization = applySidebarCustomization;
+        window.openSidebarCustomizerModal = openSidebarCustomizerModal;
+        window.renderFoldersPage = renderFoldersPage;
+        window.renderChartsPage = renderChartsPage;
+        window.openChartsPageForCurrentDocument = openChartsPageForCurrentDocument;
+
+        document.getElementById('foldersPageNewFolderBtn')?.addEventListener('click', () => showFolderModal());
+        document.getElementById('chartsPageRefreshBtn')?.addEventListener('click', renderChartsPage);
+        document.getElementById('chartsPageWorkspaceTemplateBtn')?.addEventListener('click', () => {
+            const workspaceDocs = typeof getWorkspaceDocuments === 'function' ? getWorkspaceDocuments() : documents.filter(doc => !doc.trashedAt);
+            const workspaceFolders = typeof getWorkspaceFolders === 'function' ? getWorkspaceFolders() : folders;
+            document.getElementById('chartsPageTitleInput').value = _t('workspace_highlights');
+            document.getElementById('chartsPageDataInput').value = [
+                _t('documents_section') + ': ' + workspaceDocs.length,
+                _t('folders') + ': ' + workspaceFolders.length,
+                _t('pinned') + ': ' + workspaceDocs.filter(doc => doc.pinned).length,
+                _t('notes') + ': ' + ((typeof getNotes === 'function' && Array.isArray(getNotes())) ? getNotes().length : 0)
+            ].join('\n');
+            renderChartsPage();
+        });
+        document.getElementById('chartsInsertIntoDocumentBtn')?.addEventListener('click', insertChartsPageIntoDocument);
+        ['chartsPageTitleInput', 'chartsPageTypeSelect', 'chartsPageDataInput'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', renderChartsPage);
+            document.getElementById(id)?.addEventListener('change', renderChartsPage);
+        });
+
+        const originalRenderFoldersListForOrganization = renderFoldersList;
+        renderFoldersList = function() {
+            originalRenderFoldersListForOrganization();
+            applySidebarOrganization();
+            renderFoldersPage();
+        };
+        const originalSidebarOverflowNavigation = updateSidebarOverflowNavigation;
+        updateSidebarOverflowNavigation = function() {
+            originalSidebarOverflowNavigation();
+            if (!window.__omniSidebarApplyingOverflow) {
+                const moreBtn = document.getElementById('sidebarMoreBtn');
+                let hasUserMoreItem = false;
+                getSidebarCustomization().forEach(item => {
+                    if (item.key === 'workspaceProfile') {
+                        const slot = ensureWorkspaceProfileSlot();
+                        if (item.location === 'hidden') {
+                            slot.style.display = 'none';
+                            slot.dataset.sidebarHidden = 'true';
+                            slot.removeAttribute('data-overflow-hidden');
+                            return;
+                        }
+                        if (item.location === 'more') {
+                            hasUserMoreItem = true;
+                            slot.style.display = 'none';
+                            slot.dataset.overflowHidden = 'true';
+                            slot.dataset.sidebarUserMore = 'true';
+                            return;
+                        }
+                        if (item.location === 'topbar-right') {
+                            const topbarRight = getActiveTopbarRightTarget();
+                            slot.classList.add('omni-workspace-profile-topbar');
+                            if (topbarRight && slot.parentElement !== topbarRight) topbarRight.appendChild(slot);
+                            slot.style.display = '';
+                            return;
+                        }
+                    }
+                    const interactive = getSidebarInteractiveItem(getSidebarItemElement(item.key));
+                    if (!interactive) return;
+                    if (item.location === 'hidden') {
+                        interactive.style.display = 'none';
+                        interactive.dataset.sidebarHidden = 'true';
+                        interactive.removeAttribute('data-overflow-hidden');
+                        return;
+                    }
+                    if (item.location === 'more') {
+                        hasUserMoreItem = true;
+                        interactive.style.display = 'none';
+                        interactive.dataset.overflowHidden = 'true';
+                        interactive.dataset.sidebarUserMore = 'true';
+                        return;
+                    }
+                    interactive.removeAttribute('data-overflow-hidden');
+                    interactive.removeAttribute('data-sidebar-user-more');
+                    if (!(item.key === 'folders' && (localStorage.getItem(OMNI_SIDEBAR_ORGANIZATION_KEY) || 'folder-list') !== 'document-list')) {
+                        interactive.style.display = '';
+                    }
+                });
+                if (hasUserMoreItem && moreBtn) moreBtn.style.display = '';
+                applySidebarOrganization();
+            }
+        };
+        const originalSwitchPageForSidebarFeatures = switchPage;
+        switchPage = function(pageId) {
+            originalSwitchPageForSidebarFeatures(pageId);
+            if (pageId === 'foldersApp') renderFoldersPage();
+            if (pageId === 'chartsApp') renderChartsPage();
+            applySidebarCustomization();
+        };
+        document.querySelectorAll('#mobileMiniNav [data-mini-action="charts"]').forEach(btn => btn.onclick = () => { window.location.hash = getWorkspaceHashPrefix() + '/charts'; switchPage('chartsApp'); renderChartsPage(); });
+        document.querySelectorAll('#mobileMiniNav [data-mini-action="folders"]').forEach(btn => btn.onclick = () => { window.location.hash = getWorkspaceHashPrefix() + '/folders'; switchPage('foldersApp'); renderFoldersPage(); });
+        window.addEventListener('hashchange', function() {
+            if (/\/charts$/.test(window.location.hash)) switchPage('chartsApp');
+            if (/\/folders$/.test(window.location.hash)) switchPage('foldersApp');
+        });
+        applySidebarCustomization();
+        renderFoldersPage();
+        renderChartsPage();
+
         cleanupExpiredTrashedDocuments();
         applyTranslations(localStorage.getItem('omniwrite-lang') || 'en');
         if (window.location.hash === '#/notes') {
