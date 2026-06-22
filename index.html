@@ -149,7 +149,7 @@ if ('serviceWorker' in navigator) {
             font-style: normal;
             font-display: block;
         }
-        input,
+        input[type="text"],
         textarea,
         .custom-font-input {
             width: 100%;
@@ -1495,6 +1495,7 @@ if ('serviceWorker' in navigator) {
             white-space: nowrap;
             max-height: 600px;
             overflow-y: auto;
+            overscroll-behavior: contain;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
             margin: 60px 0 0 20px;
@@ -2011,6 +2012,21 @@ if ('serviceWorker' in navigator) {
             min-width: 0;
             max-width: clamp(150px, 32vw, 360px);
         }
+        #editorContent .navbar__right #documentTitle {
+            flex: 1 1 clamp(150px, 24vw, 300px);
+            width: clamp(150px, 24vw, 300px);
+            max-width: clamp(150px, 28vw, 340px);
+            pointer-events: auto;
+            position: relative;
+            z-index: 1;
+        }
+        #editorContent #editableTitle {
+            cursor: text;
+            pointer-events: auto;
+            user-select: text;
+            -webkit-user-select: text;
+            outline: none;
+        }
         #editorContent .saving-time {
             flex: 0 1 auto;
             min-width: 34px;
@@ -2220,6 +2236,14 @@ if ('serviceWorker' in navigator) {
                top: 0;
                height: 100vh;
                z-index: 10001;
+            }
+            body.omni-sidebar-right .sidebar__container {
+                left: auto;
+                right: -600px;
+            }
+            body.omni-sidebar-left .sidebar__container {
+                left: -600px;
+                right: auto;
             }
             .main-container {
                 width: auto;
@@ -2682,6 +2706,47 @@ if ('serviceWorker' in navigator) {
             color: inherit;
             font: inherit;
         }
+        .editor-toolbar-more-section {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+        }
+        .editor-toolbar-more-title {
+            padding: 8px 12px 4px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .editor-toolbar-more-items {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(44px, 1fr));
+            gap: 6px;
+            padding: 6px;
+        }
+        .editor-toolbar-more-items .toolbar-item {
+            min-width: 44px !important;
+            width: 100%;
+            min-height: 42px;
+            margin: 0;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #editorContent .navbar__left > icon.liquid-glass {
+            box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 10px;
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .editor-topbar-customizer-row select,
+        .toolbar-customizer-row select {
+            min-width: 128px;
+        }
         .toolbar-customizer-actions {
             display: flex;
             flex-wrap: wrap;
@@ -2759,7 +2824,7 @@ if ('serviceWorker' in navigator) {
             display: flex;
         }
         body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn[data-sidebar-hidden="true"],
-        body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn[data-sidebar-user-more="true"] {
+        body.omni-sidebar-document-list-mode #sidebarFoldersPageBtn[data-sidebar-user-more="true"] {    
             display: none !important;
         }
         @media (max-width: 820px) {
@@ -2785,7 +2850,7 @@ if ('serviceWorker' in navigator) {
             border: 1px solid rgba(255,255,255,0.1);
         }
         #renameMoreOptionsBtn {
-            display: none;
+            display: flex;
         }
         @container main (max-width: 560px) {
             #versionHistoryBtn, #shareDocumentBtn, #splitScreenBtn {
@@ -3232,6 +3297,13 @@ if ('serviceWorker' in navigator) {
                overflow-y: auto
                     }
                    
+                }
+                blockquote {
+                    border-left: 4px solid #9b19e6;
+                    margin: 16px 0;
+                    border-radius: 20px;
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 16px;
                 }
                 .add-folder-button {
                     cursor: pointer;
@@ -4461,6 +4533,35 @@ if ('serviceWorker' in navigator) {
                 flex-direction: column;
             }
         }
+        .bottom-editor-toolbar {
+            position: fixed;
+            bottom: 10px;
+            width: calc(100% - (var(--sidebar-width) + 30px));
+            right: 5px;
+            z-index: 1000;
+            padding: 10px;
+        }
+        .dropdown-item-groups {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            visibility: hidden;
+            padding: 10px;
+            pointer-events: none;
+            z-index: 10000000;
+        }
+        .dropdown-item-groups.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        pre {
+          
+        }
     </style>
 </head>
 <body>
@@ -4478,10 +4579,10 @@ if ('serviceWorker' in navigator) {
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="templates" aria-label="Templates"><icon>browse</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="notes" aria-label="Notes"><icon>edit_note</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="charts" aria-label="Charts"><icon>bar_chart</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="folders" aria-label="Folders"><icon>folder_open</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="folders" aria-label="Projects"><icon>folder_open</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="trash" aria-label="Trash"><icon>delete</icon></button>
                     <button class="mobile-mini-nav-btn" type="button" data-mini-action="workspaces" aria-label="OmniWrite Workspaces"><icon>dashboard_customize</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Folders and documents"><icon>folder</icon></button>
+                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Projects and documents"><icon>folder</icon></button>
                     <div class="mobile-mini-bottom">
                         <button class="mobile-mini-nav-btn" type="button" data-mini-action="settings" aria-label="OmniWrite Settings"><icon>settings</icon></button>
                         <button class="mobile-mini-nav-btn" type="button" data-mini-action="help" aria-label="OmniWrite Help"><icon>help</icon></button>
@@ -4509,7 +4610,7 @@ if ('serviceWorker' in navigator) {
                     </div>
                     <div class="sidebarnav__item" data-nav="folders" id="sidebarFoldersPageBtn">
                         <icon>folder_open</icon>
-                        <div class="menu-text" data-i18n="folders">Folders</div>
+                        <div class="menu-text" data-i18n="folders">Projects</div>
                     </div>
                     <div class="sidebarnav__item" data-nav="templates">
                         <icon>browse</icon>
@@ -4544,15 +4645,15 @@ if ('serviceWorker' in navigator) {
                              </div>
                     </div>
                     <div class="documents--section" id="foldersSection">
-                        <h4 data-i18n="folders">Folders</h4>
+                        <h4 data-i18n="folders">Projects</h4>
                         <div class="documents--list" id="foldersList">
                             <!-- Folder items will be dynamically added here -->
-                            <p style="padding: 8px; opacity: 0.6; font-size: 14px;" data-i18n="no_folders">No folders</p>
+                            <p style="padding: 8px; opacity: 0.6; font-size: 14px;" data-i18n="no_folders">No projects</p>
                         </div>
                         <div class="add-folder-button">
                             <div id="addFolderBtn" style="display: flex; align-items: center; gap: 10px;">
                                 <icon>create_new_folder</icon>
-                                <span data-i18n="add_folder">Add Folder</span>
+                                <span data-i18n="add_folder">Add Project</span>
                             </div>
                         </div>
                     </div>
@@ -4651,7 +4752,7 @@ if ('serviceWorker' in navigator) {
                                         <icon>folder</icon>
                                         <div>
                                             <div class="dashboard-stat-value" id="dashboardFoldersCount">0</div>
-                                            <div class="dashboard-stat-label" data-i18n="folders">Folders</div>
+                                            <div class="dashboard-stat-label" data-i18n="folders">Projects</div>
                                         </div>
                                     </div>
                                 </div>
@@ -4734,21 +4835,21 @@ if ('serviceWorker' in navigator) {
                         <div class="navbar">
                             <div class="navbar__left">
                                 <div class="menu-btn liquid-glass" id="toggleSidebar"><icon>menu</icon></div>
-                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="folders">Folders</div>
+                                <div class="liquid-glass" style="padding:12px 14px;font-weight:700;" data-i18n="folders">Projects</div>
                             </div>
                             <div class="navbar__right liquid-glass" style="padding:6px 12px;">
-                                <button id="foldersPageNewFolderBtn" class="newnote-btn" type="button" style="padding:4px 8px;white-space:nowrap;background:rgba(99, 15, 194, 0.808) !important;"><icon>create_new_folder</icon><span data-i18n="new_folder">New Folder</span></button>
+                                <button id="foldersPageNewFolderBtn" class="newnote-btn" type="button" style="padding:4px 8px;white-space:nowrap;background:rgba(99, 15, 194, 0.808) !important;"><icon>create_new_folder</icon><span data-i18n="new_folder">New Project</span></button>
                             </div>
                         </div>
                     </div>
                     <div class="content-area" id="foldersContentArea">
                         <div class="dashboard-hero liquid-glass" style="margin-bottom:18px;">
-                            <h1 data-i18n="folders_page_title">Folders</h1>
-                            <p data-i18n="folders_page_desc">Browse folders and open documents without expanding the sidebar.</p>
+                            <h1 data-i18n="folders_page_title">Projects</h1>
+                            <p data-i18n="folders_page_desc">Browse projects and open documents without expanding the sidebar.</p>
                         </div>
                         <div class="omni-folder-page-grid">
                             <div class="omni-folder-list-panel liquid-glass">
-                                <h3 data-i18n="folders">Folders</h3>
+                                <h3 data-i18n="folders">Projects</h3>
                                 <div id="foldersPageList"></div>
                             </div>
                             <div class="omni-folder-docs-panel liquid-glass">
@@ -4796,7 +4897,7 @@ if ('serviceWorker' in navigator) {
                                 <div style="margin-top:14px;">
                                     <label style="display:block;margin-bottom:8px;font-weight:700;" data-i18n="chart_data">Chart Data</label>
                                     <textarea id="chartsPageDataInput">Documents: 12
-Folders: 4
+Projects: 4
 Images: 8
 Notes: 6</textarea>
                                 </div>
@@ -4897,20 +4998,16 @@ Notes: 6</textarea>
                         <icon>zoom_in</icon>
                         <div class="menu-text" contenteditable="true" id="documentZoomDisplay">100</div>
                     </div>
-                 
-                    <div class="toolbar-item" id="boldBtn" title="Bold">
-                        <icon>format_bold</icon>
+                     <div class="toolbar-item" id="undoBtn" title="Undo">
+                        <icon>undo</icon>
+                        </div>
+                    <div class="toolbar-item" id="redoBtn" title="Redo">
+                        <icon>redo</icon>
+                        </div>
+                  <div class="toolbar-item" id="fontStylesBtn" title="Font Styles" style="min-width: 120px; vertical-align: center; display: flex; align-items: center; justify-content: center;">
+                    <div class="menu-text" id="fontStyleText">Normal Text <icon>arrow_drop_down</icon></div>
                     </div>
-                    <div class="toolbar-item" id="italicBtn" title="Italic">
-                        <icon>format_italic</icon>
-                    </div>
-                    <div class="toolbar-item" id="underlineBtn" title="Underline">
-                        <icon>format_underlined</icon>
-                    </div>
-                    <div class="toolbar-item" id="strikethroughBtn" title="Strikethrough">
-                     <icon>strikethrough_s</icon>
-                     </div>
-                     <vl></vl>
+                     
                     <div class="toolbar-item" id="fontFamilyBtn" title="Font Family" style="min-width: 120px; vertical-align: center; display: flex; align-items: center; justify-content: center;">
                         <div class="menu-text" id="fontFamilyText">Google Sans Flex</div>
                     </div>
@@ -4924,145 +5021,52 @@ Notes: 6</textarea>
                     <div class="toolbar-item" id="fontSizeIncreaseBtn" title="Increase Font Size">
                         <icon>add</icon>
                     </div>
-               
-                  
-                    <div class="toolbar-item" id="bulletListBtn" title="Bullet List">
-                        <icon>format_list_bulleted</icon>
+               <vl></vl>
+                   <div class="toolbar-item" id="boldBtn" title="Bold">
+                        <icon>format_bold</icon>
+                    </div>
+                    <div class="toolbar-item" id="italicBtn" title="Italic">
+                        <icon>format_italic</icon>
+                    </div>
+                    <div class="toolbar-item" id="underlineBtn" title="Underline">
+                        <icon>format_underlined</icon>
+                    </div>
+                    <div class="toolbar-item" id="strikethroughBtn" title="Strikethrough">
+                     <icon>strikethrough_s</icon>
+                     </div> 
+                     <vl></vl>
+                          <div class="toolbar-item" id="textColorBtn" title="Text Color">
+                        <icon>palette</icon>
+                    </div>
+                    <vl></vl>
+                    <div class="toolbar-item" id="listGroupBtn" title="Lists" data-i18n-title="lists">
+                        <icon id="listGroupedChoice">format_list_bulleted</icon>
+                    </div>
+                                   <div class="toolbar-item" id="alignGroupBtn" title="Align Text">
+                            <icon id="alignGroupedChoice">format_align_left</icon>
                         </div>
-                    <div class="toolbar-item" id="numberedListBtn" title="Numbered List">
-                        <icon>format_list_numbered</icon>
-                        </div>
-                    <div class="toolbar-item" id="checkboxListBtn" title="Checkbox List">
-                        <icon>check_box</icon>
-                        </div>
+                     
+              
                     <div class="toolbar-item" id="handwritingBtn" title="Handwriting" data-i18n-title="handwriting">
                         <icon>draw</icon>
                     </div>
                         <vl></vl>
-                        <div class="toolbar-item" id="alignLeftBtn" title="Align Left">
-                            <icon>format_align_left</icon>
-                        </div>
-                        <div class="toolbar-item" id="alignCenterBtn" title="Align Center">
-                            <icon>format_align_center</icon>
-                        </div>
-                        <div class="toolbar-item" id="alignRightBtn" title="Align Right">
-                            <icon>format_align_right</icon>
-                        </div>
-                        <div class="toolbar-item" id="alignJustifyBtn" title="Justify">
-                            <icon>format_align_justify</icon>
-                        </div>
-        
-                        <vl></vl>
-                    <div class="toolbar-item" id="undoBtn" title="Undo">
-                        <icon>undo</icon>
-                        </div>
-                    <div class="toolbar-item" id="redoBtn" title="Redo">
-                        <icon>redo</icon>
-                        </div>
-                 
-                    <div class="toolbar-item" id="insertHrBtn" title="Insert Horizontal Line">
+             
+                    
+                        <div class="toolbar-item" id="insertImageBtn" title="Insert Image">
+                            <icon>image</icon>
+                        </div>      <div class="toolbar-item" id="insertHrBtn" title="Insert Horizontal Line">
                         <icon>horizontal_rule</icon>
                     </div>
                     <div class="toolbar-item" id="insertLinkBtn" title="Insert Link">
                         <icon>link</icon>
                     </div>
-                        <vl></vl>
-                        <div class="toolbar-item" id="insertImageBtn" title="Insert Image">
-                            <icon>image</icon>
+                          <div class="toolbar-item" id="insertBtn" title="Insert">
+                            <icon>add_box</icon>
                         </div>
-                        <div class="toolbar-item" id="insertVideoBtn" title="Insert Video">
-                            <icon>smart_display</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertMusicBtn" title="Insert Music">
-                            <icon>music_note</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertQuoteBtn" title="Insert Quote">
-                            <icon>format_quote</icon>
-                        </div>   <div class="toolbar-item" id="insertDropdownBtn" title="Insert Dropdown" data-i18n-title="insert_dropdown">
-                        <icon>add_box</icon>
-                    </div>
-                        <div class="toolbar-item" id="insertCodeBlockBtn" title="Insert Code Block">
-                            <icon>code</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertInlineCodeBtn" title="Insert Inline Code">
-                            <icon>data_object</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertCalloutBtn" title="Insert Callout">
-                            <icon>note_stack</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertTableBtn" title="Insert Table">
-                            <icon>table_chart</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertChartBtn" title="Insert Chart">
-                            <icon>bar_chart</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertWatermarkBtn" title="Insert Watermark">
-                            <icon>water_damage</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertTableOfContentsBtn" title="Insert Table of Contents">
-                            <icon>toc</icon>
-                        </div>
-                        <div class="toolbar-item" id="insertPageBreakBtn" title="Insert Page Break">
-                            <icon>insert_page_break</icon>
-                        </div>
-                        <vl></vl>
-                    <div class="toolbar-item" id="clearFormattingBtn" title="Clear Formatting">
-                        <icon>format_clear</icon>
-                        </div>
-                    <div class="toolbar-item" id="heading1Btn" title="Heading 1">
-                        <icon>looks_one</icon>
-                    </div>
-                    <div class="toolbar-item" id="heading2Btn" title="Heading 2">
-                        <icon>looks_two</icon>
-                    </div>
-                    <div class="toolbar-item" id="heading3Btn" title="Heading 3">
-                        <icon>looks_3</icon>
-                    </div>
-  <div class="toolbar-item" id="heading4Btn" title="Heading 4">
-                        <icon>looks_4</icon>
-                    </div>
-
-                    <div class="toolbar-item" id="superscriptBtn" title="Superscript">
-                        <icon>superscript</icon>
-                    </div>
-                    <div class="toolbar-item" id="subscriptBtn" title="Subscript">
-                        <icon>subscript</icon>
-                    </div>
-                    <div class="toolbar-item" id="highlightBtn" title="Highlight">
-                        <icon>highlight</icon>
-                    </div>
-                    <div class="toolbar-item" id="textColorBtn" title="Text Color">
-                        <icon>palette</icon>
-                    </div>
-                    <div class="toolbar-item" id="bgColorBtn" title="Text Background Color">
-                        <icon>format_color_fill</icon>
-                    </div>
-                    <div class="toolbar-item" id="documentBgColorBtn" title="Document Background Color" data-i18n-title="document_background_color">
-                        <icon>format_color_reset</icon>
-                    </div>
-                  
-                    <div class="toolbar-item" id="paragraphBtn" title="Normal Text / Paragraph">
-                        <icon>format_paragraph</icon>
-                    </div>
-                    <div class="toolbar-item" id="uppercaseBtn" title="Uppercase">
-                        <icon>text_fields</icon>
-                    </div>
-                    <div class="toolbar-item" id="lowercaseBtn" title="Lowercase">
-                        <icon>short_text</icon>
-                    </div>
-                    <div class="toolbar-item" id="insertColumnsBtn" title="Insert Two Columns">
-                        <icon>view_column</icon>
-                    </div>
-                    <vl></vl>
-               
-                    <div class="toolbar-item" id="indentIncreaseBtn" title="Increase Indent">
-                        <icon>format_indent_increase</icon>
-                    </div>
-                    <div class="toolbar-item" id="indentDecreaseBtn" title="Decrease Indent">
-                        <icon>format_indent_decrease</icon>
-                    </div>
-                    <div class="toolbar-item" id="lineSpacingBtn" title="Line Spacing">
-                        <icon>format_line_spacing</icon>
+                      
+                    <div class="toolbar-item" id="formatGroupBtn" title="More formatting" data-i18n-title="more_formatting">
+                        <icon>format_shapes</icon>
                     </div>
                 </div><!-- end .toolbar -->
                 <div class="editor-content-area-container">
@@ -5084,13 +5088,7 @@ Notes: 6</textarea>
                     </div>
                 </div>
                 </div>
-                <div id="omniPageFab">
-                    <div class="omni-fab-icon" id="voiceTypingBtn" title="Voice Typing" role="button" tabindex="0" aria-label="Voice Typing">mic</div>
-                    <div class="omni-fab-divider"></div>
-                    <div class="omni-fab-icon" id="virtualKeyboardBtn" title="Virtual Keyboard" role="button" tabindex="0" aria-label="Virtual Keyboard">keyboard</div>
-                    <div class="omni-fab-divider"></div>
-                    <div class="omni-fab-icon" id="emojiPickerBtn" title="Insert Emoji" role="button" tabindex="0" aria-label="Insert Emoji">sentiment_satisfied</div>
-                </div>
+           
                     <div class="right-editor-content" id="rightEditorContent" style="display: none;"></div>
                 </div>
                 <div class="editor-page-actions">
@@ -5140,7 +5138,70 @@ Notes: 6</textarea>
             </div> 
         </div>
     </div> <!-- Close .main-container -->
-
+    <div class="dropdown-item-groups liquid-glass" id="insertGroui">
+            <div class="toolbar-item" id="insertVideoBtn" title="Insert Video">
+                            <icon>smart_display</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertMusicBtn" title="Insert Music">
+                            <icon>music_note</icon>
+                        </div>
+                           <div class="toolbar-item" id="insertDropdownBtn" title="Insert Dropdown" data-i18n-title="insert_dropdown">
+                        <icon>dropdown</icon>
+                    </div>
+                    
+                        <div class="toolbar-item" id="insertCalloutBtn" title="Insert Callout">
+                            <icon>note_stack</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertQuoteBtn" title="Insert Quote" data-i18n-title="insert_quote">
+                            <icon>format_quote</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertCodeBlockBtn" title="Insert Code Block" data-i18n-title="insert_code_block">
+                            <icon>code_blocks</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertInlineCodeBtn" title="Inline Code" data-i18n-title="inline_code">
+                            <icon>data_object</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertTableBtn" title="Insert Table">
+                            <icon>table_chart</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertChartBtn" title="Insert Chart">
+                            <icon>bar_chart</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertWatermarkBtn" title="Insert Watermark">
+                            <icon>water_damage</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertTableOfContentsBtn" title="Insert Table of Contents">
+                            <icon>toc</icon>
+                        </div>
+                        <div class="toolbar-item" id="insertPageBreakBtn" title="Insert Page Break">
+                            <icon>insert_page_break</icon>
+                        </div>
+    </div>
+    <div class="dropdown-item-groups liquid-glass" id="alignGroup">
+        <div class="toolbar-item" id="alignLeftBtn"><icon>format_align_left</icon></div>
+                <div class="toolbar-item" id="alignCenterBtn"><icon>format_align_center</icon></div>
+                        <div class="toolbar-item" id="alignRightBtn"><icon>format_align_right</icon></div>
+                                <div class="toolbar-item" id="alignJustifyBtn"><icon>format_align_justify</icon></div>
+    </div>
+    <div class="dropdown-item-groups liquid-glass" id="listGroup">
+        <div class="toolbar-item" id="bulletListBtn" title="Bullet List" data-i18n-title="bullet_list"><icon>format_list_bulleted</icon></div>
+        <div class="toolbar-item" id="numberedListBtn" title="Numbered List" data-i18n-title="numbered_list"><icon>format_list_numbered</icon></div>
+        <div class="toolbar-item" id="checkboxListBtn" title="Checkbox List" data-i18n-title="checkbox_list"><icon>check_box</icon></div>
+        <div class="toolbar-item" id="indentIncreaseBtn" title="Increase Indent" data-i18n-title="indent_increase"><icon>format_indent_increase</icon></div>
+        <div class="toolbar-item" id="indentDecreaseBtn" title="Decrease Indent" data-i18n-title="indent_decrease"><icon>format_indent_decrease</icon></div>
+    </div>
+    <div class="dropdown-item-groups liquid-glass" id="formatGroup">
+        <div class="toolbar-item" id="clearFormattingBtn" title="Clear Formatting" data-i18n-title="clear_formatting"><icon>format_clear</icon></div>
+        <div class="toolbar-item" id="superscriptBtn" title="Superscript" data-i18n-title="superscript"><icon>superscript</icon></div>
+        <div class="toolbar-item" id="subscriptBtn" title="Subscript" data-i18n-title="subscript"><icon>subscript</icon></div>
+        <div class="toolbar-item" id="highlightBtn" title="Highlight" data-i18n-title="highlight"><icon>highlight</icon></div>
+        <div class="toolbar-item" id="bgColorBtn" title="Text Background Color" data-i18n-title="bg_color"><icon>format_color_fill</icon></div>
+        <div class="toolbar-item" id="documentBgColorBtn" title="Document Background Color" data-i18n-title="document_background_color"><icon>format_color_reset</icon></div>
+        <div class="toolbar-item" id="uppercaseBtn" title="Uppercase" data-i18n-title="uppercase"><icon>text_fields</icon></div>
+        <div class="toolbar-item" id="lowercaseBtn" title="Lowercase" data-i18n-title="lowercase"><icon>short_text</icon></div>
+        <div class="toolbar-item" id="insertColumnsBtn" title="Insert Two Columns" data-i18n-title="insert_columns"><icon>view_column</icon></div>
+        <div class="toolbar-item" id="lineSpacingBtn" title="Line Spacing" data-i18n-title="line_spacing"><icon>format_line_spacing</icon></div>
+    </div>
     <div id="customAppsContainer" style="display:none;"></div>
 
     <!-- App Panel (slides in from the right sidebar) -->
@@ -5191,6 +5252,22 @@ Notes: 6</textarea>
             <hr>
             <div id="voiceOtherActions"></div>
         </div>
+        <div class="dropdown-wrapper liquid-glass" id="fontStyleDropdown" style="min-width: 80px;">
+            <div class="dropdown-item" data-style="Heading 1"><h1>Heading 1</h1></div>
+            <div class="dropdown-item" data-style="Heading 2"><h2>Heading 2</h2></div>
+            <div class="dropdown-item" data-style="Heading 3"><h3>Heading 3</h3></div>
+            <div class="dropdown-item" data-style="Heading 4"><h4>Heading 4</h4></div>
+            <div class="dropdown-item" data-style="Heading 5"><h5>Heading 5</h5></div>
+            <div class="dropdown-item" data-style="Heading 6"><h6>Heading 6</h6></div>
+            <div class="dropdown-item" data-style="Title"><div>Title</div></div>
+            <div class="dropdown-item" data-style="Subtitle"><div>Subtitle</div></div>
+            <div class="dropdown-item" data-style="Normal"><div>Normal</div></div>
+            <div class="dropdown-item" data-style="Paragraph"><p>Paragraph</p></div>
+            <div class="dropdown-item" data-style="Caption"><div>Caption</div></div>
+            <div class="dropdown-item" data-style="Quote"><blockquote>Quote</blockquote></div>
+            <div class="dropdown-item" data-style="Inline Code"><pre>Inline Code</pre></div>
+            <div class="dropdown-item" data-style="Emphasis"><em>Emphasis</em></div>
+        </div>
                         <div class="dropdown-wrapper liquid-glass" id="fontSizePicker" style="min-width: 80px;">
                               <div class="dropdown-item" data-size="6"><div class="menu-text" style="font-size:6pt;">6 pt</div></div>
                         <div class="dropdown-item" data-size="8"><div class="menu-text" style="font-size:8pt;">8 pt</div></div>
@@ -5211,8 +5288,8 @@ Notes: 6</textarea>
                           <div class="dropdown-item" data-size="85"><div class="menu-text" style="font-size:85pt;">85 pt</div></div>
                             <div class="dropdown-item" data-size="96"><div class="menu-text" style="font-size:96pt;">96 pt</div></div>
                               <div class="dropdown-item" data-size="120"><div class="menu-text" style="font-size:120pt;">120 pt</div></div>
-                              <div class="dropdown-item" data-size="160"><div class="menu-text" style="font-size:72pt;">160 pt</div></div>
-                              <div class="dropdown-item" data-size="200"><div class="menu-text" style="font-size:72pt;">200 pt</div></div>
+                              <div class="dropdown-item" data-size="160"><div class="menu-text" style="font-size:160pt;">160 pt</div></div>
+                              <div class="dropdown-item" data-size="200"><div class="menu-text" style="font-size:200pt;">200 pt</div></div>
                     </div>
 <div class="dropdown-wrapper liquid-glass" id="fontFamilyPicker">
     <div class="dropdown-item" data-font="'Google Sans Flex'">
@@ -5520,7 +5597,7 @@ Notes: 6</textarea>
     </div>
     <div class="dropdown-item" id="moveToFolderMoreOptionsBtn">
         <icon>drive_file_move</icon>
-        <div class="menu-text" data-i18n="move_to_folder">Move to Folder</div>
+        <div class="menu-text" data-i18n="move_to_folder">Move to Project</div>
     </div>
     <div class="dropdown-item" id="moveToWorkspaceMoreOptionsBtn">
         <icon>workspaces</icon>
@@ -5566,7 +5643,7 @@ Notes: 6</textarea>
         </div>
         <div class="dropdown-item" id="createNewFolderBtn">
             <icon>folder</icon>
-            <div class="menu-text" data-i18n="new_folder">New Folder</div>
+            <div class="menu-text" data-i18n="new_folder">New Project</div>
         </div>
         <div class="dropdown-item" id="createNewImageBtn">
             <icon>image</icon>
@@ -5580,11 +5657,11 @@ Notes: 6</textarea>
     <div class="dropdown-wrapper liquid-glass" id="folderMoreOptions">
         <div class="dropdown-item" id="editFolderBtn">
             <icon>edit</icon>
-            <div class="menu-text" data-i18n="edit_folder">Edit Folder</div>
+            <div class="menu-text" data-i18n="edit_folder">Edit Project</div>
         </div>
         <div class="dropdown-item" id="deleteFolderBtn" style="color:#e74c3c;">
             <icon>delete</icon>
-            <div class="menu-text" data-i18n="delete_folder">Delete Folder</div>
+            <div class="menu-text" data-i18n="delete_folder">Delete Project</div>
         </div>
     </div>
     <div class="color-picker-wrapper liquid-glass" id="colorPicker">
@@ -5884,6 +5961,17 @@ Notes: 6</textarea>
         }
     }
 
+    function reportUnexpectedTypeError(error) {
+        const isTypeError = error instanceof TypeError || error?.name === 'TypeError';
+        if (!isTypeError) return false;
+        showAppErrorToast(
+            'unexpected_app_error',
+            'We were unable to process an unexpected error.',
+            error
+        );
+        return true;
+    }
+
     function flushPendingAppErrorToasts() {
         if (typeof showToast !== 'function' || !Array.isArray(window.__omniPendingCoreToasts)) return;
         const pending = window.__omniPendingCoreToasts.splice(0);
@@ -6078,6 +6166,7 @@ Notes: 6</textarea>
             window.__omniLastClickedControl = event.target?.closest?.('button, [role="button"], .sidebarnav__item, .dropdown-item, icon[id], .app-icon, .modal-content-close') || null;
         }, true);
         window.addEventListener('error', event => {
+            if (reportUnexpectedTypeError(event.error)) return;
             if (document.getElementById('businessModeModal')) {
                 showAppErrorToast('business_setup_start_failed', "We couldn't start setup", event.error || event.message);
                 return;
@@ -6094,6 +6183,7 @@ Notes: 6</textarea>
             renderDocumentLoadFailureStates();
         });
         window.addEventListener('unhandledrejection', event => {
+            if (reportUnexpectedTypeError(event.reason)) return;
             if (document.getElementById('businessModeModal')) {
                 showAppErrorToast('business_setup_start_failed', "We couldn't start setup", event.reason);
                 return;
@@ -7857,6 +7947,7 @@ Notes: 6</textarea>
             }
         } catch (e) {
             console.error('Navigation error:', e);
+            reportUnexpectedTypeError(e);
             try { switchPage('selectArea'); } catch(e2) {}
         }
     }
@@ -7887,7 +7978,7 @@ Notes: 6</textarea>
         window.location.hash = '#/profile/' + getWorkspaceSlug(ws.name) + '/document/' + docId;
         // Save title on blur or enter
         const editable = document.getElementById('editableTitle');
-        editable.addEventListener('blur', function() {
+        editable?.addEventListener('blur', function() {
             if (isEffectivelyLocked(doc)) {
                 this.textContent = doc.title;
                 return;
@@ -7908,6 +7999,39 @@ Notes: 6</textarea>
             }
         });
     }
+
+    function commitEditableDocumentTitle(editableTitle) {
+        if (!editableTitle || editableTitle.id !== 'editableTitle') return;
+        const docId = getCurrentDocIdFromHash();
+        const doc = documents.find(item => item.id === docId);
+        if (!doc) return;
+        if (isEffectivelyLocked(doc)) {
+            editableTitle.textContent = doc.title;
+            return;
+        }
+        const nextTitle = editableTitle.textContent.trim() || 'Untitled Document';
+        doc.title = nextTitle;
+        doc.timestamp = Date.now();
+        editableTitle.textContent = nextTitle;
+        document.title = nextTitle + ' — Munetios OmniWrite';
+        document.querySelectorAll(`.document-item[data-doc-id="${CSS.escape(doc.id)}"] .menu-text`).forEach(item => {
+            item.textContent = nextTitle;
+        });
+        debouncedSaveDocuments(100);
+    }
+
+    if (!window.__omniEditableTitleDelegationReady) {
+        window.__omniEditableTitleDelegationReady = true;
+        document.addEventListener('focusout', event => {
+            if (event.target?.id === 'editableTitle') commitEditableDocumentTitle(event.target);
+        });
+        document.addEventListener('keydown', event => {
+            if (event.target?.id !== 'editableTitle' || event.key !== 'Enter') return;
+            event.preventDefault();
+            event.target.blur();
+        });
+    }
+
     // Utility to create a document DOM element
     function createDocumentElement(doc) {
         const div = document.createElement('div');
@@ -8001,7 +8125,7 @@ Notes: 6</textarea>
         
         const workspaceFolders = getWorkspaceFolders();
         if (workspaceFolders.length === 0) {
-            foldersList.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders</p>';
+            foldersList.innerHTML = `<p style="padding: 8px; opacity: 0.6; font-size: 14px;">${_t('no_folders')}</p>`;
             renderHomeDashboard();
             return;
         }
@@ -8146,6 +8270,7 @@ Notes: 6</textarea>
             // Re-attach font pickers for this document/editor (ensure DOM is ready)
         setTimeout(() => {
             setupFontPickers(doc, editorArea);
+            setupToolbarDropdownGroups(doc, editorArea);
             syncFontToolbarState();
             if (!isEffectivelyLocked(doc)) focusEditorSurface(editorArea);
         }, 0);
@@ -8375,19 +8500,19 @@ Notes: 6</textarea>
         });
 
         // Heading 1
-        document.getElementById('heading1Btn').addEventListener('mousedown', function(e) {
+        document.getElementById('heading1Btn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             execCommandWithRestore('formatBlock', '<h1>');
         });
 
         // Heading 2
-        document.getElementById('heading2Btn').addEventListener('mousedown', function(e) {
+        document.getElementById('heading2Btn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             execCommandWithRestore('formatBlock', '<h2>');
         });
 
         // Heading 3
-        document.getElementById('heading3Btn').addEventListener('mousedown', function(e) {
+        document.getElementById('heading3Btn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             execCommandWithRestore('formatBlock', '<h3>');
         });
@@ -8423,13 +8548,13 @@ Notes: 6</textarea>
         });
 
         // --- Heading 4 ---
-        document.getElementById('heading4Btn').addEventListener('mousedown', function(e) {
+        document.getElementById('heading4Btn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             execCommandWithRestore('formatBlock', '<h4>');
         });
 
         // --- Normal Paragraph ---
-        document.getElementById('paragraphBtn').addEventListener('mousedown', function(e) {
+        document.getElementById('paragraphBtn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             execCommandWithRestore('formatBlock', '<p>');
         });
@@ -9003,7 +9128,7 @@ Notes: 6</textarea>
             const removeMenu = ev2 => { if (!menu.contains(ev2.target)) { menu.remove(); document.removeEventListener('mousedown', removeMenu); } };
             setTimeout(() => document.addEventListener('mousedown', removeMenu), 0);
         });
-        document.getElementById('insertQuoteBtn').addEventListener('mousedown', function(e) {
+        document.getElementById('insertQuoteBtn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             const editorArea = document.getElementById('editorArea');
             editorArea.focus();
@@ -9031,7 +9156,7 @@ Notes: 6</textarea>
     
 
         // --- Insert Code Block Functionality ---
-        document.getElementById('insertCodeBlockBtn').addEventListener('mousedown', function(e) {
+        document.getElementById('insertCodeBlockBtn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             const editorArea = document.getElementById('editorArea');
             editorArea.focus();
@@ -9059,7 +9184,7 @@ Notes: 6</textarea>
             }
         });
 
-        document.getElementById('insertInlineCodeBtn').addEventListener('mousedown', function(e) {
+        document.getElementById('insertInlineCodeBtn')?.addEventListener('mousedown', function(e) {
             e.preventDefault();
             const editorArea = getActiveEditorSurface();
             if (!editorArea) return;
@@ -13210,6 +13335,206 @@ try {
             document.addEventListener('selectionchange', syncFontToolbarState);
         }
 
+        function setupToolbarDropdownGroups(doc, editorArea) {
+            const fontStylesBtn = document.getElementById('fontStylesBtn');
+            const fontStyleDropdown = document.getElementById('fontStyleDropdown');
+            const fontStyleText = document.getElementById('fontStyleText');
+            const insertBtn = document.getElementById('insertBtn');
+            const insertGroup = document.getElementById('insertGroui');
+            const alignGroupBtn = document.getElementById('alignGroupBtn');
+            const alignGroup = document.getElementById('alignGroup');
+            const listGroupBtn = document.getElementById('listGroupBtn');
+            const listGroup = document.getElementById('listGroup');
+            const formatGroupBtn = document.getElementById('formatGroupBtn');
+            const formatGroup = document.getElementById('formatGroup');
+            if (!fontStylesBtn || !fontStyleDropdown || !fontStyleText || !insertBtn || !insertGroup || !alignGroupBtn || !alignGroup || !listGroupBtn || !listGroup || !formatGroupBtn || !formatGroup) return;
+
+            fontStyleDropdown._ctx = { doc, editorArea, fontStyleText };
+
+            const closeGroup = group => {
+                group.classList.remove('is-open');
+                group.setAttribute('aria-hidden', 'true');
+            };
+            const closeFontStyles = () => {
+                fontStyleDropdown.style.display = 'none';
+                fontStyleDropdown.setAttribute('aria-hidden', 'true');
+                fontStylesBtn.setAttribute('aria-expanded', 'false');
+            };
+            const closeAll = except => {
+                if (except !== fontStyleDropdown) closeFontStyles();
+                if (except !== insertGroup) closeGroup(insertGroup);
+                if (except !== alignGroup) closeGroup(alignGroup);
+                if (except !== listGroup) closeGroup(listGroup);
+                if (except !== formatGroup) closeGroup(formatGroup);
+            };
+            const positionMenu = (trigger, menu) => {
+                const rect = trigger.getBoundingClientRect();
+                menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+                menu.style.left = `${Math.max(8, Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - menu.offsetWidth - 8))}px`;
+            };
+            const toggleGroup = (trigger, group) => {
+                const willOpen = !group.classList.contains('is-open');
+                closeAll(willOpen ? group : null);
+                if (!willOpen) return;
+                group.classList.add('is-open');
+                group.setAttribute('aria-hidden', 'false');
+                positionMenu(trigger, group);
+            };
+            const setFontStyleLabel = (element, label) => {
+                element.replaceChildren(document.createTextNode(`${label} `));
+                const icon = document.createElement('icon');
+                icon.textContent = 'arrow_drop_down';
+                element.appendChild(icon);
+            };
+            const applyFontStyle = (style, context) => {
+                const styleConfig = {
+                    'Heading 1': { fontSize: '32px', fontWeight: '700', lineHeight: '1.25' },
+                    'Heading 2': { fontSize: '28px', fontWeight: '700', lineHeight: '1.3' },
+                    'Heading 3': { fontSize: '24px', fontWeight: '650', lineHeight: '1.35' },
+                    'Heading 4': { fontSize: '21px', fontWeight: '650', lineHeight: '1.4' },
+                    'Heading 5': { fontSize: '19px', fontWeight: '600', lineHeight: '1.45' },
+                    'Heading 6': { fontSize: '17px', fontWeight: '600', lineHeight: '1.5' },
+                    'Title': { fontSize: '40px', fontWeight: '700', lineHeight: '1.2' },
+                    'Subtitle': { fontSize: '24px', fontWeight: '400', lineHeight: '1.45', opacity: '0.82' },
+                    'Normal': { fontSize: '18px', fontWeight: '400', fontStyle: 'normal', lineHeight: '1.9', opacity: '1' },
+                    'Paragraph': { fontSize: '18px', fontWeight: '400', fontStyle: 'normal', lineHeight: '1.9', opacity: '1' },
+                    'Caption': { fontSize: '13px', fontWeight: '400', lineHeight: '1.4', opacity: '0.75' },
+                    'Quote': { display: 'inline-block', borderLeft: '4px solid #ffe066', padding: '2px 10px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px', fontStyle: 'italic' },
+                    'Inline Code': { fontFamily: "'Google Sans Code', 'Courier New', monospace", background: 'rgba(0,0,0,0.28)', borderRadius: '6px', padding: '2px 5px' },
+                    'Emphasis': { fontStyle: 'italic', fontWeight: '600' }
+                }[style];
+                if (!styleConfig) return;
+                const { doc: activeDoc, editorArea: activeEditor, fontStyleText: activeText } = context;
+                if (!activeDoc || !activeEditor || isEffectivelyLocked(activeDoc)) return;
+                focusEditorSurface(activeEditor);
+                restoreEditorSelection(activeEditor, fontStyleDropdown._savedSelection);
+                const selection = window.getSelection();
+                if (!selection || !selection.rangeCount || selection.isCollapsed) return;
+                const selectedRange = selection.getRangeAt(0);
+                if (!activeEditor.contains(selectedRange.commonAncestorContainer)) return;
+
+                const textNodes = [];
+                const walker = document.createTreeWalker(activeEditor, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        if (!node.nodeValue || !node.nodeValue.length) return NodeFilter.FILTER_REJECT;
+                        if (node.parentElement?.closest('.line-numbers-gutter, [contenteditable="false"]')) return NodeFilter.FILTER_REJECT;
+                        try {
+                            return selectedRange.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                        } catch (error) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                    }
+                });
+                while (walker.nextNode()) textNodes.push(walker.currentNode);
+                const wrappers = [];
+                textNodes.reverse().forEach(node => {
+                    const start = node === selectedRange.startContainer ? selectedRange.startOffset : 0;
+                    const end = node === selectedRange.endContainer ? selectedRange.endOffset : node.nodeValue.length;
+                    if (start >= end) return;
+                    if (end < node.nodeValue.length) node.splitText(end);
+                    const selectedTextNode = start > 0 ? node.splitText(start) : node;
+                    const span = document.createElement('span');
+                    span.dataset.omniTextStyle = style;
+                    Object.assign(span.style, styleConfig);
+                    selectedTextNode.parentNode.replaceChild(span, selectedTextNode);
+                    span.appendChild(selectedTextNode);
+                    wrappers.push(span);
+                });
+                if (!wrappers.length) return;
+                wrappers.reverse();
+                const appliedRange = document.createRange();
+                appliedRange.setStartBefore(wrappers[0]);
+                appliedRange.setEndAfter(wrappers[wrappers.length - 1]);
+                selection.removeAllRanges();
+                selection.addRange(appliedRange);
+                setFontStyleLabel(activeText, style === 'Normal' ? 'Normal Text' : style);
+                saveEditorSurfaceContent(activeEditor);
+            };
+
+            if (window.__omniToolbarDropdownGroupsBound) return;
+            window.__omniToolbarDropdownGroupsBound = true;
+            fontStylesBtn.setAttribute('aria-haspopup', 'menu');
+            fontStylesBtn.setAttribute('aria-expanded', 'false');
+            fontStyleDropdown.setAttribute('aria-hidden', 'true');
+            insertGroup.setAttribute('aria-hidden', 'true');
+            alignGroup.setAttribute('aria-hidden', 'true');
+            listGroup.setAttribute('aria-hidden', 'true');
+            formatGroup.setAttribute('aria-hidden', 'true');
+
+            fontStylesBtn.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                fontStyleDropdown._savedSelection = saveEditorSelection(fontStyleDropdown._ctx.editorArea);
+                const willOpen = fontStyleDropdown.style.display !== 'block';
+                closeAll(willOpen ? fontStyleDropdown : null);
+                if (!willOpen) return;
+                fontStyleDropdown.style.display = 'block';
+                fontStyleDropdown.setAttribute('aria-hidden', 'false');
+                fontStylesBtn.setAttribute('aria-expanded', 'true');
+                positionMenu(fontStylesBtn, fontStyleDropdown);
+            });
+            fontStyleDropdown.addEventListener('mousedown', event => {
+                const item = event.target.closest('.dropdown-item[data-style]');
+                if (!item) return;
+                event.preventDefault();
+                applyFontStyle(item.dataset.style, fontStyleDropdown._ctx);
+                closeFontStyles();
+            });
+            insertBtn.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleGroup(insertBtn, insertGroup);
+            });
+            alignGroupBtn.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleGroup(alignGroupBtn, alignGroup);
+            });
+            listGroupBtn.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleGroup(listGroupBtn, listGroup);
+            });
+            formatGroupBtn.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleGroup(formatGroupBtn, formatGroup);
+            });
+            insertGroup.addEventListener('mousedown', event => {
+                if (event.target.closest('.toolbar-item')) setTimeout(() => closeGroup(insertGroup));
+            });
+            alignGroup.addEventListener('mousedown', event => {
+                const item = event.target.closest('.toolbar-item');
+                if (!item) return;
+                const icon = item.querySelector('icon');
+                const groupedChoice = document.getElementById('alignGroupedChoice');
+                if (icon && groupedChoice) groupedChoice.textContent = icon.textContent;
+                setTimeout(() => closeGroup(alignGroup));
+            });
+            listGroup.addEventListener('mousedown', event => {
+                const item = event.target.closest('.toolbar-item');
+                if (!item) return;
+                const icon = item.querySelector('icon');
+                const groupedChoice = document.getElementById('listGroupedChoice');
+                if (icon && groupedChoice) groupedChoice.textContent = icon.textContent;
+                setTimeout(() => closeGroup(listGroup));
+            });
+            formatGroup.addEventListener('mousedown', event => {
+                if (event.target.closest('.toolbar-item')) setTimeout(() => closeGroup(formatGroup));
+            });
+            document.addEventListener('mousedown', event => {
+                if (!event.target.closest('#fontStylesBtn, #fontStyleDropdown, #insertBtn, #insertGroui, #alignGroupBtn, #alignGroup, #listGroupBtn, #listGroup, #formatGroupBtn, #formatGroup')) closeAll(null);
+            });
+            window.addEventListener('resize', () => closeAll(null));
+            window.addEventListener('scroll', event => {
+                const scrollingMenu = event.target instanceof Element
+                    ? event.target.closest('#fontStyleDropdown, #fontSizePicker, #fontFamilyPicker, #insertGroui, #alignGroup, #listGroup, #formatGroup')
+                    : null;
+                if (scrollingMenu) return;
+                closeAll(null);
+            }, true);
+        }
+
         // Font Size and Font Family Picker logic as functions to re-attach event listeners
         function setupFontPickers(doc, editorArea) {
             // Always get fresh references after cloning
@@ -15074,7 +15399,7 @@ try {
                         foldersList.appendChild(div);
                     });
                 } else {
-                    foldersList.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">No folders found</p>';
+                    foldersList.innerHTML = `<p style="padding: 8px; opacity: 0.6; font-size: 14px;">${_t('no_folders_found')}</p>`;
                 }
             }
             
@@ -15904,6 +16229,8 @@ try {
     const sidebarContainer = document.querySelector('.sidebar__container');
     const mainContainer = document.querySelector('.main-container');
     const navbar = document.querySelector('.navbar');
+    let desktopSidebarCollapsed = document.body.classList.contains('omni-sidebar-collapsed');
+    let compactShellActive = false;
 
     // Get all toggleSidebar buttons (there's one in each navbar)
     const toggleSidebarBtns = document.querySelectorAll('#toggleSidebar');
@@ -15913,9 +16240,13 @@ try {
 
     function showSidebarOverlay() {
         const position = getSidebarPositionSetting();
+        if (document.body.classList.contains('omni-sidebar-collapsed')) {
+            desktopSidebarCollapsed = true;
+            document.body.classList.remove('omni-sidebar-collapsed');
+        }
         sidebarContainer.style.position = 'fixed';
-        sidebarContainer.style.left = position === 'left' ? '0' : '';
-        sidebarContainer.style.right = position === 'right' ? '0' : '';
+        sidebarContainer.style.left = position === 'left' ? '0' : 'auto';
+        sidebarContainer.style.right = position === 'right' ? '0' : 'auto';
         sidebarContainer.style.top = '0';
         sidebarContainer.style.zIndex = '10001';
         sidebarContainer.style.height = '100vh';
@@ -15928,8 +16259,8 @@ try {
 
     function hideSidebarOverlay() {
         const position = getSidebarPositionSetting();
-        sidebarContainer.style.left = position === 'left' ? '-600px' : '';
-        sidebarContainer.style.right = position === 'right' ? '-600px' : '';
+        sidebarContainer.style.left = position === 'left' ? '-600px' : 'auto';
+        sidebarContainer.style.right = position === 'right' ? '-600px' : 'auto';
         sidebarContainer.style.background = '';
         sidebarContainer.style.boxShadow = '';
         document.body.style.overflow = '';
@@ -15950,6 +16281,15 @@ try {
     function updateResponsiveShellState() {
         const isCompact = window.innerWidth <= 1190;
         document.body.classList.toggle('omni-compact-shell', isCompact);
+        if (isCompact) {
+            if (!compactShellActive) {
+                desktopSidebarCollapsed = document.body.classList.contains('omni-sidebar-collapsed');
+            }
+            document.body.classList.remove('omni-sidebar-collapsed');
+        } else if (compactShellActive) {
+            document.body.classList.toggle('omni-sidebar-collapsed', desktopSidebarCollapsed);
+        }
+        compactShellActive = isCompact;
         if (!isCompact) {
             sidebarContainer.style.position = '';
             sidebarContainer.style.left = '';
@@ -17028,6 +17368,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.14.11 - Some of the toolbar items are grouped or moved to reduce clutter for the editor toolbar, Renamed folders to projects, added editor topbar customization, added font styles and more.</li>
                      <li>v1.14.10 - Added insert dropdown feature, Added sidebar customization.</li>
                           <li>v1.14.4 - Added watermark feature, improved font family/size, added zoom, and added move to workspace feature.</li>
                         <li>v1.14.3 - Improved importing PDFs and DOCX files, fixed a font bug that Google Sans Flex wouldn't load on Chromebooks.</li>
@@ -17198,6 +17539,7 @@ try {
         }
         
         const OMNI_TOOLBAR_CUSTOMIZATION_KEY = 'omniwrite-editor-toolbar-customization';
+        const OMNI_EDITOR_TOPBAR_CUSTOMIZATION_KEY = 'omniwrite-editor-topbar-customization';
         const OMNI_DOCUMENT_FONT_FEATURES_KEY = 'omniwrite-document-font-features';
         const OMNI_FONT_FEATURE_GROUPS = [
             { title: 'Stylistic Sets', keys: Array.from({ length: 20 }, (_, index) => 'ss' + String(index + 1).padStart(2, '0')) },
@@ -17303,12 +17645,12 @@ try {
                 if (child.classList && child.classList.contains('toolbar-item') && child.id) {
                     child.dataset.toolbarKey = child.id;
                     child.dataset.toolbarType = 'item';
-                    defaults.push({ type: 'item', key: child.id, label: getToolbarElementLabel(child, child.id), visible: true, custom: false });
+                    defaults.push({ type: 'item', key: child.id, label: getToolbarElementLabel(child, child.id), location: 'toolbar', visible: true, custom: false });
                 } else if (child.tagName && child.tagName.toLowerCase() === 'vl') {
                     const key = child.dataset.toolbarKey || `default-divider-${dividerIndex++}`;
                     child.dataset.toolbarKey = key;
                     child.dataset.toolbarType = 'divider';
-                    defaults.push({ type: 'divider', key, label: _t('vertical_line'), visible: true, custom: false });
+                    defaults.push({ type: 'divider', key, label: _t('vertical_line'), location: 'toolbar', visible: true, custom: false });
                 }
             });
             window._omniToolbarDefaultConfig = defaults;
@@ -17326,11 +17668,15 @@ try {
                     if (!item || !item.key || !item.type) return;
                     const base = defaultMap.get(item.key);
                     if (base) {
-                        normalized.push({ ...base, visible: item.visible !== false });
+                        const location = item.location === 'more' && base.type === 'item'
+                            ? 'more'
+                            : (item.location === 'hidden' || item.visible === false ? 'hidden' : 'toolbar');
+                        normalized.push({ ...base, location, visible: location !== 'hidden' });
                         return;
                     }
                     if (item.type === 'divider' && item.custom) {
-                        normalized.push({ type: 'divider', key: item.key, label: _t('vertical_line'), visible: item.visible !== false, custom: true });
+                        const location = item.location === 'hidden' || item.visible === false ? 'hidden' : 'toolbar';
+                        normalized.push({ type: 'divider', key: item.key, label: _t('vertical_line'), location, visible: location !== 'hidden', custom: true });
                     }
                 });
                 defaults.forEach(item => {
@@ -17346,32 +17692,57 @@ try {
             try { localStorage.setItem(OMNI_TOOLBAR_CUSTOMIZATION_KEY, JSON.stringify(config)); } catch(e) { console.warn('localStorage unavailable:', e); }
         }
 
+        function ensureEditorToolbarMoreContainer() {
+            const menu = document.getElementById('editorMoreOptions');
+            if (!menu) return null;
+            let section = document.getElementById('editorToolbarMoreSection');
+            if (!section) {
+                section = document.createElement('div');
+                section.id = 'editorToolbarMoreSection';
+                section.className = 'editor-toolbar-more-section';
+                section.innerHTML = `<div class="editor-toolbar-more-title">${_t('editor_toolbar_items')}</div><div class="editor-toolbar-more-items" id="editorToolbarMoreItems"></div>`;
+                menu.insertBefore(section, menu.firstChild);
+            }
+            return section.querySelector('#editorToolbarMoreItems');
+        }
+
         function applyToolbarCustomization(config = loadToolbarCustomization()) {
             const toolbar = document.querySelector('.toolbar');
             if (!toolbar) return;
             getToolbarDefaultConfig();
-            const fragment = document.createDocumentFragment();
+            const moreContainer = ensureEditorToolbarMoreContainer();
+            const toolbarFragment = document.createDocumentFragment();
+            const moreFragment = document.createDocumentFragment();
             const usedKeys = new Set();
             config.forEach(item => {
-                let node = toolbar.querySelector(`[data-toolbar-key="${CSS.escape(item.key)}"]`);
+                let node = document.querySelector(`[data-toolbar-key="${CSS.escape(item.key)}"]`);
                 if (!node && item.type === 'divider') {
                     node = document.createElement('vl');
                     node.dataset.toolbarKey = item.key;
                     node.dataset.toolbarType = 'divider';
                 }
                 if (!node) return;
-                node.style.display = item.visible === false ? 'none' : '';
-                fragment.appendChild(node);
+                const location = item.location === 'more' && item.type === 'item'
+                    ? 'more'
+                    : (item.location === 'hidden' || item.visible === false ? 'hidden' : 'toolbar');
+                node.style.display = location === 'hidden' ? 'none' : '';
+                node.classList.toggle('omni-toolbar-more-item', location === 'more');
+                if (location === 'more') moreFragment.appendChild(node);
+                else toolbarFragment.appendChild(node);
                 usedKeys.add(item.key);
             });
-            [...toolbar.children].forEach(child => {
+            [...document.querySelectorAll('[data-toolbar-key]')].forEach(child => {
                 const key = child.dataset.toolbarKey;
                 if (key && !usedKeys.has(key)) {
                     child.style.display = 'none';
-                    fragment.appendChild(child);
+                    child.classList.remove('omni-toolbar-more-item');
+                    toolbarFragment.appendChild(child);
                 }
             });
-            toolbar.appendChild(fragment);
+            toolbar.appendChild(toolbarFragment);
+            if (moreContainer) moreContainer.appendChild(moreFragment);
+            const section = document.getElementById('editorToolbarMoreSection');
+            if (section) section.style.display = moreContainer && moreContainer.children.length ? '' : 'none';
         }
 
         function openToolbarCustomizerModal() {
@@ -17398,12 +17769,17 @@ try {
 
             function renderList() {
                 list.innerHTML = workingConfig.map(item => `
-                    <div class="toolbar-customizer-row${item.visible === false ? ' is-hidden' : ''}" draggable="true" data-key="${item.key}">
+                    <div class="toolbar-customizer-row${item.location === 'hidden' || item.visible === false ? ' is-hidden' : ''}" draggable="true" data-key="${item.key}">
                         <icon>${item.type === 'divider' ? 'vertical_align_center' : 'drag_indicator'}</icon>
                         <div class="toolbar-customizer-title">${item.label || item.key}</div>
                     <button type="button" data-action="up" title="${_t('move_up')}"><icon>keyboard_arrow_up</icon></button>
                     <button type="button" data-action="down" title="${_t('move_down')}"><icon>keyboard_arrow_down</icon></button>
-                    <button type="button" data-action="${item.type === 'divider' && item.custom ? 'delete' : 'toggle'}">${item.type === 'divider' && item.custom ? '<icon>delete</icon>' : (item.visible === false ? _t('show') : _t('hide'))}</button>
+                    ${item.type === 'divider' && item.custom ? '<button type="button" data-action="delete"><icon>delete</icon></button>' : `
+                    <select data-action="location" aria-label="${_t('item_location')}">
+                        <option value="toolbar" ${item.location !== 'more' && item.location !== 'hidden' && item.visible !== false ? 'selected' : ''}>${_t('toolbar_location_toolbar')}</option>
+                        ${item.type === 'item' ? `<option value="more" ${item.location === 'more' ? 'selected' : ''}>${_t('toolbar_location_more')}</option>` : ''}
+                        <option value="hidden" ${item.location === 'hidden' || item.visible === false ? 'selected' : ''}>${_t('toolbar_location_hidden')}</option>
+                    </select>`}
                     </div>
                 `).join('');
             }
@@ -17451,17 +17827,22 @@ try {
                 if (!item) return;
                 if (action === 'up') moveItem(key, -1);
                 if (action === 'down') moveItem(key, 1);
-                if (action === 'toggle') {
-                    item.visible = item.visible === false;
-                    renderList();
-                }
                 if (action === 'delete') {
                     workingConfig = workingConfig.filter(entry => entry.key !== key);
                     renderList();
                 }
             });
+            list.addEventListener('change', e => {
+                const select = e.target.closest('select[data-action="location"]');
+                if (!select) return;
+                const item = workingConfig.find(entry => entry.key === select.closest('.toolbar-customizer-row')?.dataset.key);
+                if (!item) return;
+                item.location = select.value;
+                item.visible = select.value !== 'hidden';
+                renderList();
+            });
             modal.querySelector('#toolbarAddDividerBtn').onclick = () => {
-                workingConfig.push({ type: 'divider', key: 'custom-divider-' + Date.now(), label: _t('vertical_line'), visible: true, custom: true });
+                workingConfig.push({ type: 'divider', key: 'custom-divider-' + Date.now(), label: _t('vertical_line'), location: 'toolbar', visible: true, custom: true });
                 renderList();
             };
             modal.querySelector('#toolbarResetBtn').onclick = () => {
@@ -17475,6 +17856,159 @@ try {
                 modal.remove();
             };
             modal.querySelector('#closeToolbarCustomizerModal').onclick = () => modal.remove();
+        }
+
+        function getEditorTopbarDefaultConfig() {
+            return [
+                { key: 'toggleSidebar', label: _t('topbar_menu'), location: 'left' },
+                { key: 'documentTitle', label: _t('topbar_document_title'), location: 'left' },
+                { key: 'savingStatusPill', label: _t('topbar_saving_status'), location: 'left' },
+                { key: 'versionHistoryBtn', label: _t('Version History'), location: 'right' },
+                { key: 'previewBtn', label: _t('Preview'), location: 'right' },
+                { key: 'readingModeBtn', label: _t('reading_mode'), location: 'right' },
+                { key: 'splitScreenBtn', label: _t('Split Screen'), location: 'right' },
+                { key: 'shareDocumentBtn', label: _t('Share'), location: 'right' },
+                { key: 'moreEditorBtn', label: _t('more_options'), location: 'right', required: true }
+            ];
+        }
+
+        function loadEditorTopbarCustomization() {
+            const defaults = getEditorTopbarDefaultConfig();
+            try {
+                const stored = JSON.parse(localStorage.getItem(OMNI_EDITOR_TOPBAR_CUSTOMIZATION_KEY) || 'null');
+                if (!Array.isArray(stored)) return defaults.map(item => ({ ...item }));
+                return defaults.map(item => {
+                    const saved = stored.find(entry => entry?.key === item.key) || {};
+                    const location = ['left', 'right', 'hidden'].includes(saved.location) ? saved.location : item.location;
+                    return { ...item, location: item.required && location === 'hidden' ? item.location : location };
+                });
+            } catch(e) {
+                return defaults.map(item => ({ ...item }));
+            }
+        }
+
+        function saveEditorTopbarCustomization(config) {
+            try { localStorage.setItem(OMNI_EDITOR_TOPBAR_CUSTOMIZATION_KEY, JSON.stringify(config)); } catch(e) { console.warn('localStorage unavailable:', e); }
+        }
+
+        function getEditorTopbarElement(key) {
+            const navbar = document.querySelector('#editorContent .navbar');
+            if (!navbar) return null;
+            if (key === 'toggleSidebar') return navbar.querySelector('#toggleSidebar');
+            return navbar.querySelector('#' + CSS.escape(key));
+        }
+
+        function applyEditorTopbarCustomization(config = loadEditorTopbarCustomization()) {
+            const navbar = document.querySelector('#editorContent .navbar');
+            const left = navbar?.querySelector('.navbar__left');
+            const right = navbar?.querySelector('.navbar__right');
+            if (!left || !right) return;
+            const leftFragment = document.createDocumentFragment();
+            const rightFragment = document.createDocumentFragment();
+            config.forEach(item => {
+                const node = getEditorTopbarElement(item.key);
+                if (!node) return;
+                const location = item.required && item.location === 'hidden' ? 'right' : item.location;
+                node.style.display = location === 'hidden' ? 'none' : '';
+                if (node.tagName === 'ICON') node.classList.toggle('liquid-glass', location === 'left');
+                if (location === 'left') leftFragment.appendChild(node);
+                else rightFragment.appendChild(node);
+            });
+            left.appendChild(leftFragment);
+            right.appendChild(rightFragment);
+        }
+
+        function openEditorTopbarCustomizerModal() {
+            document.getElementById('editorTopbarCustomizerModal')?.remove();
+            let workingConfig = loadEditorTopbarCustomization();
+            const modal = document.createElement('div');
+            modal.id = 'editorTopbarCustomizerModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content" style="position:relative;max-width:760px;max-height:84vh;overflow-y:auto;">
+                    <span class="modal-content-close" id="closeEditorTopbarCustomizerModal" style="position:absolute;top:18px;right:24px;cursor:pointer;font-size:28px;z-index:2;">&times;</span>
+                    <h2>${_t('customize_editor_topbar')}</h2>
+                    <p style="opacity:.72;margin-top:-6px;">${_t('customize_editor_topbar_desc')}</p>
+                    <div class="toolbar-customizer-actions">
+                        <button id="editorTopbarResetBtn"><icon>restart_alt</icon> ${_t('reset')}</button>
+                        <button id="editorTopbarSaveBtn"><icon>save</icon> ${_t('save')}</button>
+                    </div>
+                    <div class="toolbar-customizer-list" id="editorTopbarCustomizerList"></div>
+                </div>`;
+            document.body.appendChild(modal);
+            const list = modal.querySelector('#editorTopbarCustomizerList');
+            let draggingKey = null;
+            function renderList() {
+                list.innerHTML = workingConfig.map(item => `
+                    <div class="toolbar-customizer-row editor-topbar-customizer-row${item.location === 'hidden' ? ' is-hidden' : ''}" draggable="true" data-key="${item.key}">
+                        <icon>drag_indicator</icon>
+                        <div class="toolbar-customizer-title">${item.label || item.key}</div>
+                        <button type="button" data-action="up" title="${_t('move_up')}"><icon>keyboard_arrow_up</icon></button>
+                        <button type="button" data-action="down" title="${_t('move_down')}"><icon>keyboard_arrow_down</icon></button>
+                        <select data-action="location" aria-label="${_t('item_location')}">
+                            <option value="left" ${item.location === 'left' ? 'selected' : ''}>${_t('topbar_location_left')}</option>
+                            <option value="right" ${item.location === 'right' ? 'selected' : ''}>${_t('topbar_location_right')}</option>
+                            ${item.required ? '' : `<option value="hidden" ${item.location === 'hidden' ? 'selected' : ''}>${_t('toolbar_location_hidden')}</option>`}
+                        </select>
+                    </div>`).join('');
+            }
+            function moveItem(key, direction) {
+                const index = workingConfig.findIndex(item => item.key === key);
+                const target = index + direction;
+                if (index < 0 || target < 0 || target >= workingConfig.length) return;
+                const [item] = workingConfig.splice(index, 1);
+                workingConfig.splice(target, 0, item);
+                renderList();
+            }
+            renderList();
+            list.addEventListener('dragstart', event => {
+                const row = event.target.closest('.toolbar-customizer-row');
+                if (!row) return;
+                draggingKey = row.dataset.key;
+                row.classList.add('is-dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', draggingKey);
+            });
+            list.addEventListener('dragend', event => {
+                event.target.closest('.toolbar-customizer-row')?.classList.remove('is-dragging');
+                draggingKey = null;
+            });
+            list.addEventListener('dragover', event => {
+                event.preventDefault();
+                const row = event.target.closest('.toolbar-customizer-row');
+                if (!row || !draggingKey || row.dataset.key === draggingKey) return;
+                const from = workingConfig.findIndex(item => item.key === draggingKey);
+                const to = workingConfig.findIndex(item => item.key === row.dataset.key);
+                if (from < 0 || to < 0 || from === to) return;
+                const [item] = workingConfig.splice(from, 1);
+                workingConfig.splice(to, 0, item);
+                renderList();
+            });
+            list.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                const key = button?.closest('.toolbar-customizer-row')?.dataset.key;
+                if (!button || !key) return;
+                moveItem(key, button.dataset.action === 'up' ? -1 : 1);
+            });
+            list.addEventListener('change', event => {
+                const select = event.target.closest('select[data-action="location"]');
+                if (!select) return;
+                const item = workingConfig.find(entry => entry.key === select.closest('.toolbar-customizer-row')?.dataset.key);
+                if (!item) return;
+                item.location = select.value;
+                renderList();
+            });
+            modal.querySelector('#editorTopbarResetBtn').onclick = () => {
+                workingConfig = getEditorTopbarDefaultConfig().map(item => ({ ...item }));
+                renderList();
+            };
+            modal.querySelector('#editorTopbarSaveBtn').onclick = () => {
+                saveEditorTopbarCustomization(workingConfig);
+                applyEditorTopbarCustomization(workingConfig);
+                showToast(_t('topbar_customization_saved'), { type: 'success' });
+                modal.remove();
+            };
+            modal.querySelector('#closeEditorTopbarCustomizerModal').onclick = () => modal.remove();
         }
 
         function setupSidebarContextMenu() {
@@ -17534,11 +18068,11 @@ try {
                 if (app) app.style.flexDirection = 'row-reverse';
                 if (window.innerWidth <= 1190) {
                     if (sidebarContainer && sidebarContainer.style.left === '0px') {
-                        sidebarContainer.style.left = '';
+                        sidebarContainer.style.left = 'auto';
                         sidebarContainer.style.right = '0';
                     }
                     if (sidebarContainer && sidebarContainer.style.left === '-600px') {
-                        sidebarContainer.style.left = '';
+                        sidebarContainer.style.left = 'auto';
                         sidebarContainer.style.right = '-600px';
                     }
                 }
@@ -17546,11 +18080,11 @@ try {
                 if (app) app.style.flexDirection = 'row';
                 if (window.innerWidth <= 1190) {
                     if (sidebarContainer && sidebarContainer.style.right === '0px') {
-                        sidebarContainer.style.right = '';
+                        sidebarContainer.style.right = 'auto';
                         sidebarContainer.style.left = '0';
                     }
                     if (sidebarContainer && sidebarContainer.style.right === '-600px') {
-                        sidebarContainer.style.right = '';
+                        sidebarContainer.style.right = 'auto';
                         sidebarContainer.style.left = '-600px';
                     }
                 }
@@ -25363,7 +25897,7 @@ try {
                 'underlineBtn':'Underline','strikethroughBtn':'strikethrough',
                 'fontFamilyBtn':'Font Family','fontSizeBtn':'Font Size',
                 'bulletListBtn':'Bullet List','numberedListBtn':'Numbered List',
-                'checkboxListBtn':'checkbox_list','alignLeftBtn':'Align Left',
+                'checkboxListBtn':'checkbox_list','listGroupBtn':'lists','formatGroupBtn':'more_formatting','alignLeftBtn':'Align Left',
                 'alignCenterBtn':'Align Center','alignRightBtn':'Align Right',
                 'alignJustifyBtn':'justify','undoBtn':'Undo','redoBtn':'Redo',
                 'insertHrBtn':'insert_hr','insertLinkBtn':'insert_link',
@@ -25525,12 +26059,35 @@ try {
             }
         }
 
+        const editorCustomizationLocalePatches = {
+            en: { customize_editor_topbar:'Customize Editor Topbar', customize_editor_topbar_desc:'Reorder editor topbar items, choose a side, or hide optional actions.', topbar_customization_saved:'Editor topbar customization saved.', editor_toolbar_items:'Editor toolbar items', item_location:'Item location', toolbar_location_toolbar:'Toolbar', toolbar_location_more:'More menu', toolbar_location_hidden:'Hidden', topbar_location_left:'Topbar left', topbar_location_right:'Topbar right', topbar_menu:'Menu', topbar_document_title:'Document title', topbar_saving_status:'Saving status', customize_editor_toolbar_desc:'Reorder editor tools and place each item in the toolbar, More menu, or Hidden.' },
+            es: { customize_editor_topbar:'Personalizar barra superior del editor', customize_editor_topbar_desc:'Reordena los elementos, elige un lado u oculta acciones opcionales.', topbar_customization_saved:'Personalización de la barra superior guardada.', editor_toolbar_items:'Elementos de la barra del editor', item_location:'Ubicación del elemento', toolbar_location_toolbar:'Barra de herramientas', toolbar_location_more:'Menú Más', toolbar_location_hidden:'Oculto', topbar_location_left:'Izquierda de la barra superior', topbar_location_right:'Derecha de la barra superior', topbar_menu:'Menú', topbar_document_title:'Título del documento', topbar_saving_status:'Estado de guardado', customize_editor_toolbar_desc:'Reordena las herramientas y coloca cada elemento en la barra, el menú Más u Oculto.' },
+            fr: { customize_editor_topbar:'Personnaliser la barre supérieure de l’éditeur', customize_editor_topbar_desc:'Réorganisez les éléments, choisissez un côté ou masquez les actions facultatives.', topbar_customization_saved:'Personnalisation de la barre supérieure enregistrée.', editor_toolbar_items:'Éléments de la barre d’outils', item_location:'Emplacement de l’élément', toolbar_location_toolbar:'Barre d’outils', toolbar_location_more:'Menu Plus', toolbar_location_hidden:'Masqué', topbar_location_left:'Gauche de la barre supérieure', topbar_location_right:'Droite de la barre supérieure', topbar_menu:'Menu', topbar_document_title:'Titre du document', topbar_saving_status:'État d’enregistrement', customize_editor_toolbar_desc:'Réorganisez les outils et placez-les dans la barre, le menu Plus ou Masqué.' },
+            de: { customize_editor_topbar:'Editor-Kopfleiste anpassen', customize_editor_topbar_desc:'Ordne Elemente neu an, wähle eine Seite oder blende optionale Aktionen aus.', topbar_customization_saved:'Editor-Kopfleiste gespeichert.', editor_toolbar_items:'Editor-Werkzeuge', item_location:'Elementposition', toolbar_location_toolbar:'Werkzeugleiste', toolbar_location_more:'Mehr-Menü', toolbar_location_hidden:'Ausgeblendet', topbar_location_left:'Kopfleiste links', topbar_location_right:'Kopfleiste rechts', topbar_menu:'Menü', topbar_document_title:'Dokumenttitel', topbar_saving_status:'Speicherstatus', customize_editor_toolbar_desc:'Ordne Werkzeuge neu und platziere sie in der Leiste, im Mehr-Menü oder ausgeblendet.' },
+            pt: { customize_editor_topbar:'Personalizar barra superior do editor', customize_editor_topbar_desc:'Reordene itens, escolha um lado ou oculte ações opcionais.', topbar_customization_saved:'Personalização da barra superior salva.', editor_toolbar_items:'Itens da barra do editor', item_location:'Local do item', toolbar_location_toolbar:'Barra de ferramentas', toolbar_location_more:'Menu Mais', toolbar_location_hidden:'Oculto', topbar_location_left:'Barra superior à esquerda', topbar_location_right:'Barra superior à direita', topbar_menu:'Menu', topbar_document_title:'Título do documento', topbar_saving_status:'Status de salvamento', customize_editor_toolbar_desc:'Reordene ferramentas e coloque cada item na barra, no menu Mais ou Oculto.' },
+            it: { customize_editor_topbar:'Personalizza barra superiore dell’editor', customize_editor_topbar_desc:'Riordina gli elementi, scegli un lato o nascondi le azioni opzionali.', topbar_customization_saved:'Personalizzazione della barra superiore salvata.', editor_toolbar_items:'Elementi della barra dell’editor', item_location:'Posizione elemento', toolbar_location_toolbar:'Barra strumenti', toolbar_location_more:'Menu Altro', toolbar_location_hidden:'Nascosto', topbar_location_left:'Barra superiore a sinistra', topbar_location_right:'Barra superiore a destra', topbar_menu:'Menu', topbar_document_title:'Titolo documento', topbar_saving_status:'Stato salvataggio', customize_editor_toolbar_desc:'Riordina gli strumenti e inseriscili nella barra, nel menu Altro o tra i nascosti.' },
+            zh: { customize_editor_topbar:'自定义编辑器顶栏', customize_editor_topbar_desc:'重新排列顶栏项目、选择一侧或隐藏可选操作。', topbar_customization_saved:'编辑器顶栏设置已保存。', editor_toolbar_items:'编辑器工具栏项目', item_location:'项目位置', toolbar_location_toolbar:'工具栏', toolbar_location_more:'更多菜单', toolbar_location_hidden:'隐藏', topbar_location_left:'顶栏左侧', topbar_location_right:'顶栏右侧', topbar_menu:'菜单', topbar_document_title:'文档标题', topbar_saving_status:'保存状态', customize_editor_toolbar_desc:'重新排列编辑工具，并将项目放在工具栏、更多菜单或隐藏。' },
+            ja: { customize_editor_topbar:'エディター上部バーをカスタマイズ', customize_editor_topbar_desc:'項目を並べ替え、左右を選択し、任意の操作を非表示にします。', topbar_customization_saved:'エディター上部バーの設定を保存しました。', editor_toolbar_items:'エディターツールバー項目', item_location:'項目の場所', toolbar_location_toolbar:'ツールバー', toolbar_location_more:'その他メニュー', toolbar_location_hidden:'非表示', topbar_location_left:'上部バー左', topbar_location_right:'上部バー右', topbar_menu:'メニュー', topbar_document_title:'文書タイトル', topbar_saving_status:'保存状態', customize_editor_toolbar_desc:'ツールを並べ替え、ツールバー、その他メニュー、または非表示に配置します。' },
+            ko: { customize_editor_topbar:'편집기 상단 표시줄 사용자 지정', customize_editor_topbar_desc:'항목 순서를 바꾸고 위치를 선택하거나 선택 작업을 숨깁니다.', topbar_customization_saved:'편집기 상단 표시줄 설정을 저장했습니다.', editor_toolbar_items:'편집기 도구 모음 항목', item_location:'항목 위치', toolbar_location_toolbar:'도구 모음', toolbar_location_more:'더보기 메뉴', toolbar_location_hidden:'숨김', topbar_location_left:'상단 표시줄 왼쪽', topbar_location_right:'상단 표시줄 오른쪽', topbar_menu:'메뉴', topbar_document_title:'문서 제목', topbar_saving_status:'저장 상태', customize_editor_toolbar_desc:'도구 순서를 바꾸고 도구 모음, 더보기 메뉴 또는 숨김에 배치합니다.' },
+            ar: { customize_editor_topbar:'تخصيص الشريط العلوي للمحرر', customize_editor_topbar_desc:'أعد ترتيب العناصر واختر جانبًا أو أخفِ الإجراءات الاختيارية.', topbar_customization_saved:'تم حفظ تخصيص الشريط العلوي.', editor_toolbar_items:'عناصر شريط أدوات المحرر', item_location:'موقع العنصر', toolbar_location_toolbar:'شريط الأدوات', toolbar_location_more:'قائمة المزيد', toolbar_location_hidden:'مخفي', topbar_location_left:'يسار الشريط العلوي', topbar_location_right:'يمين الشريط العلوي', topbar_menu:'القائمة', topbar_document_title:'عنوان المستند', topbar_saving_status:'حالة الحفظ', customize_editor_toolbar_desc:'أعد ترتيب الأدوات وضعها في شريط الأدوات أو قائمة المزيد أو ضمن المخفي.' },
+            hi: { customize_editor_topbar:'एडिटर टॉपबार अनुकूलित करें', customize_editor_topbar_desc:'आइटम का क्रम बदलें, किनारा चुनें या वैकल्पिक कार्रवाइयाँ छिपाएँ।', topbar_customization_saved:'एडिटर टॉपबार अनुकूलन सहेजा गया।', editor_toolbar_items:'एडिटर टूलबार आइटम', item_location:'आइटम स्थान', toolbar_location_toolbar:'टूलबार', toolbar_location_more:'अधिक मेनू', toolbar_location_hidden:'छिपा हुआ', topbar_location_left:'टॉपबार बायाँ', topbar_location_right:'टॉपबार दायाँ', topbar_menu:'मेनू', topbar_document_title:'दस्तावेज़ शीर्षक', topbar_saving_status:'सहेजने की स्थिति', customize_editor_toolbar_desc:'टूल का क्रम बदलें और उन्हें टूलबार, अधिक मेनू या छिपे हुए में रखें।' },
+            ru: { customize_editor_topbar:'Настроить верхнюю панель редактора', customize_editor_topbar_desc:'Меняйте порядок, выбирайте сторону или скрывайте необязательные действия.', topbar_customization_saved:'Настройки верхней панели сохранены.', editor_toolbar_items:'Элементы панели редактора', item_location:'Расположение элемента', toolbar_location_toolbar:'Панель инструментов', toolbar_location_more:'Меню «Ещё»', toolbar_location_hidden:'Скрыто', topbar_location_left:'Верхняя панель слева', topbar_location_right:'Верхняя панель справа', topbar_menu:'Меню', topbar_document_title:'Название документа', topbar_saving_status:'Статус сохранения', customize_editor_toolbar_desc:'Меняйте порядок инструментов и размещайте их на панели, в меню «Ещё» или скрывайте.' }
+        };
+        Object.keys(editorCustomizationLocalePatches).forEach(lang => {
+            TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, editorCustomizationLocalePatches[lang]);
+        });
+        Object.keys(TRANSLATIONS).forEach(locale => {
+            const base = String(locale).split('-')[0];
+            if (editorCustomizationLocalePatches[base]) TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[locale] || {}, editorCustomizationLocalePatches[base]);
+        });
+
         // On page load, apply theme and translations from localStorage
         try { applyTheme(localStorage.getItem('omniwrite-theme') || 'system'); } catch(e) { applyTheme('system'); }
         try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) { applyTranslations('en'); }
         try { applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left'); } catch(e) { applySidebarPosition('left'); }
         try { setupSidebarContextMenu(); } catch(e) { console.warn('Sidebar context menu unavailable:', e); }
         try { applyToolbarCustomization(); } catch(e) { console.warn('Toolbar customization unavailable:', e); }
+        try { applyEditorTopbarCustomization(); } catch(e) { console.warn('Editor topbar customization unavailable:', e); }
         try { applyFontPreferences(); } catch(e) { console.warn('Font preferences unavailable:', e); }
         try { applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true'); } catch(e) {}
         try { applyCompactMode(localStorage.getItem('omniwrite-compact-mode') === 'true'); } catch(e) {}
@@ -25648,6 +26205,13 @@ try {
                                     <div class="settings-row-subtitle">${_t('customize_editor_toolbar_desc')}</div>
                                 </div>
                                 <button id="customizeToolbarBtn" class="settings-select-btn">${_t('open')}</button>
+                            </div>
+                            <div class="settings-row">
+                                <div class="settings-row-info">
+                                    <div class="settings-row-title">${_t('customize_editor_topbar')}</div>
+                                    <div class="settings-row-subtitle">${_t('customize_editor_topbar_desc')}</div>
+                                </div>
+                                <button id="customizeEditorTopbarBtn" class="settings-select-btn">${_t('open')}</button>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-row-info">
@@ -26280,6 +26844,10 @@ try {
                 e.preventDefault();
                 openToolbarCustomizerModal();
             };
+            settingsModal.querySelector('#customizeEditorTopbarBtn').onclick = function(e) {
+                e.preventDefault();
+                openEditorTopbarCustomizerModal();
+            };
             settingsModal.querySelector('#customizeSidebarBtn').onclick = function(e) {
                 e.preventDefault();
                 if (typeof window.openSidebarCustomizerModal === 'function') window.openSidebarCustomizerModal();
@@ -26460,6 +27028,8 @@ try {
                         sidebarOrganization: localStorage.getItem('omniwrite-sidebar-organization') || 'folder-list',
                         sidebarPosition: localStorage.getItem('omniwrite-sidebar-position') || 'left',
                         sidebarWidth: localStorage.getItem('omniwrite-sidebar-width') || '',
+                        editorToolbarCustomization: loadToolbarCustomization(),
+                        editorTopbarCustomization: loadEditorTopbarCustomization(),
                         time: Date.now()
                     };
                     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -26537,6 +27107,14 @@ try {
                         if (backup.sidebarWidth) {
                             localStorage.setItem('omniwrite-sidebar-width', backup.sidebarWidth);
                             document.getElementById('app')?.style.setProperty('--sidebar-width', backup.sidebarWidth + 'px');
+                        }
+                        if (Array.isArray(backup.editorToolbarCustomization)) {
+                            saveToolbarCustomization(backup.editorToolbarCustomization);
+                            applyToolbarCustomization(backup.editorToolbarCustomization);
+                        }
+                        if (Array.isArray(backup.editorTopbarCustomization)) {
+                            saveEditorTopbarCustomization(backup.editorTopbarCustomization);
+                            applyEditorTopbarCustomization(backup.editorTopbarCustomization);
                         }
                         await saveDocuments();
                         renderWorkspacesSidebar();
@@ -30879,6 +31457,120 @@ try {
                     TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[locale] || {}, omniSidebarFeatureLocalePatches[base]);
                 }
             });
+        }
+
+        const omniProjectAndToolbarTranslations = {
+            folders: 'Projects',
+            no_folders: 'No projects',
+            no_folders_found: 'No projects found',
+            add_folder: 'Add Project',
+            new_folder: 'New Project',
+            edit_folder: 'Edit Project',
+            delete_folder: 'Delete Project',
+            move_to_folder: 'Move to Project',
+            move_document_to_folder: 'Move Document to Project',
+            no_folder: 'No Project',
+            create_new_folder_title: 'Create New Project',
+            folder_name_label: 'Project Name',
+            folder_name_placeholder: 'Enter project name',
+            create_folder_btn: 'Create Project',
+            delete_folder_confirm: 'Are you sure you want to delete the project "{name}"?',
+            folder_docs_note: 'The documents inside will not be deleted, only the project.',
+            folder_created: 'Project created.',
+            folder_updated: 'Project updated.',
+            folder_deleted: 'Project deleted.',
+            document_moved_to_folder: 'Document moved to project.',
+            please_enter_folder_name: 'Please enter a project name.',
+            no_folders_available_move: 'Create a project first to move this document.',
+            failed_save_folder: 'Failed to save project. Please try again.',
+            failed_delete_folder: 'Failed to delete project. Please try again.',
+            folders_page_title: 'Projects',
+            folders_page_desc: 'Browse projects and open documents without expanding the sidebar.',
+            folder_empty: 'This project has no documents.',
+            sidebar_organization_desc: 'Choose whether projects appear inline or as their own page.',
+            organize_by_folder_list: 'Project list',
+            workspace_counts: '{documents} documents • {folders} projects',
+            lists: 'Lists',
+            more_formatting: 'More formatting',
+            bullet_list: 'Bullet List',
+            numbered_list: 'Numbered List',
+            clear_formatting: 'Clear Formatting'
+        };
+        const omniProjectAndToolbarLocalePatches = {
+            es: { folders:'Proyectos', no_folders:'No hay proyectos', add_folder:'Añadir proyecto', new_folder:'Nuevo proyecto', edit_folder:'Editar proyecto', delete_folder:'Eliminar proyecto', move_to_folder:'Mover al proyecto', folder_name_label:'Nombre del proyecto', folders_page_title:'Proyectos', folders_page_desc:'Explora proyectos y abre documentos sin expandir la barra lateral.', folder_empty:'Este proyecto no tiene documentos.', organize_by_folder_list:'Lista de proyectos', workspace_counts:'{documents} documentos • {folders} proyectos', lists:'Listas', more_formatting:'Más formato', bullet_list:'Lista con viñetas', numbered_list:'Lista numerada', clear_formatting:'Borrar formato' },
+            fr: { folders:'Projets', no_folders:'Aucun projet', add_folder:'Ajouter un projet', new_folder:'Nouveau projet', edit_folder:'Modifier le projet', delete_folder:'Supprimer le projet', move_to_folder:'Déplacer vers le projet', folder_name_label:'Nom du projet', folders_page_title:'Projets', folders_page_desc:'Parcourez les projets et ouvrez des documents sans développer la barre latérale.', folder_empty:'Ce projet ne contient aucun document.', organize_by_folder_list:'Liste des projets', workspace_counts:'{documents} documents • {folders} projets', lists:'Listes', more_formatting:'Plus de mise en forme', bullet_list:'Liste à puces', numbered_list:'Liste numérotée', clear_formatting:'Effacer la mise en forme' },
+            de: { folders:'Projekte', no_folders:'Keine Projekte', add_folder:'Projekt hinzufügen', new_folder:'Neues Projekt', edit_folder:'Projekt bearbeiten', delete_folder:'Projekt löschen', move_to_folder:'In Projekt verschieben', folder_name_label:'Projektname', folders_page_title:'Projekte', folders_page_desc:'Durchsuche Projekte und öffne Dokumente, ohne die Seitenleiste zu erweitern.', folder_empty:'Dieses Projekt enthält keine Dokumente.', organize_by_folder_list:'Projektliste', workspace_counts:'{documents} Dokumente • {folders} Projekte', lists:'Listen', more_formatting:'Weitere Formatierung', bullet_list:'Aufzählung', numbered_list:'Nummerierte Liste', clear_formatting:'Formatierung löschen' },
+            pt: { folders:'Projetos', no_folders:'Nenhum projeto', add_folder:'Adicionar projeto', new_folder:'Novo projeto', edit_folder:'Editar projeto', delete_folder:'Excluir projeto', move_to_folder:'Mover para projeto', folder_name_label:'Nome do projeto', folders_page_title:'Projetos', folders_page_desc:'Navegue por projetos e abra documentos sem expandir a barra lateral.', folder_empty:'Este projeto não tem documentos.', organize_by_folder_list:'Lista de projetos', workspace_counts:'{documents} documentos • {folders} projetos', lists:'Listas', more_formatting:'Mais formatação', bullet_list:'Lista com marcadores', numbered_list:'Lista numerada', clear_formatting:'Limpar formatação' },
+            it: { folders:'Progetti', no_folders:'Nessun progetto', add_folder:'Aggiungi progetto', new_folder:'Nuovo progetto', edit_folder:'Modifica progetto', delete_folder:'Elimina progetto', move_to_folder:'Sposta nel progetto', folder_name_label:'Nome del progetto', folders_page_title:'Progetti', folders_page_desc:'Sfoglia i progetti e apri i documenti senza espandere la barra laterale.', folder_empty:'Questo progetto non contiene documenti.', organize_by_folder_list:'Elenco progetti', workspace_counts:'{documents} documenti • {folders} progetti', lists:'Elenchi', more_formatting:'Altra formattazione', bullet_list:'Elenco puntato', numbered_list:'Elenco numerato', clear_formatting:'Cancella formattazione' },
+            zh: { folders:'项目', no_folders:'没有项目', add_folder:'添加项目', new_folder:'新建项目', edit_folder:'编辑项目', delete_folder:'删除项目', move_to_folder:'移动到项目', folder_name_label:'项目名称', folders_page_title:'项目', folders_page_desc:'无需展开侧边栏即可浏览项目并打开文档。', folder_empty:'此项目没有文档。', organize_by_folder_list:'项目列表', workspace_counts:'{documents} 个文档 • {folders} 个项目', lists:'列表', more_formatting:'更多格式', bullet_list:'项目符号列表', numbered_list:'编号列表', clear_formatting:'清除格式' },
+            ja: { folders:'プロジェクト', no_folders:'プロジェクトはありません', add_folder:'プロジェクトを追加', new_folder:'新しいプロジェクト', edit_folder:'プロジェクトを編集', delete_folder:'プロジェクトを削除', move_to_folder:'プロジェクトへ移動', folder_name_label:'プロジェクト名', folders_page_title:'プロジェクト', folders_page_desc:'サイドバーを展開せずにプロジェクトを参照して文書を開きます。', folder_empty:'このプロジェクトには文書がありません。', organize_by_folder_list:'プロジェクト一覧', workspace_counts:'{documents} 件の文書 • {folders} 件のプロジェクト', lists:'リスト', more_formatting:'その他の書式', bullet_list:'箇条書き', numbered_list:'番号付きリスト', clear_formatting:'書式をクリア' },
+            ko: { folders:'프로젝트', no_folders:'프로젝트 없음', add_folder:'프로젝트 추가', new_folder:'새 프로젝트', edit_folder:'프로젝트 편집', delete_folder:'프로젝트 삭제', move_to_folder:'프로젝트로 이동', folder_name_label:'프로젝트 이름', folders_page_title:'프로젝트', folders_page_desc:'사이드바를 펼치지 않고 프로젝트를 탐색하고 문서를 엽니다.', folder_empty:'이 프로젝트에는 문서가 없습니다.', organize_by_folder_list:'프로젝트 목록', workspace_counts:'{documents} 문서 • {folders} 프로젝트', lists:'목록', more_formatting:'추가 서식', bullet_list:'글머리 기호 목록', numbered_list:'번호 매기기 목록', clear_formatting:'서식 지우기' },
+            ar: { folders:'المشاريع', no_folders:'لا توجد مشاريع', add_folder:'إضافة مشروع', new_folder:'مشروع جديد', edit_folder:'تعديل المشروع', delete_folder:'حذف المشروع', move_to_folder:'نقل إلى المشروع', folder_name_label:'اسم المشروع', folders_page_title:'المشاريع', folders_page_desc:'تصفح المشاريع وافتح المستندات دون توسيع الشريط الجانبي.', folder_empty:'لا يحتوي هذا المشروع على مستندات.', organize_by_folder_list:'قائمة المشاريع', workspace_counts:'{documents} مستندات • {folders} مشاريع', lists:'القوائم', more_formatting:'المزيد من التنسيق', bullet_list:'قائمة نقطية', numbered_list:'قائمة مرقمة', clear_formatting:'مسح التنسيق' },
+            hi: { folders:'प्रोजेक्ट', no_folders:'कोई प्रोजेक्ट नहीं', add_folder:'प्रोजेक्ट जोड़ें', new_folder:'नया प्रोजेक्ट', edit_folder:'प्रोजेक्ट संपादित करें', delete_folder:'प्रोजेक्ट हटाएँ', move_to_folder:'प्रोजेक्ट में ले जाएँ', folder_name_label:'प्रोजेक्ट का नाम', folders_page_title:'प्रोजेक्ट', folders_page_desc:'साइडबार फैलाए बिना प्रोजेक्ट ब्राउज़ करें और दस्तावेज़ खोलें।', folder_empty:'इस प्रोजेक्ट में कोई दस्तावेज़ नहीं है।', organize_by_folder_list:'प्रोजेक्ट सूची', workspace_counts:'{documents} दस्तावेज़ • {folders} प्रोजेक्ट', lists:'सूचियाँ', more_formatting:'अधिक फ़ॉर्मेटिंग', bullet_list:'बुलेट सूची', numbered_list:'क्रमांकित सूची', clear_formatting:'फ़ॉर्मेटिंग साफ़ करें' },
+            ru: { folders:'Проекты', no_folders:'Нет проектов', add_folder:'Добавить проект', new_folder:'Новый проект', edit_folder:'Изменить проект', delete_folder:'Удалить проект', move_to_folder:'Переместить в проект', folder_name_label:'Название проекта', folders_page_title:'Проекты', folders_page_desc:'Просматривайте проекты и открывайте документы без раскрытия боковой панели.', folder_empty:'В этом проекте нет документов.', organize_by_folder_list:'Список проектов', workspace_counts:'{documents} документов • {folders} проектов', lists:'Списки', more_formatting:'Дополнительное форматирование', bullet_list:'Маркированный список', numbered_list:'Нумерованный список', clear_formatting:'Очистить форматирование' }
+        };
+        if (typeof TRANSLATIONS === 'object') {
+            Object.keys(TRANSLATIONS).forEach(locale => {
+                const base = String(locale).split('-')[0];
+                TRANSLATIONS[locale] = Object.assign(
+                    TRANSLATIONS[locale] || {},
+                    omniProjectAndToolbarTranslations,
+                    omniProjectAndToolbarLocalePatches[base] || omniProjectAndToolbarLocalePatches[locale] || {}
+                );
+            });
+            try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
+        }
+
+        const omniRegionalLocalePatches = {
+            'en-GB': {
+                customize_sidebar: 'Customise Sidebar',
+                customize_sidebar_desc: 'Reorder sidebar items, move items to More, and choose how projects are organised.',
+                sidebar_organization: 'Sidebar Organisation',
+                sidebar_organization_desc: 'Choose whether projects appear inline or as their own page.',
+                customize_editor_toolbar: 'Customise Editor Toolbar',
+                customize_editor_toolbar_desc: 'Reorder editor tools and place each item in the toolbar, More menu, or Hidden.',
+                toolbar_customization_saved: 'Toolbar customisation saved.',
+                customize_editor_topbar: 'Customise Editor Topbar',
+                customize_editor_topbar_desc: 'Reorder editor topbar items, choose a side, or hide optional actions.',
+                topbar_customization_saved: 'Editor topbar customisation saved.',
+                background_color: 'Background Colour:',
+                'Text Color': 'Text Colour',
+                bg_color: 'Text Background Colour',
+                document_background_color: 'Document Background Colour',
+                'Align Center': 'Align Centre'
+            },
+            'es-ES': {
+                settings: 'Ajustes',
+                Settings: 'Ajustes',
+                settings_modal_title: 'Ajustes'
+            },
+            'es-MX': {
+                settings: 'Configuración',
+                Settings: 'Configuración',
+                settings_modal_title: 'Configuración'
+            },
+            'es-US': {
+                settings: 'Configuración',
+                Settings: 'Configuración',
+                settings_modal_title: 'Configuración'
+            },
+            'es-AR': {
+                settings: 'Configuración',
+                Settings: 'Configuración',
+                settings_modal_title: 'Configuración'
+            },
+            'es-CO': {
+                settings: 'Configuración',
+                Settings: 'Configuración',
+                settings_modal_title: 'Configuración'
+            }
+        };
+        if (typeof TRANSLATIONS === 'object') {
+            Object.entries(omniRegionalLocalePatches).forEach(([locale, patch]) => {
+                const base = OMNI_LOCALE_FALLBACKS[locale] || locale.split('-')[0] || 'en';
+                TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[base] || TRANSLATIONS.en || {}, TRANSLATIONS[locale] || {}, patch);
+            });
+            try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
         }
 
         function getSidebarDefaultConfig() {
