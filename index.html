@@ -5826,6 +5826,11 @@ Notes: 6</textarea>
             transition: background 0.15s;
         }
         .omni-img-toolbar button:hover { background: rgba(255,255,255,0.15); }
+        .omni-img-toolbar button:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            background: none;
+        }
         .omni-img-toolbar button icon { font-size: 18px; }
         /* resize handle highlight on selected image */
         img.omni-selected {
@@ -10585,6 +10590,9 @@ Q4: 22</textarea>
         function showImgToolbar(img) {
             removeImgToolbar();
             img.classList.add('omni-selected');
+            const sourceAttribute = img.getAttribute('src') || '';
+            const isUrlInsertedImage = img.dataset.omniwriteImageSource === 'url'
+                || (!img.hasAttribute('data-omniwrite-image-id') && /^https?:\/\//i.test(sourceAttribute));
             const toolbar = document.createElement('div');
             toolbar.className = 'omni-img-toolbar';
             toolbar.innerHTML = `
@@ -10595,9 +10603,15 @@ Q4: 22</textarea>
                 <button id="imgAlignRightBtn" title="${_t('img_align_right')}"><icon>format_align_right</icon></button>
             `;
             toolbar.addEventListener('mousedown', ev => ev.stopPropagation());
+            const cropButton = toolbar.querySelector('#imgCropBtn');
+            if (isUrlInsertedImage) {
+                cropButton.disabled = true;
+                cropButton.title = _t('img_crop_unavailable_url');
+                cropButton.setAttribute('aria-label', _t('img_crop_unavailable_url'));
+            }
 
             // Crop button — opens native crop via canvas
-            toolbar.querySelector('#imgCropBtn').onclick = () => {
+            cropButton.onclick = () => {
                 removeImgToolbar();
                 const cropModal = document.createElement('div');
                 cropModal.className = 'modal';
@@ -10607,7 +10621,7 @@ Q4: 22</textarea>
                         <h2 style="display:flex;align-items:center;gap:8px;"><icon>crop</icon> ${_t('img_crop')}</h2>
                         <p style="font-size:13px;opacity:0.7;">${_t('img_crop_hint')}</p>
                         <div style="position:relative;display:inline-block;user-select:none;" id="cropContainer">
-                            <img id="cropSourceImg" src="${img.src}" style="max-width:100%;display:block;" draggable="false">
+                            <img id="cropSourceImg" style="max-width:100%;display:block;" draggable="false">
                             <div id="cropBox" style="position:absolute;border:2px dashed #ffe066;box-sizing:border-box;left:10%;top:10%;width:80%;height:80%;cursor:move;"></div>
                         </div>
                         <div style="display:flex;gap:10px;margin-top:16px;">
@@ -10616,42 +10630,99 @@ Q4: 22</textarea>
                         </div>
                     </div>`;
                 document.body.appendChild(cropModal);
-                cropModal.querySelector('#closeCropModal').onclick = () => cropModal.remove();
-                cropModal.querySelector('#cancelCropBtn').onclick = () => cropModal.remove();
+                const cropSourceImg = cropModal.querySelector('#cropSourceImg');
+                cropSourceImg.src = img.currentSrc || img.src;
 
                 // Simple drag-to-reposition crop box
                 const box = cropModal.querySelector('#cropBox');
                 const container = cropModal.querySelector('#cropContainer');
                 let dragging = false, ox=0, oy=0, bx=0, by=0;
-                box.addEventListener('mousedown', function(ev) {
-                    dragging = true; ox=ev.clientX; oy=ev.clientY;
-                    bx = box.offsetLeft; by = box.offsetTop;
-                    ev.preventDefault();
-                });
-                document.addEventListener('mousemove', function mv(ev) {
-                    if(!dragging) return;
+                const closeCropModal = () => {
+                    document.removeEventListener('mousemove', moveCropBox);
+                    document.removeEventListener('mouseup', stopMovingCropBox);
+                    cropModal.remove();
+                };
+                const stopMovingCropBox = () => { dragging = false; };
+                const moveCropBox = ev => {
+                    if (!dragging) return;
                     const cw=container.offsetWidth, ch=container.offsetHeight;
                     const bw=box.offsetWidth, bh=box.offsetHeight;
                     let nx=bx+(ev.clientX-ox), ny=by+(ev.clientY-oy);
                     nx=Math.max(0,Math.min(nx,cw-bw)); ny=Math.max(0,Math.min(ny,ch-bh));
                     box.style.left=nx+'px'; box.style.top=ny+'px';
+                };
+                cropModal.querySelector('#closeCropModal').onclick = closeCropModal;
+                cropModal.querySelector('#cancelCropBtn').onclick = closeCropModal;
+                box.addEventListener('mousedown', function(ev) {
+                    dragging = true; ox=ev.clientX; oy=ev.clientY;
+                    bx = box.offsetLeft; by = box.offsetTop;
+                    ev.preventDefault();
                 });
-                document.addEventListener('mouseup', () => { dragging=false; });
+                document.addEventListener('mousemove', moveCropBox);
+                document.addEventListener('mouseup', stopMovingCropBox);
 
-                cropModal.querySelector('#applyCropBtn').onclick = () => {
-                    const srcImg = cropModal.querySelector('#cropSourceImg');
-                    const scaleX = srcImg.naturalWidth / srcImg.offsetWidth;
-                    const scaleY = srcImg.naturalHeight / srcImg.offsetHeight;
-                    const cx = box.offsetLeft * scaleX, cy = box.offsetTop * scaleY;
-                    const cw = box.offsetWidth * scaleX, ch = box.offsetHeight * scaleY;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = cw; canvas.height = ch;
-                    canvas.getContext('2d').drawImage(srcImg, cx, cy, cw, ch, 0, 0, cw, ch);
-                    img.src = canvas.toDataURL('image/png');
-                    // Remove DB ref since now a data URL crop
-                    img.removeAttribute('data-omniwrite-image-id');
-                    cropModal.remove();
-                    saveEditorSurfaceContent(img.closest(ACTIVE_EDITOR_SELECTOR));
+                cropModal.querySelector('#applyCropBtn').onclick = async event => {
+                    const applyButton = event.currentTarget;
+                    applyButton.disabled = true;
+                    let cleanImageUrl = '';
+                    try {
+                        let sourceBlob = null;
+                        const storedImageAttribute = img.getAttribute('data-omniwrite-image-id');
+                        const storedImageId = storedImageAttribute === null ? NaN : Number(storedImageAttribute);
+                        if (Number.isFinite(storedImageId)) {
+                            sourceBlob = await new Promise((resolve, reject) => {
+                                const request = db.transaction(IMAGE_STORE, 'readonly').objectStore(IMAGE_STORE).get(storedImageId);
+                                request.onsuccess = () => request.result?.file ? resolve(request.result.file) : reject(new Error('Stored image was not found'));
+                                request.onerror = () => reject(request.error || new Error('Stored image could not be loaded'));
+                            });
+                        } else {
+                            const sourceUrl = img.currentSrc || img.src;
+                            const parsedUrl = new URL(sourceUrl, window.location.href);
+                            const response = await fetch(parsedUrl.href, {
+                                mode: 'cors',
+                                credentials: parsedUrl.origin === window.location.origin ? 'same-origin' : 'omit'
+                            });
+                            if (!response.ok) throw new Error('Image request failed with status ' + response.status);
+                            sourceBlob = await response.blob();
+                        }
+
+                        cleanImageUrl = URL.createObjectURL(sourceBlob);
+                        const cleanImage = new Image();
+                        await new Promise((resolve, reject) => {
+                            cleanImage.onload = resolve;
+                            cleanImage.onerror = () => reject(new Error('Crop image could not be decoded'));
+                            cleanImage.src = cleanImageUrl;
+                        });
+
+                        const scaleX = cleanImage.naturalWidth / cropSourceImg.offsetWidth;
+                        const scaleY = cleanImage.naturalHeight / cropSourceImg.offsetHeight;
+                        const cx = Math.round(box.offsetLeft * scaleX);
+                        const cy = Math.round(box.offsetTop * scaleY);
+                        const cw = Math.max(1, Math.round(box.offsetWidth * scaleX));
+                        const ch = Math.max(1, Math.round(box.offsetHeight * scaleY));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = cw;
+                        canvas.height = ch;
+                        canvas.getContext('2d').drawImage(cleanImage, cx, cy, cw, ch, 0, 0, cw, ch);
+                        const croppedBlob = await new Promise((resolve, reject) => {
+                            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Crop image could not be exported')), 'image/png');
+                        });
+                        const croppedFile = new File([croppedBlob], 'omniwrite-crop-' + Date.now().toString(36) + '.png', { type: 'image/png' });
+                        const croppedImageId = await addImageToDB(croppedFile);
+                        if (img.dataset.omniBlobUrl) URL.revokeObjectURL(img.dataset.omniBlobUrl);
+                        const croppedUrl = URL.createObjectURL(croppedBlob);
+                        img.src = croppedUrl;
+                        img.dataset.omniBlobUrl = croppedUrl;
+                        img.setAttribute('data-omniwrite-image-id', croppedImageId);
+                        closeCropModal();
+                        saveEditorSurfaceContent(img.closest(ACTIVE_EDITOR_SELECTOR));
+                    } catch (error) {
+                        console.error('Failed to crop image:', error);
+                        showToast(_t('failed_load_image'), { type: 'error' });
+                        applyButton.disabled = false;
+                    } finally {
+                        if (cleanImageUrl) URL.revokeObjectURL(cleanImageUrl);
+                    }
                 };
             };
 
@@ -10854,37 +10925,25 @@ Q4: 22</textarea>
                     }
                 })();
             } else {
-                // Insert image at caret using execCommand or Range API
-                if (document.queryCommandSupported('insertImage')) {
-                    document.execCommand('insertImage', false, url);
-                    // Set alt attribute (execCommand doesn't set alt)
-                    // Find the last inserted image
-                    const imgs = editorArea.querySelectorAll('img');
-                    if (imgs.length) {
-                        img = imgs[imgs.length - 1];
-                        img.alt = alt || '';
-                        setLazyImageAttributes(img);
-                        img.style.maxWidth = '100%';
-                        img.style.borderRadius = '8px';
-                        img.style.margin = '8px 0';
-                    }
+                img = document.createElement('img');
+                img.src = url;
+                img.alt = alt || '';
+                img.dataset.omniwriteImageSource = 'url';
+                setLazyImageAttributes(img);
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '8px';
+                img.style.margin = '8px 0';
+                const sel = window.getSelection();
+                if (sel.rangeCount && editorArea.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+                    const range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(img);
+                    range.setStartAfter(img);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
                 } else {
-                    // Fallback: Range API
-                    img = document.createElement('img');
-                    img.src = url;
-                    img.alt = alt || '';
-                    setLazyImageAttributes(img);
-                    img.style.maxWidth = '100%';
-                    img.style.borderRadius = '8px';
-                    img.style.margin = '8px 0';
-                    const sel = window.getSelection();
-                    if (sel.rangeCount) {
-                        const range = sel.getRangeAt(0);
-                        range.deleteContents();
-                        range.insertNode(img);
-                    } else {
-                        editorArea.appendChild(img);
-                    }
+                    editorArea.appendChild(img);
                 }
             }
             // Save after insert
@@ -17368,6 +17427,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                    <li>v1.14.12 - Fixed some bugs when going to document background color won't open the wrapper. Disabled the crop feature if a image was inserted from a URL</li>
                         <li>v1.14.11 - Some of the toolbar items are grouped or moved to reduce clutter for the editor toolbar, Renamed folders to projects, added editor topbar customization, added font styles and more.</li>
                      <li>v1.14.10 - Added insert dropdown feature, Added sidebar customization.</li>
                           <li>v1.14.4 - Added watermark feature, improved font family/size, added zoom, and added move to workspace feature.</li>
@@ -28378,7 +28438,9 @@ try {
             const btn = document.getElementById('documentBgColorBtn');
             if (!btn || btn.dataset.omniReady === 'true') return;
             btn.dataset.omniReady = 'true';
-            btn.addEventListener('click', function() {
+            btn.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
                 const doc = currentDoc();
                 if (!doc) return;
                 if (isLockedDoc(doc)) {
@@ -28391,6 +28453,11 @@ try {
                     doc.timestamp = Date.now();
                     debouncedSaveDocuments(120);
                 });
+                const formatGroup = btn.closest('#formatGroup');
+                if (formatGroup) {
+                    formatGroup.classList.remove('is-open');
+                    formatGroup.setAttribute('aria-hidden', 'true');
+                }
             });
         }
 
@@ -30237,6 +30304,7 @@ try {
                 'untitled_document': 'Untitled Document',
                 'no_images_title': 'No Images',
                 'failed_load_images_short': 'Failed to load images.',
+                'img_crop_unavailable_url': 'Crop is unavailable for images inserted from a URL.',
                 'replace_with': 'Replace with',
                 'add_font': 'Add Font',
                 'search_fonts': 'Search fonts',
@@ -30267,6 +30335,22 @@ try {
             };
             Object.keys(omniUiLocalePatches).forEach(lang => {
                 TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, omniUiLocalePatches[lang]);
+            });
+            const omniImageCropLocalePatches = {
+                es: 'Recortar no está disponible para imágenes insertadas desde una URL.',
+                fr: 'Le rognage est indisponible pour les images insérées depuis une URL.',
+                de: 'Zuschneiden ist für Bilder, die über eine URL eingefügt wurden, nicht verfügbar.',
+                pt: 'O recorte não está disponível para imagens inseridas por URL.',
+                it: 'Il ritaglio non è disponibile per le immagini inserite da un URL.',
+                zh: '无法裁剪通过网址插入的图片。',
+                ja: 'URLから挿入した画像はトリミングできません。',
+                ko: 'URL에서 삽입한 이미지는 자를 수 없습니다.',
+                ar: 'الاقتصاص غير متاح للصور المدرجة من عنوان URL.',
+                hi: 'URL से डाली गई छवियों के लिए क्रॉप उपलब्ध नहीं है।',
+                ru: 'Обрезка недоступна для изображений, вставленных по URL.'
+            };
+            Object.entries(omniImageCropLocalePatches).forEach(([lang, value]) => {
+                TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, { img_crop_unavailable_url: value });
             });
             const omniVersionHistoryLocalePatches = {
                 es: { version_history_desc:'Revisa instantáneas guardadas del documento actual y restaura un borrador anterior.', current_document:'Documento actual', saved_versions:'Versiones guardadas', select_version:'Selecciona una versión', select_version_desc:'Elige una instantánea guardada para previsualizarla aquí.', restore_this_version:'Restaurar esta versión', no_versions_saved_yet:'No hay versiones guardadas aún.', version_history_empty_desc:'Empieza a editar este documento y OmniWrite guardará instantáneas automáticamente.', version_history_auto_clear:'Borrar historial automáticamente', version_history_auto_clear_desc:'Elimina instantáneas guardadas antiguas automáticamente. El valor predeterminado es nunca.', version_history_auto_clear_updated:'Borrado automático del historial actualizado.', auto_clear_never:'Nunca', auto_clear_7_days:'Después de 7 días', auto_clear_30_days:'Después de 30 días', auto_clear_90_days:'Después de 90 días', refresh:'Actualizar', no_document_selected:'No hay documento seleccionado' },
