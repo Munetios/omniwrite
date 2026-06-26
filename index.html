@@ -57,7 +57,7 @@
     </script>
     
     <script src="https://write.munetios.com/chart.js"></script>
-    <script src="https://write.munetios.com/tone.js" defer></script>
+    <script src="https://write.munetios.com/tone.js"></script>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -90,7 +90,7 @@ if ('serviceWorker' in navigator) {
     media-src 'self' blob: data:;
     img-src 'self' https://*.munetios.com https://fonts.gstatic.com https://i.ytimg.com data: blob: https:;
     frame-src 'self' https://*.munetios.com https://www.youtube-nocookie.com https://*.openstreetmap.org blob: data:;
-    connect-src 'self' https://api.munetios.com;
+    connect-src 'self' https://*.munetios.com https://write.munetios.com;
     worker-src 'self' blob:;
     object-src 'none';
     base-uri 'self';
@@ -215,7 +215,7 @@ if ('serviceWorker' in navigator) {
             font-feature-settings: "ss01" 1 !important;
         }
         .app {
-            --workspace-rail-width: 76px;
+            --workspace-rail-width: 0px;
             --sidebar-width: 300px;
             display: flex;
             height: 100vh;
@@ -230,10 +230,10 @@ if ('serviceWorker' in navigator) {
             transition: flex-basis 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
         }
         .workspaces-sidebar {
-            width: var(--workspace-rail-width);
+            display: none !important;
+            width: 0;
             box-sizing: border-box;
-            padding: 1px 2px;
-            display: flex;
+            padding: 0;
             flex-direction: column;
             gap: 10px;
             flex-shrink: 0;
@@ -406,12 +406,12 @@ if ('serviceWorker' in navigator) {
             pointer-events: none;
         }
         body.omni-sidebar-collapsed .workspaces-sidebar {
-            display: flex !important;
-            width: 76px;
-            flex-basis: 76px;
+            display: none !important;
+            width: 0;
+            flex-basis: 0;
         }
         body.omni-sidebar-collapsed #mobileMiniNav {
-            display: flex;
+            display: none !important;
         }
         body.omni-sidebar-collapsed #workspacesList,
         body.omni-sidebar-collapsed #addWorkspaceBtn,
@@ -420,7 +420,7 @@ if ('serviceWorker' in navigator) {
             display: none !important;
         }
         body.omni-sidebar-collapsed .navbar {
-            width: calc(100% - 80px);
+            width: 100%;
         }
         .sidenav {
             height: 100%;
@@ -2209,15 +2209,17 @@ if ('serviceWorker' in navigator) {
         }
         @media (max-width: 1190px) {
             .app {
-                --workspace-rail-width: 64px;
+                --workspace-rail-width: 0px;
                 --sidebar-width: 300px;
             }
             .workspaces-sidebar {
-                width: var(--workspace-rail-width);
-                padding: 8px 4px;
+                display: none !important;
+                width: 0;
+                padding: 0;
             }
             .workspace-rail {
-                padding: 8px 4px;
+                display: none !important;
+                padding: 0;
             }
             .workspace-rail > #workspacesList,
             .workspace-rail > #addWorkspaceBtn,
@@ -2225,10 +2227,10 @@ if ('serviceWorker' in navigator) {
                 display: none !important;
             }
             .mobile-mini-nav {
-                display: flex;
+                display: none !important;
             }
             body.omni-workspaces-hidden .workspaces-sidebar {
-                display: flex;
+                display: none !important;
             }
             .sidebar__container {
                left: -600px;
@@ -2434,7 +2436,7 @@ if ('serviceWorker' in navigator) {
         }
             padding-r {padding-right: 10px}
         .toolbar-item {
-            padding: 6px 8px;
+               padding: 5px 5px;
             border-radius: 16px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2733,6 +2735,56 @@ if ('serviceWorker' in navigator) {
             justify-content: center;
             overflow: hidden;
         }
+        .editor-topbar-more-section,
+        .editor-toolbar-overflow-section {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+        }
+        .editor-topbar-more-title,
+        .editor-toolbar-overflow-title {
+            padding: 8px 12px 4px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .editor-topbar-more-items {
+            display: grid;
+            gap: 2px;
+        }
+        .editor-toolbar-overflow-menu {
+            position: absolute;
+            min-width: 230px;
+            max-width: min(320px, calc(100vw - 24px));
+            margin: 0;
+            padding: 6px;
+            z-index: 100000001;
+            isolation: isolate;
+            background: rgba(25, 9, 70, 0.05) !important;
+            backdrop-filter: blur(2px) saturate(160%) !important;
+            -webkit-backdrop-filter: blur(2px) saturate(160%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 18px 48px rgba(10, 4, 30, 0.5), 0 0 24px rgba(126, 34, 206, 0.26);
+        }
+        .editor-toolbar-overflow-menu .dropdown-item,
+        .editor-topbar-more-items .dropdown-item {
+            margin: 4px 8px;
+        }
+        .editor-toolbar-overflow-menu .dropdown-item {
+            background: rgba(255, 255, 255, 0.055);
+        }
+        .editor-toolbar-overflow-menu .dropdown-item:hover {
+            background: rgba(168, 85, 247, 0.22);
+        }
+        .editor-toolbar-overflow-menu .menu-text,
+        .editor-topbar-more-items .menu-text {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         #editorContent .navbar__left > icon.liquid-glass {
             box-sizing: border-box;
             min-width: 44px;
@@ -2817,6 +2869,13 @@ if ('serviceWorker' in navigator) {
             justify-content: flex-end;
             flex-wrap: wrap;
         }
+        #chartsPagePreviewCanvas {
+            display: block;
+            width: 100% !important;
+            max-width: 100%;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
+        }
         body.omni-sidebar-folder-list-mode #sidebarFoldersPageBtn {
             display: none !important;
         }
@@ -2832,6 +2891,106 @@ if ('serviceWorker' in navigator) {
             .omni-charts-page-grid,
             .omni-chart-form-grid {
                 grid-template-columns: 1fr;
+            }
+            #chartsApp,
+            #chartsContentArea,
+            #chartsApp .navbar-container,
+            #chartsApp .navbar,
+            #chartsApp .dashboard-hero,
+            #chartsApp .omni-charts-page-grid,
+            #chartsApp .omni-chart-editor-panel,
+            #chartsApp .omni-chart-preview-panel {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            #chartsApp {
+                overflow-x: hidden;
+            }
+            #chartsContentArea {
+                padding-inline: clamp(10px, 3.5vw, 16px);
+                height: auto;
+                min-height: calc(100dvh - 80px);
+                padding-bottom: 92px;
+                overflow-x: hidden;
+            }
+            #chartsApp .navbar {
+                align-items: center;
+                gap: 8px;
+                overflow: hidden;
+            }
+            #chartsApp .navbar__left {
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+            #chartsApp .navbar__right {
+                min-width: 0;
+                flex: 0 1 auto;
+                max-width: 56vw;
+                overflow: hidden;
+                padding: 5px 8px !important;
+            }
+            #chartsInsertIntoDocumentBtn {
+                max-width: 100%;
+                min-width: 0;
+                padding: 6px 10px !important;
+            }
+            #chartsInsertIntoDocumentBtn span {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #chartsApp .dashboard-hero {
+                margin-bottom: 12px !important;
+                padding: 18px;
+            }
+            #chartsApp .dashboard-hero h1 {
+                font-size: clamp(22px, 7vw, 30px);
+                line-height: 1.1;
+            }
+            #chartsApp .dashboard-hero p {
+                font-size: 14px;
+                line-height: 1.35;
+            }
+            #chartsApp .omni-charts-page-grid {
+                gap: 12px;
+            }
+            #chartsApp .omni-chart-editor-panel,
+            #chartsApp .omni-chart-preview-panel {
+                padding: 12px;
+                overflow: hidden;
+            }
+            #chartsApp input,
+            #chartsApp select,
+            #chartsApp textarea {
+                max-width: 100%;
+                min-width: 0;
+            }
+            #chartsPageDataInput {
+                min-height: 118px;
+                resize: vertical;
+            }
+            #chartsApp .omni-chart-page-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+                justify-content: stretch;
+            }
+            #chartsApp .omni-chart-page-actions button {
+                width: 100%;
+                min-width: 0;
+                justify-content: center;
+            }
+            #chartsApp .omni-chart-page-actions span {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #chartsApp .omni-chart-preview-panel h3 {
+                margin-top: 0;
+                overflow-wrap: anywhere;
             }
         }
         .font-feature-grid {
@@ -4163,7 +4322,7 @@ if ('serviceWorker' in navigator) {
             background: rgba(102,126,234,0.42); border-color: rgba(102,126,234,0.65);
         }
         #virtualKeyboardBtn.vk-typing-glow {
-            filter: drop-shadow(0 0 7px rgba(102,126,234,0.95));
+            box-shadow: 0 0 0 1px rgba(168, 112, 255, 0.52), 0 0 18px rgba(102,126,234,0.55);
         }
 
         /* ===== Emoji / Keyboard page-corner pill ===== */
@@ -4309,6 +4468,13 @@ if ('serviceWorker' in navigator) {
             height: 42px;
             border-radius: 50% !important;
             color: rgba(255,255,255,0.82);
+            border: 0;
+            background: transparent;
+            padding: 0;
+        }
+        .omni-fab-icon icon {
+            font-size: 22px;
+            line-height: 1;
         }
         .omni-fab-icon:hover {
             background: rgba(146, 82, 255, 0.32);
@@ -4510,6 +4676,46 @@ if ('serviceWorker' in navigator) {
             color: #ffcb6b;
         }
         @media (max-width: 760px) {
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+            .app,
+            .page.active,
+            #editorContent,
+            .navbar-container,
+            .navbar,
+            .editor-content-editor,
+            .editor-content-area-container,
+            .editor-paper-canvas,
+            .editor-pages-column,
+            .editor-with-line-numbers,
+            .document-page-shell,
+            .document-page-editor {
+                max-width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            #editorContent .navbar-container,
+            #editorContent .navbar,
+            #editorContent .editor-content-editor,
+            #editorContent .editor-content-area-container,
+            #editorContent .editor-paper-canvas {
+                overflow-x: hidden;
+            }
+            #editorContent .toolbar {
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: auto;
+                overscroll-behavior-inline: contain;
+            }
+            #editorContent .editor-paper-canvas {
+                scrollbar-gutter: auto;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
             .workspace-current-name {
                 display: none !important;
             }
@@ -4562,6 +4768,77 @@ if ('serviceWorker' in navigator) {
         pre {
           
         }
+        #moreItemGroupMobileBtn {
+            display: none;
+            
+        }
+        .mobile-icon {
+            display: none;
+        }
+        .toolbar {
+            container-name: toolbar;
+            container-type: inline-size;
+        }
+        @container toolbar (max-width: 1489px) {
+         
+            vl {
+                display: none;
+            }
+         
+        }
+        @container toolbar (max-width: 1378px) {
+          
+             #moreItemGroupMobileBtn {
+            display: flex;
+            
+        }
+        #formatGroupBtn, #insertBtn {
+            display: none;
+        }
+        }
+        @container toolbar (max-width: 1322px) {
+            #insertLinkBtn, #insertHrBtn, #insertImageBtn {
+                display: none;
+            }
+        }
+        @container toolbar (max-width: 1183px) {
+            #handwritingBtn, #fontSizeIncreaseBtn, #fontSizeDecreaseBtn {
+                display: none;
+            }
+            .mobile-icon {
+                display: flex;
+            }
+            #fontFamilyBtn {
+                  min-width: 0 !important;
+                  padding: 5px 5px;
+            }
+            
+            #fontFamilyBtn .menu-text {
+                display: none;
+              
+            }
+        }
+        @container toolbar (max-width: 938px) {
+            #documentZoomBtn, #replaceInDocumentBtn, #redoBtn, #undoBtn {
+                display: none;
+            }
+        }
+        @container toolbar (max-width: 718px) {
+          #fontStylesBtn, #alignGroupBtn {
+            display: none;
+          }
+        }
+        @container toolbar (max-width: 494px) {
+            #listGroupBtn, #textColorBtn {
+                display: none;
+            }
+        }
+        @container toolbar (max-width: 440px) {
+            #strikethroughBtn, #fontSizeBtn {
+                display: none;
+            }
+        }
+         
     </style>
 </head>
 <body>
@@ -4569,31 +4846,21 @@ if ('serviceWorker' in navigator) {
         <p>Please enable JavaScript to use OmniWrite.</p>
     </noscript>
 
+    <div class="liquid-glass" id="omniPageFab" role="toolbar" aria-label="Writing Tools" data-i18n-aria-label="writing_tools">
+        <button class="omni-fab-icon" id="voiceTypingBtn" type="button" aria-label="Voice Typing" data-tooltip="Voice Typing" data-i18n-title="voice_typing" data-i18n-aria-label="voice_typing">
+            <icon>mic</icon>
+        </button>
+        <div class="omni-fab-divider" aria-hidden="true"></div>
+        <button class="omni-fab-icon" id="virtualKeyboardBtn" type="button" aria-label="Virtual Keyboard" data-tooltip="Virtual Keyboard" data-i18n-title="virtual_keyboard" data-i18n-aria-label="virtual_keyboard">
+            <icon>keyboard</icon>
+        </button>
+        <div class="omni-fab-divider" aria-hidden="true"></div>
+        <button class="omni-fab-icon" id="emojiPickerBtn" type="button" aria-label="Insert Emoji" data-tooltip="Insert Emoji" data-i18n-title="insert_emoji" data-i18n-aria-label="insert_emoji">
+            <icon>sentiment_satisfied</icon>
+        </button>
+    </div>
+
     <div class="app" id="app">
-        <aside class="workspaces-sidebar" id="workspacesSidebar">
-            <div class="workspace-rail liquid-glass">
-                <div class="mobile-mini-nav" id="mobileMiniNav">
-                    <button class="mobile-mini-nav-btn mobile-mini-logo" type="button" data-mini-action="home" aria-label="OmniWrite"><img src="apple-touch-icon.png" alt=""></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="images" aria-label="Images"><icon>image</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="tasks" aria-label="Tasks"><icon>task_alt</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="templates" aria-label="Templates"><icon>browse</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="notes" aria-label="Notes"><icon>edit_note</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="charts" aria-label="Charts"><icon>bar_chart</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="folders" aria-label="Projects"><icon>folder_open</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="trash" aria-label="Trash"><icon>delete</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="workspaces" aria-label="OmniWrite Workspaces"><icon>dashboard_customize</icon></button>
-                    <button class="mobile-mini-nav-btn" type="button" data-mini-action="documents" aria-label="Projects and documents"><icon>folder</icon></button>
-                    <div class="mobile-mini-bottom">
-                        <button class="mobile-mini-nav-btn" type="button" data-mini-action="settings" aria-label="OmniWrite Settings"><icon>settings</icon></button>
-                        <button class="mobile-mini-nav-btn" type="button" data-mini-action="help" aria-label="OmniWrite Help"><icon>help</icon></button>
-                    </div>
-                </div>
-                <div id="workspacesList" style="display:flex;flex-direction:column;gap:10px;align-items:center;width:100%;"></div>
-                <button class="workspace-add-btn" id="addWorkspaceBtn" type="button" title="Add workspace" aria-label="Add workspace"><icon>add</icon></button>
-                <div class="workspace-rail-spacer"></div>
-                <button class="workspace-settings-btn" id="manageWorkspacesBtn" type="button" title="Manage workspaces" aria-label="Manage workspaces"><icon>tune</icon></button>
-            </div>
-        </aside>
         <omniwrite-sidebar class="sidebar__container">
             <div class="sidebar liquid-glass" id="sidebar">
                 <div class="sidenav">
@@ -4978,10 +5245,17 @@ Notes: 6</textarea>
                             </div>
                 </div>
                 <div class="navbar__right liquid-glass" style="padding: 6px 14px; display: flex; align-items: center; gap: 15px;">
+                    
+                    <icon id="pinDocumentBtn" class="editor-topbar-action" title="Pin Document" data-i18n-title="pin_document">push_pin</icon>
+             
+             
                     <icon id="versionHistoryBtn" title="Version History">history</icon>
                     <icon id="previewBtn" title="Preview">visibility</icon>
+                    <icon id="lockDocumentBtn" class="editor-topbar-action" title="Lock Document" data-i18n-title="lock_document">lock</icon>
                     <icon id="readingModeBtn" title="Reading Mode">auto_stories</icon>
+                           <icon id="documentInfoBtn" class="editor-topbar-action" title="Document Info" data-i18n-title="document_info">info</icon>
                     <icon id="splitScreenBtn" title="Split Screen">vertical_split</icon>
+                           <icon id="downloadDocumentBtn" class="editor-topbar-action" title="Download" data-i18n-title="Download">download</icon>
                     <icon id="shareDocumentBtn" title="Share">share</icon>
                     <icon id="moreEditorBtn" title="More Options">more_vert</icon>
                 </div>
@@ -5009,6 +5283,7 @@ Notes: 6</textarea>
                     </div>
                      
                     <div class="toolbar-item" id="fontFamilyBtn" title="Font Family" style="min-width: 120px; vertical-align: center; display: flex; align-items: center; justify-content: center;">
+                        <icon class="mobile-icon">font_download</icon>
                         <div class="menu-text" id="fontFamilyText">Google Sans Flex</div>
                     </div>
                     <div class="toolbar-item" id="fontSizeDecreaseBtn" title="Decrease Font Size">
@@ -5067,6 +5342,9 @@ Notes: 6</textarea>
                       
                     <div class="toolbar-item" id="formatGroupBtn" title="More formatting" data-i18n-title="more_formatting">
                         <icon>format_shapes</icon>
+                    </div>
+                    <div class="toolbar-item" id="moreItemGroupMobileBtn" title="More" data-i18n-title="more_items">
+                        <icon>double_arrow</icon>
                     </div>
                 </div><!-- end .toolbar -->
                 <div class="editor-content-area-container">
@@ -6977,7 +7255,10 @@ Notes: 6</textarea>
     }
 
     function playVoiceTypingSound(kind) {
-        if (typeof Tone === 'undefined') return;
+        if (typeof Tone === 'undefined') {
+            if (typeof window.omniRegisterToneSoundFailure === 'function') window.omniRegisterToneSoundFailure('voice_typing_missing');
+            return;
+        }
         try {
             Tone.start?.();
             const isStart = kind === 'start';
@@ -6985,7 +7266,9 @@ Notes: 6</textarea>
             synth.triggerAttackRelease(isStart ? 'C5' : 'C4', '8n');
             const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease('G4', '8n');
+            if (typeof window.omniRegisterToneSoundPlay === 'function') window.omniRegisterToneSoundPlay('voice_typing_' + (kind || 'sound'));
         } catch(e) {
+            if (typeof window.omniRegisterToneSoundFailure === 'function') window.omniRegisterToneSoundFailure('voice_typing_error');
             console.warn("Couldn't play voice typing sound:", e);
         }
     }
@@ -11497,35 +11780,91 @@ Q4: 22</textarea>
         requestAnimationFrame(positionReadingModePanelDefault);
     };
 
-    // Load Tone.js from CDN
-    const toneScript = document.createElement('script');
-    toneScript.src = 'https://write.munetios.com/tone.js';
-    toneScript.onload = function() {
-        toneLoaded = true;
+    const OMNI_TONE_JS_URL = 'https://write.munetios.com/tone.js';
+    const OMNI_TONE_FAILURE_RELOAD_THRESHOLD = 5;
+    const OMNI_TONE_PLAY_RELOAD_THRESHOLD = 5;
+    let omniToneSoundFailures = 0;
+    let omniToneSoundPlays = 0;
+    let omniToneRelinking = false;
+
+    function omniRelinkToneScript() {
+        if (omniToneRelinking) return null;
+        omniToneRelinking = true;
+        toneLoaded = false;
+        document.querySelectorAll('script[src*="tone.js"]').forEach(script => script.remove());
+        const script = document.createElement('script');
+        script.src = OMNI_TONE_JS_URL;
+        script.async = false;
+        script.onload = function() {
+            toneLoaded = true;
+            omniToneSoundFailures = 0;
+            omniToneSoundPlays = 0;
+            omniToneRelinking = false;
+        };
+        script.onerror = function() {
+            toneLoaded = false;
+            omniToneRelinking = false;
+            window.omniRegisterToneSoundFailure('tone_script_error');
+        };
+        document.head.appendChild(script);
+        return script;
+    }
+
+    window.omniRegisterToneSoundFailure = function omniRegisterToneSoundFailure(reason) {
+        omniToneSoundFailures += 1;
+        console.warn('Tone.js sound failure ' + omniToneSoundFailures + '/' + OMNI_TONE_FAILURE_RELOAD_THRESHOLD + ':', reason);
+        if (omniToneSoundFailures >= OMNI_TONE_FAILURE_RELOAD_THRESHOLD) {
+            omniRelinkToneScript();
+        }
     };
-    document.head.appendChild(toneScript);
+
+    window.omniRegisterToneSoundPlay = function omniRegisterToneSoundPlay(reason) {
+        omniToneSoundPlays += 1;
+        if (omniToneSoundPlays >= OMNI_TONE_PLAY_RELOAD_THRESHOLD) {
+            console.warn('Tone.js sound play threshold reached, relinking script:', reason);
+            omniRelinkToneScript();
+        }
+    };
+
+    if (typeof Tone !== 'undefined') {
+        toneLoaded = true;
+    } else {
+        omniRelinkToneScript();
+    }
 
     // Sound effects using Tone.js
     function playStartSound() {
-        if (!toneLoaded || typeof Tone === 'undefined') return;
+        if (!toneLoaded || typeof Tone === 'undefined') {
+            window.omniRegisterToneSoundFailure('start_sound_missing');
+            return;
+        }
         try {
+            Tone.start?.();
             const synth = new Tone.Synth().toDestination();
             synth.triggerAttackRelease("C5", "8n");
               const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease("G4", "8n");
+            window.omniRegisterToneSoundPlay('start_sound');
         } catch (e) {
+            window.omniRegisterToneSoundFailure('start_sound_error');
             console.warn("Couldn't play start sound:", e);
         }
     }
 
     function playStopSound() {
-        if (!toneLoaded || typeof Tone === 'undefined') return;
+        if (!toneLoaded || typeof Tone === 'undefined') {
+            window.omniRegisterToneSoundFailure('stop_sound_missing');
+            return;
+        }
         try {
+            Tone.start?.();
                  const synth = new Tone.Synth().toDestination();
             synth.triggerAttackRelease("C4", "8n");
               const synth2 = new Tone.Synth().toDestination();
             synth2.triggerAttackRelease("G4", "8n");
+            window.omniRegisterToneSoundPlay('stop_sound');
         } catch (e) {
+            window.omniRegisterToneSoundFailure('stop_sound_error');
             console.warn("Couldn't play stop sound:", e);
         }
     }
@@ -12130,6 +12469,8 @@ Q4: 22</textarea>
             moreDropdownVisible = false;
         } else {
             // Position dropdown below the button
+            if (typeof renderEditorTopbarMoreItems === 'function') renderEditorTopbarMoreItems();
+            if (typeof renderToolbarOverflowMoreMenu === 'function') renderToolbarOverflowMoreMenu(false);
             const rect = moreEditorBtn.getBoundingClientRect();
             editorMoreOptions.style.top = (rect.bottom + window.scrollY + 4) + 'px';
             editorMoreOptions.style.left = (rect.left + window.scrollX - 250) + 'px';
@@ -12221,6 +12562,8 @@ Q4: 22</textarea>
         
         // Save to database
         scheduleDocumentSave();
+        if (typeof syncEditorTopbarActionState === 'function') syncEditorTopbarActionState();
+        if (typeof renderEditorTopbarMoreItems === 'function') renderEditorTopbarMoreItems();
     });
 
     // --- Version History ---
@@ -13427,7 +13770,8 @@ try {
                 if (except !== formatGroup) closeGroup(formatGroup);
             };
             const positionMenu = (trigger, menu) => {
-                const rect = trigger.getBoundingClientRect();
+                const anchor = window.__omniToolbarOverflowActionAnchor || trigger;
+                const rect = anchor.getBoundingClientRect();
                 menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
                 menu.style.left = `${Math.max(8, Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - menu.offsetWidth - 8))}px`;
             };
@@ -13682,7 +14026,8 @@ try {
                 if (document.body.contains(fontSizePicker) && fontSizePicker.style.display === 'block') {
                     closeFloatingDropdown(fontSizePicker);
                 } else {
-                    const rect = fontSizeBtn.getBoundingClientRect();
+                    const anchor = window.__omniToolbarOverflowActionAnchor || fontSizeBtn;
+                    const rect = anchor.getBoundingClientRect();
                     fontSizePicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                     fontSizePicker.style.left = (rect.left + window.scrollX) + 'px';
                     fontSizePicker.style.display = 'block';
@@ -13731,7 +14076,8 @@ try {
                 if (document.body.contains(fontFamilyPicker) && fontFamilyPicker.style.display === 'block') {
                     closeFloatingDropdown(fontFamilyPicker);
                 } else {
-                    const rect = fontFamilyBtn.getBoundingClientRect();
+                    const anchor = window.__omniToolbarOverflowActionAnchor || fontFamilyBtn;
+                    const rect = anchor.getBoundingClientRect();
                     fontFamilyPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
                     fontFamilyPicker.style.left = (rect.left + window.scrollX) + 'px';
                     fontFamilyPicker.style.display = 'block';
@@ -13812,7 +14158,8 @@ try {
 
         function positionDropdownNear(dropdown, anchor) {
             if (!dropdown || !anchor) return;
-            const rect = anchor.getBoundingClientRect();
+            const activeAnchor = window.__omniToolbarOverflowActionAnchor || anchor;
+            const rect = activeAnchor.getBoundingClientRect();
             dropdown.style.position = 'absolute';
             dropdown.style.left = Math.max(8, rect.left + window.scrollX) + 'px';
             dropdown.style.top = (rect.bottom + window.scrollY + 6) + 'px';
@@ -14421,6 +14768,8 @@ try {
             const ico = document.getElementById('lockDocumentIcon');
             if (lbl) lbl.textContent = _t('unlock_document');
             if (ico) ico.textContent = 'lock_open';
+            if (typeof syncEditorTopbarActionState === 'function') syncEditorTopbarActionState();
+            if (typeof renderEditorTopbarMoreItems === 'function') renderEditorTopbarMoreItems();
         } else {
             if (editorArea) {
                 editorArea.contentEditable = 'true';
@@ -14446,6 +14795,8 @@ try {
             const ico = document.getElementById('lockDocumentIcon');
             if (lbl) lbl.textContent = _t('lock_document');
             if (ico) ico.textContent = 'lock';
+            if (typeof syncEditorTopbarActionState === 'function') syncEditorTopbarActionState();
+            if (typeof renderEditorTopbarMoreItems === 'function') renderEditorTopbarMoreItems();
         }
     }
 
@@ -14768,7 +15119,8 @@ try {
     textColorBtn.addEventListener('mousedown', function(e) {
         e.preventDefault();
         // Position color picker below the button
-        const rect = textColorBtn.getBoundingClientRect();
+        const anchor = window.__omniToolbarOverflowActionAnchor || textColorBtn;
+        const rect = anchor.getBoundingClientRect();
         colorPicker.style.top = (rect.bottom + window.scrollY + 4) + 'px';
         colorPicker.style.left = (rect.left + window.scrollX - 300) + 'px';
         colorPicker.style.display = colorPicker.style.display === 'flex' ? 'none' : 'flex';
@@ -15628,8 +15980,18 @@ try {
         if (!menu.contains(event.target) && !event.target.closest('#sidebarMoreBtn')) menu.classList.remove('open');
     });
     function updateSidebarOverflowNavigation() {
-        const alwaysVisible = new Set(['images', 'templates']);
-        const overflowPriority = ['help', 'apps', 'trash', 'folders', 'charts', 'tasks', 'notes'];
+        const protectedVisible = new Set(['folders']);
+        const overflowPriority = ['notes', 'charts', 'apps', 'help', 'trash', 'tasks', 'images', 'templates', 'folders'];
+        const sidebar = document.getElementById('sidebar');
+        const sidebarHeight = sidebar?.clientHeight || window.innerHeight;
+        const breakpointMore = new Set();
+        [
+            { maxHeight: 800, items: ['notes', 'charts'] },
+            { maxHeight: 710, items: ['apps', 'help', 'trash'] },
+            { maxHeight: 650, items: ['tasks', 'images'] }
+        ].forEach(rule => {
+            if (sidebarHeight <= rule.maxHeight) rule.items.forEach(item => breakpointMore.add(item));
+        });
         let savedSidebarLocations = new Map();
         try {
             const savedSidebarConfig = JSON.parse(localStorage.getItem('omniwrite-sidebar-customization') || '[]');
@@ -15654,18 +16016,15 @@ try {
                 item.dataset.sidebarHidden = 'true';
                 item.removeAttribute('data-overflow-hidden');
                 item.removeAttribute('data-sidebar-user-more');
+                item.removeAttribute('data-sidebar-breakpoint-more');
                 return;
             }
             item.style.display = '';
             item.removeAttribute('data-overflow-hidden');
             item.removeAttribute('data-sidebar-user-more');
+            item.removeAttribute('data-sidebar-breakpoint-more');
         });
         if (!moreBtn) return;
-        const sidebar = document.getElementById('sidebar');
-        const bottom = document.querySelector('.sidebar__bottom');
-        const content = document.querySelector('.sidebar__content');
-        const available = (sidebar?.clientHeight || window.innerHeight) - (bottom?.offsetHeight || 0) - (content ? Math.min(content.offsetHeight, 180) : 0) - 170;
-        let used = 0;
         let hidden = 0;
         optional.forEach(item => {
             const savedLocation = savedSidebarLocations.get(item.dataset.nav);
@@ -15673,22 +16032,46 @@ try {
                 hidden += 1;
                 return;
             }
-            if (!savedLocation && alwaysVisible.has(item.dataset.nav)) {
+            if (protectedVisible.has(item.dataset.nav)) {
                 return;
             }
-            if (savedLocation === 'hidden' || ['top', 'main', 'bottom'].includes(savedLocation)) {
+            if (savedLocation === 'hidden') {
                 return;
             }
-            used += item.offsetHeight || 52;
-            const shouldHide = window.innerHeight < 720 && used > available;
+            const shouldHide = breakpointMore.has(item.dataset.nav);
             if (shouldHide) {
                 item.style.display = 'none';
                 item.dataset.overflowHidden = 'true';
+                item.dataset.sidebarBreakpointMore = 'true';
                 hidden += 1;
+            } else {
+                item.removeAttribute('data-sidebar-breakpoint-more');
             }
         });
         moreBtn.style.display = hidden ? '' : 'none';
         if (!hidden) document.getElementById('sidebarMoreMenu')?.classList.remove('open');
+    }
+    function setupSidebarOverflowObservers() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar || sidebar.dataset.overflowObserverReady === 'true') return;
+        sidebar.dataset.overflowObserverReady = 'true';
+        if (typeof ResizeObserver === 'undefined') return;
+        let overflowFrame = 0;
+        const requestUpdate = () => {
+            if (overflowFrame) return;
+            overflowFrame = requestAnimationFrame(() => {
+                overflowFrame = 0;
+                updateSidebarOverflowNavigation();
+            });
+        };
+        const observer = new ResizeObserver(requestUpdate);
+        observer.observe(sidebar);
+        ['sidebarScroll', 'sidebarMainNav', 'sidebarPriorityNav'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+        const bottom = document.querySelector('.sidebar__bottom');
+        if (bottom) observer.observe(bottom);
     }
     function syncSidebarPriorityPlacement() {
         const priorityNav = document.getElementById('sidebarPriorityNav');
@@ -15704,6 +16087,7 @@ try {
     window.addEventListener('resize', updateSidebarOverflowNavigation);
     window.addEventListener('resize', syncSidebarPriorityPlacement);
     syncSidebarPriorityPlacement();
+    setupSidebarOverflowObservers();
     setTimeout(updateSidebarOverflowNavigation, 0);
     function setupSidebarResize() {
         const appShell = document.getElementById('app');
@@ -15824,7 +16208,7 @@ try {
                     if (typeof renderFoldersList === 'function') renderFoldersList();
                 } else {
                     if (typeof clearUnknownWorkspaceContext === 'function') clearUnknownWorkspaceContext();
-                    if (typeof clearUnknownDocumentContext === 'function') clearUnknownDocumentContext();
+                    if (typeof clearUnknownDocumentContext === 'function') clearUnknownDocumentContext();           
                 }
             } else {
                 if (typeof clearUnknownWorkspaceContext === 'function') clearUnknownWorkspaceContext();
@@ -17427,6 +17811,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.14.13 - Improved mobile support </li>
                     <li>v1.14.12 - Fixed some bugs when going to document background color won't open the wrapper. Disabled the crop feature if a image was inserted from a URL</li>
                         <li>v1.14.11 - Some of the toolbar items are grouped or moved to reduce clutter for the editor toolbar, Renamed folders to projects, added editor topbar customization, added font styles and more.</li>
                      <li>v1.14.10 - Added insert dropdown feature, Added sidebar customization.</li>
@@ -17695,6 +18080,70 @@ try {
             return icon ? icon.replace(/_/g, ' ') : fallback;
         }
 
+        const OMNI_TOOLBAR_OVERFLOW_LABEL_KEYS = {
+            findInDocumentBtn: 'find_in_document',
+            replaceInDocumentBtn: 'find_replace',
+            documentZoomBtn: 'zoom',
+            undoBtn: 'Undo',
+            redoBtn: 'Redo',
+            fontStylesBtn: 'font_styles',
+            fontFamilyBtn: 'Font Family',
+            fontSizeDecreaseBtn: 'decrease_font_size',
+            fontSizeBtn: 'Font Size',
+            fontSizeIncreaseBtn: 'increase_font_size',
+            boldBtn: 'Bold',
+            italicBtn: 'Italic',
+            underlineBtn: 'Underline',
+            strikethroughBtn: 'strikethrough',
+            textColorBtn: 'Text Color',
+            listGroupBtn: 'lists',
+            alignGroupBtn: 'align_text',
+            handwritingBtn: 'handwriting',
+            insertImageBtn: 'Insert Image',
+            insertHrBtn: 'insert_hr',
+            insertLinkBtn: 'insert_link',
+            insertBtn: 'insert',
+            formatGroupBtn: 'more_formatting'
+        };
+
+        const OMNI_TOOLBAR_OVERFLOW_LABEL_FALLBACKS = {
+            findInDocumentBtn: 'Find in Document',
+            replaceInDocumentBtn: 'Find and Replace',
+            documentZoomBtn: 'Zoom',
+            undoBtn: 'Undo',
+            redoBtn: 'Redo',
+            fontStylesBtn: 'Font Styles',
+            fontFamilyBtn: 'Font Family',
+            fontSizeDecreaseBtn: 'Decrease Font Size',
+            fontSizeBtn: 'Font Size',
+            fontSizeIncreaseBtn: 'Increase Font Size',
+            boldBtn: 'Bold',
+            italicBtn: 'Italic',
+            underlineBtn: 'Underline',
+            strikethroughBtn: 'Strikethrough',
+            textColorBtn: 'Text Color',
+            listGroupBtn: 'Lists',
+            alignGroupBtn: 'Align Text',
+            handwritingBtn: 'Handwriting',
+            insertImageBtn: 'Insert Image',
+            insertHrBtn: 'Insert Horizontal Line',
+            insertLinkBtn: 'Insert Link',
+            insertBtn: 'Insert',
+            formatGroupBtn: 'More formatting'
+        };
+
+        function getToolbarOverflowItemLabel(el) {
+            if (!el?.id) return getToolbarElementLabel(el, '');
+            const labelKey = OMNI_TOOLBAR_OVERFLOW_LABEL_KEYS[el.id] || el.getAttribute('data-i18n-title');
+            const translated = labelKey ? _t(labelKey) : '';
+            if (translated && translated !== labelKey) return translated;
+            const fallback = OMNI_TOOLBAR_OVERFLOW_LABEL_FALLBACKS[el.id];
+            if (fallback) return fallback;
+            const defaultItem = getToolbarDefaultConfig().find(item => item.key === el.id);
+            if (defaultItem?.label && defaultItem.label !== el.id) return defaultItem.label;
+            return getToolbarElementLabel(el, el.id);
+        }
+
         function getToolbarDefaultConfig() {
             const toolbar = document.querySelector('.toolbar');
             if (!toolbar) return [];
@@ -17803,6 +18252,125 @@ try {
             if (moreContainer) moreContainer.appendChild(moreFragment);
             const section = document.getElementById('editorToolbarMoreSection');
             if (section) section.style.display = moreContainer && moreContainer.children.length ? '' : 'none';
+            if (typeof renderToolbarOverflowMoreMenu === 'function') renderToolbarOverflowMoreMenu(false);
+        }
+
+        function getToolbarItemLocationMap() {
+            const map = new Map();
+            try {
+                loadToolbarCustomization().forEach(item => map.set(item.key, item.location === 'hidden' || item.visible === false ? 'hidden' : item.location));
+            } catch(e) {}
+            return map;
+        }
+
+        function getToolbarOverflowHiddenItems() {
+            const toolbar = document.querySelector('.toolbar');
+            if (!toolbar) return [];
+            const locationMap = getToolbarItemLocationMap();
+            return [...toolbar.querySelectorAll(':scope > .toolbar-item[id]')].filter(item => {
+                if (!item.id || item.id === 'moreItemGroupMobileBtn') return false;
+                const location = locationMap.get(item.id);
+                if (location === 'hidden' || location === 'more') return false;
+                return window.getComputedStyle(item).display === 'none';
+            });
+        }
+
+        function ensureToolbarOverflowMoreMenu() {
+            let menu = document.getElementById('editorToolbarOverflowMenu');
+            if (!menu) {
+                menu = document.createElement('div');
+                menu.id = 'editorToolbarOverflowMenu';
+                menu.className = 'dropdown-wrapper liquid-glass editor-toolbar-overflow-menu';
+                menu.setAttribute('role', 'menu');
+                menu.style.display = 'none';
+                document.body.appendChild(menu);
+            }
+            return menu;
+        }
+
+        function positionToolbarOverflowMoreMenu(menu, anchor) {
+            if (!menu || !anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            menu.style.left = Math.max(8, Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - menu.offsetWidth - 8)) + 'px';
+            menu.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+        }
+
+        function triggerToolbarOverflowItem(target, proxy) {
+            if (!target) return;
+            window.__omniToolbarOverflowActionAnchor = proxy;
+            const downEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+            const shouldClick = target.dispatchEvent(downEvent) && !downEvent.defaultPrevented;
+            if (shouldClick) target.click();
+            setTimeout(() => {
+                if (window.__omniToolbarOverflowActionAnchor === proxy) window.__omniToolbarOverflowActionAnchor = null;
+                const menu = document.getElementById('editorToolbarOverflowMenu');
+                if (menu) menu.style.display = 'none';
+            }, 0);
+        }
+
+        function renderToolbarOverflowMoreMenu(open = false) {
+            const menu = ensureToolbarOverflowMoreMenu();
+            const items = getToolbarOverflowHiddenItems();
+            menu.innerHTML = '';
+            const section = document.createElement('div');
+            section.className = 'editor-toolbar-overflow-section';
+            section.innerHTML = `<div class="editor-toolbar-overflow-title">${escapeHtml(_t('hidden_toolbar_items'))}</div>`;
+            items.forEach(item => {
+                const proxy = document.createElement('div');
+                proxy.className = 'dropdown-item';
+                proxy.setAttribute('role', 'menuitem');
+                proxy.dataset.toolbarOverflowTarget = item.id;
+                const icon = item.querySelector('icon')?.textContent?.trim() || 'radio_button_unchecked';
+                const label = getToolbarOverflowItemLabel(item);
+                proxy.innerHTML = `<icon>${escapeHtml(icon)}</icon><div class="menu-text">${escapeHtml(label)}</div>`;
+                proxy.addEventListener('mousedown', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    triggerToolbarOverflowItem(item, proxy);
+                });
+                section.appendChild(proxy);
+            });
+            if (!items.length) {
+                section.innerHTML += `<div style="padding:12px 14px;opacity:0.65;" data-i18n="no_results">${escapeHtml(_t('no_results'))}</div>`;
+            }
+            menu.appendChild(section);
+            if (open) {
+                const anchor = document.getElementById('moreItemGroupMobileBtn');
+                menu.style.display = 'block';
+                positionToolbarOverflowMoreMenu(menu, anchor);
+                try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
+            }
+            return items.length;
+        }
+
+        function setupToolbarOverflowMoreButton() {
+            const button = document.getElementById('moreItemGroupMobileBtn');
+            if (!button || button.dataset.overflowReady === 'true') return;
+            button.dataset.overflowReady = 'true';
+            button.setAttribute('aria-haspopup', 'menu');
+            button.setAttribute('aria-expanded', 'false');
+            button.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const menu = ensureToolbarOverflowMoreMenu();
+                const isOpen = menu.style.display === 'block';
+                if (isOpen) {
+                    menu.style.display = 'none';
+                    button.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+                renderToolbarOverflowMoreMenu(true);
+                button.setAttribute('aria-expanded', 'true');
+            });
+            document.addEventListener('mousedown', event => {
+                const menu = document.getElementById('editorToolbarOverflowMenu');
+                if (!menu || menu.style.display !== 'block') return;
+                if (!menu.contains(event.target) && !button.contains(event.target)) {
+                    menu.style.display = 'none';
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            });
+            window.addEventListener('resize', () => renderToolbarOverflowMoreMenu(false));
         }
 
         function openToolbarCustomizerModal() {
@@ -17918,17 +18486,191 @@ try {
             modal.querySelector('#closeToolbarCustomizerModal').onclick = () => modal.remove();
         }
 
+        const OMNI_EDITOR_TOPBAR_RESPONSIVE_MORE_RULES = [
+            { maxWidth: 750, keys: ['lockDocumentBtn', 'documentInfoBtn', 'downloadDocumentBtn'] },
+            { maxWidth: 620, keys: ['splitScreenBtn', 'pinDocumentBtn'] },
+            { maxWidth: 560, keys: ['previewBtn', 'shareDocumentBtn'] }
+        ];
+        const OMNI_EDITOR_TOPBAR_ACTIONS = {
+          
+            pinDocumentBtn: { icon: 'push_pin', labelKey: 'pin_document', fallback: 'Pin Document', menuTarget: 'pinDocumentMoreOptionsBtn', eventType: 'mousedown' },
+          
+         
+            versionHistoryBtn: { icon: 'history', labelKey: 'Version History', fallback: 'Version History', menuTarget: 'versionHistoryMoreOptionsBtn', eventType: 'mousedown' },
+            previewBtn: { icon: 'visibility', labelKey: 'Preview', fallback: 'Preview', target: 'previewBtn', eventType: 'click' },  lockDocumentBtn: { icon: 'lock', labelKey: 'lock_document', fallback: 'Lock Document', menuTarget: 'lockDocumentMoreOptionsBtn', eventType: 'mousedown' },
+            readingModeBtn: { icon: 'auto_stories', labelKey: 'reading_mode', fallback: 'Reading Mode', target: 'readingModeBtn', eventType: 'click' },  documentInfoBtn: { icon: 'info', labelKey: 'document_info', fallback: 'Document Info', menuTarget: 'documentInfoMoreOptionsBtn', eventType: 'click' },
+            splitScreenBtn: { icon: 'vertical_split', labelKey: 'split_screen', fallback: 'Split Screen', target: 'splitScreenBtn', eventType: 'click' },   downloadDocumentBtn: { icon: 'download', labelKey: 'Download', fallback: 'Download', menuTarget: 'downloadMoreOptionsBtn', eventType: 'mousedown' },
+            shareDocumentBtn: { icon: 'share', labelKey: 'Share', fallback: 'Share', menuTarget: 'shareMoreOptionsBtn', eventType: 'mousedown' }
+        };
+        const OMNI_EDITOR_TOPBAR_STATIC_MORE_IDS = Object.values(OMNI_EDITOR_TOPBAR_ACTIONS)
+            .map(action => action.menuTarget)
+            .filter(Boolean);
+
+        function getEditorTopbarContainerWidth() {
+            const navbar = document.querySelector('#editorContent .navbar');
+            return navbar?.getBoundingClientRect().width || window.innerWidth;
+        }
+
+        function getEditorTopbarResponsiveMoreKeys(width = getEditorTopbarContainerWidth()) {
+            const keys = new Set();
+            OMNI_EDITOR_TOPBAR_RESPONSIVE_MORE_RULES.forEach(rule => {
+                if (width <= rule.maxWidth) rule.keys.forEach(key => keys.add(key));
+            });
+            return keys;
+        }
+
+        function getCurrentEditorDocument() {
+            const docId = typeof getCurrentDocIdFromHash === 'function' ? getCurrentDocIdFromHash() : '';
+            return docId ? documents.find(doc => doc.id === docId) || null : null;
+        }
+
+        function getEditorTopbarActionLabel(key) {
+            const doc = getCurrentEditorDocument();
+            if (key === 'pinDocumentBtn') return doc?.pinned ? _t('unpin_document') : _t('pin_document');
+            if (key === 'lockDocumentBtn') return doc && isEffectivelyLocked(doc) ? _t('unlock_document') : _t('lock_document');
+            const action = OMNI_EDITOR_TOPBAR_ACTIONS[key];
+            return action ? _t(action.labelKey) || action.fallback : key;
+        }
+
+        function syncEditorTopbarActionState() {
+            const doc = getCurrentEditorDocument();
+            const pinBtn = document.getElementById('pinDocumentBtn');
+            const lockBtn = document.getElementById('lockDocumentBtn');
+            if (pinBtn) {
+                pinBtn.title = getEditorTopbarActionLabel('pinDocumentBtn');
+                pinBtn.dataset.tooltip = pinBtn.title;
+                pinBtn.classList.toggle('active', !!doc?.pinned);
+            }
+            if (lockBtn) {
+                const locked = !!(doc && isEffectivelyLocked(doc));
+                lockBtn.textContent = locked ? 'lock_open' : 'lock';
+                lockBtn.title = getEditorTopbarActionLabel('lockDocumentBtn');
+                lockBtn.dataset.tooltip = lockBtn.title;
+                lockBtn.classList.toggle('active', locked);
+            }
+        }
+
+        function getEffectiveEditorTopbarConfig(config = loadEditorTopbarCustomization()) {
+            const responsiveMoreKeys = getEditorTopbarResponsiveMoreKeys();
+            return config.map(item => {
+                const next = { ...item };
+                if (next.required && (next.location === 'hidden' || next.location === 'more')) next.location = 'right';
+                if (next.supportsMore !== false && next.location !== 'hidden' && responsiveMoreKeys.has(next.key)) next.location = 'more';
+                return next;
+            });
+        }
+
+        function ensureEditorTopbarMoreContainer() {
+            const menu = document.getElementById('editorMoreOptions');
+            if (!menu) return null;
+            let section = document.getElementById('editorTopbarMoreSection');
+            if (!section) {
+                section = document.createElement('div');
+                section.id = 'editorTopbarMoreSection';
+                section.className = 'editor-topbar-more-section';
+                section.innerHTML = `<div class="editor-topbar-more-title">${_t('editor_topbar_items')}</div><div class="editor-topbar-more-items" id="editorTopbarMoreItems"></div>`;
+                menu.insertBefore(section, menu.firstChild);
+            }
+            return section.querySelector('#editorTopbarMoreItems');
+        }
+
+        function syncEditorMoreStaticTopbarItems() {
+            OMNI_EDITOR_TOPBAR_STATIC_MORE_IDS.forEach(id => {
+                const item = document.getElementById(id);
+                if (item) item.style.display = 'none';
+            });
+        }
+
+        function triggerEditorTopbarAction(key, proxy) {
+            const action = OMNI_EDITOR_TOPBAR_ACTIONS[key];
+            if (!action) return;
+            const target = document.getElementById(action.menuTarget || action.target || key);
+            if (!target) return;
+            window.__omniToolbarOverflowActionAnchor = proxy || target;
+            if (action.eventType === 'mousedown') {
+                target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+            } else {
+                const menu = document.getElementById('editorMoreOptions');
+                if (menu) menu.style.display = 'none';
+                target.click();
+            }
+            setTimeout(() => {
+                if (window.__omniToolbarOverflowActionAnchor === (proxy || target)) window.__omniToolbarOverflowActionAnchor = null;
+            }, 0);
+        }
+
+        function renderEditorTopbarMoreItems(config = getEffectiveEditorTopbarConfig()) {
+            const container = ensureEditorTopbarMoreContainer();
+            if (!container) return [];
+            syncEditorTopbarActionState();
+            syncEditorMoreStaticTopbarItems();
+            container.innerHTML = '';
+            const moreItems = config.filter(item => item.location === 'more' && item.supportsMore !== false && OMNI_EDITOR_TOPBAR_ACTIONS[item.key]);
+            moreItems.forEach(item => {
+                const action = OMNI_EDITOR_TOPBAR_ACTIONS[item.key];
+                const proxy = document.createElement('div');
+                proxy.className = 'dropdown-item';
+                proxy.setAttribute('role', 'menuitem');
+                proxy.dataset.editorTopbarTarget = item.key;
+                proxy.innerHTML = `<icon>${escapeHtml(action.icon)}</icon><div class="menu-text">${escapeHtml(getEditorTopbarActionLabel(item.key))}</div>`;
+                proxy.addEventListener('mousedown', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const menu = document.getElementById('editorMoreOptions');
+                    triggerEditorTopbarAction(item.key, proxy);
+                    if (menu) menu.style.display = 'none';
+                });
+                container.appendChild(proxy);
+            });
+            const section = document.getElementById('editorTopbarMoreSection');
+            if (section) section.style.display = moreItems.length ? '' : 'none';
+            return moreItems.map(item => item.key);
+        }
+
+        function setupEditorTopbarActionShortcuts() {
+            Object.keys(OMNI_EDITOR_TOPBAR_ACTIONS).forEach(key => {
+                const node = document.getElementById(key);
+                if (!node || node.dataset.topbarActionReady === 'true') return;
+                node.dataset.topbarActionReady = 'true';
+                node.addEventListener('click', event => {
+                    if (node.style.display === 'none') return;
+                    if (['versionHistoryBtn', 'previewBtn', 'readingModeBtn', 'splitScreenBtn', 'shareDocumentBtn'].includes(key)) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    triggerEditorTopbarAction(key, node);
+                });
+            });
+        }
+
+        function observeEditorTopbarOverflow() {
+            const navbar = document.querySelector('#editorContent .navbar');
+            if (!navbar || navbar.dataset.topbarOverflowObserverReady === 'true') return;
+            navbar.dataset.topbarOverflowObserverReady = 'true';
+            const update = () => applyEditorTopbarCustomization();
+            if (typeof ResizeObserver !== 'undefined') {
+                const observer = new ResizeObserver(update);
+                observer.observe(navbar);
+                const container = document.querySelector('#editorContent .navbar-container');
+                if (container) observer.observe(container);
+            }
+            window.addEventListener('resize', update);
+        }
+
         function getEditorTopbarDefaultConfig() {
             return [
-                { key: 'toggleSidebar', label: _t('topbar_menu'), location: 'left' },
-                { key: 'documentTitle', label: _t('topbar_document_title'), location: 'left' },
-                { key: 'savingStatusPill', label: _t('topbar_saving_status'), location: 'left' },
-                { key: 'versionHistoryBtn', label: _t('Version History'), location: 'right' },
-                { key: 'previewBtn', label: _t('Preview'), location: 'right' },
-                { key: 'readingModeBtn', label: _t('reading_mode'), location: 'right' },
-                { key: 'splitScreenBtn', label: _t('Split Screen'), location: 'right' },
-                { key: 'shareDocumentBtn', label: _t('Share'), location: 'right' },
-                { key: 'moreEditorBtn', label: _t('more_options'), location: 'right', required: true }
+                { key: 'toggleSidebar', label: _t('topbar_menu'), location: 'left', supportsMore: false },
+                { key: 'documentTitle', label: _t('topbar_document_title'), location: 'left', supportsMore: false },
+                { key: 'savingStatusPill', label: _t('topbar_saving_status'), location: 'left', supportsMore: false },
+                { key: 'pinDocumentBtn', label: _t('pin_document'), location: 'right', supportsMore: true },
+                { key: 'versionHistoryBtn', label: _t('Version History'), location: 'right', supportsMore: true },   
+                { key: 'previewBtn', label: _t('Preview'), location: 'right', supportsMore: true },
+                { key: 'lockDocumentBtn', label: _t('lock_document'), location: 'right', supportsMore: true },
+                { key: 'readingModeBtn', label: _t('reading_mode'), location: 'right', supportsMore: true },
+                { key: 'splitScreenBtn', label: _t('Split Screen'), location: 'right', supportsMore: true },
+                { key: 'documentInfoBtn', label: _t('document_info'), location: 'right', supportsMore: true },
+                { key: 'shareDocumentBtn', label: _t('Share'), location: 'right', supportsMore: true },
+                { key: 'downloadDocumentBtn', label: _t('Download'), location: 'right', supportsMore: true },
+                { key: 'moreEditorBtn', label: _t('more_options'), location: 'right', required: true, supportsMore: false }
             ];
         }
 
@@ -17939,8 +18681,8 @@ try {
                 if (!Array.isArray(stored)) return defaults.map(item => ({ ...item }));
                 return defaults.map(item => {
                     const saved = stored.find(entry => entry?.key === item.key) || {};
-                    const location = ['left', 'right', 'hidden'].includes(saved.location) ? saved.location : item.location;
-                    return { ...item, location: item.required && location === 'hidden' ? item.location : location };
+                    const location = ['left', 'right', 'more', 'hidden'].includes(saved.location) ? saved.location : item.location;
+                    return { ...item, location: item.required && (location === 'hidden' || location === 'more') ? item.location : location };
                 });
             } catch(e) {
                 return defaults.map(item => ({ ...item }));
@@ -17963,19 +18705,23 @@ try {
             const left = navbar?.querySelector('.navbar__left');
             const right = navbar?.querySelector('.navbar__right');
             if (!left || !right) return;
+            const effectiveConfig = getEffectiveEditorTopbarConfig(config);
             const leftFragment = document.createDocumentFragment();
             const rightFragment = document.createDocumentFragment();
-            config.forEach(item => {
+            effectiveConfig.forEach(item => {
                 const node = getEditorTopbarElement(item.key);
                 if (!node) return;
-                const location = item.required && item.location === 'hidden' ? 'right' : item.location;
-                node.style.display = location === 'hidden' ? 'none' : '';
+                const location = item.required && (item.location === 'hidden' || item.location === 'more') ? 'right' : item.location;
+                node.style.display = location === 'hidden' || location === 'more' ? 'none' : '';
                 if (node.tagName === 'ICON') node.classList.toggle('liquid-glass', location === 'left');
                 if (location === 'left') leftFragment.appendChild(node);
-                else rightFragment.appendChild(node);
+                else if (location === 'right') rightFragment.appendChild(node);
             });
             left.appendChild(leftFragment);
             right.appendChild(rightFragment);
+            renderEditorTopbarMoreItems(effectiveConfig);
+            setupEditorTopbarActionShortcuts();
+            observeEditorTopbarOverflow();
         }
 
         function openEditorTopbarCustomizerModal() {
@@ -18008,6 +18754,7 @@ try {
                         <select data-action="location" aria-label="${_t('item_location')}">
                             <option value="left" ${item.location === 'left' ? 'selected' : ''}>${_t('topbar_location_left')}</option>
                             <option value="right" ${item.location === 'right' ? 'selected' : ''}>${_t('topbar_location_right')}</option>
+                            ${item.supportsMore !== false ? `<option value="more" ${item.location === 'more' ? 'selected' : ''}>${_t('topbar_location_more')}</option>` : ''}
                             ${item.required ? '' : `<option value="hidden" ${item.location === 'hidden' ? 'selected' : ''}>${_t('toolbar_location_hidden')}</option>`}
                         </select>
                     </div>`).join('');
@@ -25980,7 +26727,10 @@ try {
                 'lineSpacingBtn':'line_spacing','versionHistoryBtn':'Version History',
                 'previewBtn':'Preview','readingModeBtn':'reading_mode',
                 'splitScreenBtn':'split_screen','shareDocumentBtn':'Share',
-                'moreEditorBtn':'more_options','emojiPickerBtn':'insert_emoji',
+                'lockDocumentBtn':'lock_document','pinDocumentBtn':'pin_document',
+                'documentInfoBtn':'document_info','downloadDocumentBtn':'Download',
+                'moreItemGroupMobileBtn':'more_items',
+                'moreEditorBtn':'more_options','voiceTypingBtn':'voice_typing','emojiPickerBtn':'insert_emoji',
                 'virtualKeyboardBtn':'virtual_keyboard',
                 'moreImagesBtn':'more_options','createBtn':'create_new'
             };
@@ -26140,13 +26890,34 @@ try {
             const base = String(locale).split('-')[0];
             if (editorCustomizationLocalePatches[base]) TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[locale] || {}, editorCustomizationLocalePatches[base]);
         });
+        const editorMoreLocalePatches = {
+            en: { editor_topbar_items: 'Editor topbar items', hidden_toolbar_items: 'Hidden toolbar items', topbar_location_more: 'More menu', font_styles: 'Font Styles', align_text: 'Align Text', decrease_font_size: 'Decrease Font Size', increase_font_size: 'Increase Font Size' },
+            es: { editor_topbar_items: 'Elementos de la barra superior', hidden_toolbar_items: 'Elementos ocultos de la barra', topbar_location_more: 'Menú Más', font_styles: 'Estilos de fuente', align_text: 'Alinear texto', decrease_font_size: 'Disminuir tamaño de fuente', increase_font_size: 'Aumentar tamaño de fuente' },
+            fr: { editor_topbar_items: 'Éléments de la barre supérieure', hidden_toolbar_items: 'Éléments masqués de la barre', topbar_location_more: 'Menu Plus', font_styles: 'Styles de police', align_text: 'Aligner le texte', decrease_font_size: 'Réduire la taille de police', increase_font_size: 'Augmenter la taille de police' },
+            de: { editor_topbar_items: 'Elemente der Kopfleiste', hidden_toolbar_items: 'Ausgeblendete Werkzeuge', topbar_location_more: 'Mehr-Menü', font_styles: 'Schriftstile', align_text: 'Text ausrichten', decrease_font_size: 'Schrift verkleinern', increase_font_size: 'Schrift vergrößern' },
+            pt: { editor_topbar_items: 'Itens da barra superior', hidden_toolbar_items: 'Itens ocultos da barra', topbar_location_more: 'Menu Mais', font_styles: 'Estilos de fonte', align_text: 'Alinhar texto', decrease_font_size: 'Diminuir fonte', increase_font_size: 'Aumentar fonte' },
+            it: { editor_topbar_items: 'Elementi della barra superiore', hidden_toolbar_items: 'Elementi nascosti della barra', topbar_location_more: 'Menu Altro', font_styles: 'Stili carattere', align_text: 'Allinea testo', decrease_font_size: 'Riduci dimensione carattere', increase_font_size: 'Aumenta dimensione carattere' },
+            zh: { editor_topbar_items: '编辑器顶栏项目', hidden_toolbar_items: '隐藏的工具栏项目', topbar_location_more: '更多菜单', font_styles: '字体样式', align_text: '对齐文本', decrease_font_size: '减小字号', increase_font_size: '增大字号' },
+            ja: { editor_topbar_items: 'エディター上部バー項目', hidden_toolbar_items: '非表示のツールバー項目', topbar_location_more: 'その他メニュー', font_styles: 'フォントスタイル', align_text: '文字揃え', decrease_font_size: 'フォントサイズを縮小', increase_font_size: 'フォントサイズを拡大' },
+            ko: { editor_topbar_items: '편집기 상단 표시줄 항목', hidden_toolbar_items: '숨겨진 도구 모음 항목', topbar_location_more: '더보기 메뉴', font_styles: '글꼴 스타일', align_text: '텍스트 정렬', decrease_font_size: '글꼴 크기 줄이기', increase_font_size: '글꼴 크기 늘리기' },
+            ar: { editor_topbar_items: 'عناصر الشريط العلوي للمحرر', hidden_toolbar_items: 'عناصر شريط الأدوات المخفية', topbar_location_more: 'قائمة المزيد', font_styles: 'أنماط الخط', align_text: 'محاذاة النص', decrease_font_size: 'تصغير حجم الخط', increase_font_size: 'تكبير حجم الخط' },
+            hi: { editor_topbar_items: 'एडिटर टॉपबार आइटम', hidden_toolbar_items: 'छिपे हुए टूलबार आइटम', topbar_location_more: 'अधिक मेनू', font_styles: 'फ़ॉन्ट स्टाइल', align_text: 'टेक्स्ट संरेखित करें', decrease_font_size: 'फ़ॉन्ट आकार घटाएँ', increase_font_size: 'फ़ॉन्ट आकार बढ़ाएँ' },
+            ru: { editor_topbar_items: 'Элементы верхней панели', hidden_toolbar_items: 'Скрытые элементы панели', topbar_location_more: 'Меню «Ещё»', font_styles: 'Стили шрифта', align_text: 'Выровнять текст', decrease_font_size: 'Уменьшить шрифт', increase_font_size: 'Увеличить шрифт' }
+        };
+        Object.keys(editorMoreLocalePatches).forEach(lang => {
+            TRANSLATIONS[lang] = Object.assign(TRANSLATIONS[lang] || {}, editorMoreLocalePatches[lang]);
+        });
+        Object.keys(TRANSLATIONS).forEach(locale => {
+            const base = String(locale).split('-')[0];
+            if (editorMoreLocalePatches[base]) TRANSLATIONS[locale] = Object.assign({}, TRANSLATIONS[locale] || {}, editorMoreLocalePatches[base]);
+        });
 
         // On page load, apply theme and translations from localStorage
         try { applyTheme(localStorage.getItem('omniwrite-theme') || 'system'); } catch(e) { applyTheme('system'); }
         try { applyTranslations(localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) { applyTranslations('en'); }
         try { applySidebarPosition(localStorage.getItem('omniwrite-sidebar-position') || 'left'); } catch(e) { applySidebarPosition('left'); }
         try { setupSidebarContextMenu(); } catch(e) { console.warn('Sidebar context menu unavailable:', e); }
-        try { applyToolbarCustomization(); } catch(e) { console.warn('Toolbar customization unavailable:', e); }
+        try { setupToolbarOverflowMoreButton(); applyToolbarCustomization(); } catch(e) { console.warn('Toolbar customization unavailable:', e); }
         try { applyEditorTopbarCustomization(); } catch(e) { console.warn('Editor topbar customization unavailable:', e); }
         try { applyFontPreferences(); } catch(e) { console.warn('Font preferences unavailable:', e); }
         try { applyReduceTransparency(localStorage.getItem('omniwrite-reduce-transparency') === 'true'); } catch(e) {}
@@ -30116,6 +30887,7 @@ try {
                 'save_queue': 'Save Queue',
                 'queued': 'Queued',
                 'clear': 'Clear',
+                'writing_tools': 'Writing Tools',
                 'voice_typing': 'Voice Typing',
                 'voice_typing_started': 'Voice typing started.',
                 'voice_typing_denied': 'Microphone access was denied.',
@@ -32244,6 +33016,9 @@ try {
                         interactive.style.display = 'none';
                         interactive.dataset.overflowHidden = 'true';
                         interactive.dataset.sidebarUserMore = 'true';
+                        return;
+                    }
+                    if (interactive.getAttribute('data-overflow-hidden') === 'true' && interactive.dataset.sidebarUserMore !== 'true') {
                         return;
                     }
                     interactive.removeAttribute('data-overflow-hidden');
