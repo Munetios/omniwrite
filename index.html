@@ -6732,6 +6732,7 @@ Notes: 6</textarea>
     let unknownWorkspaceContext = null;
     let unknownDocumentContext = null;
     let workspacesLoaded = false;
+    let storedWorkspacesSnapshot = null;
     const sessionUnlockedWorkspaces = new Set();
     const DOCUMENT_ZOOM_MIN = 25;
     const DOCUMENT_ZOOM_MAX = 1600;
@@ -7431,23 +7432,36 @@ Notes: 6</textarea>
         return !!(workspace && workspace.locked && workspace.lockPassphraseHash && !sessionUnlockedWorkspaces.has(workspace.id));
     }
 
+    function readStoredWorkspacesSnapshot() {
+        if (Array.isArray(storedWorkspacesSnapshot)) return storedWorkspacesSnapshot;
+        try {
+            const stored = JSON.parse(localStorage.getItem(WORKSPACES_KEY) || '[]');
+            storedWorkspacesSnapshot = Array.isArray(stored) ? stored.filter(ws => ws && ws.id && ws.name) : [];
+        } catch(e) {
+            storedWorkspacesSnapshot = [];
+        }
+        return storedWorkspacesSnapshot;
+    }
+
+    function clearStoredWorkspacesSnapshot() {
+        storedWorkspacesSnapshot = null;
+    }
+
     function loadWorkspaces() {
         workspacesLoaded = false;
         clearUnknownWorkspaceContext();
         clearUnknownDocumentContext();
-        try {
-            const stored = JSON.parse(localStorage.getItem(WORKSPACES_KEY) || '[]');
-            workspaces = Array.isArray(stored) ? stored.filter(ws => ws && ws.id && ws.name) : [];
-        } catch(e) {
-            workspaces = [];
-        }
+        clearStoredWorkspacesSnapshot();
+        workspaces = readStoredWorkspacesSnapshot().map(ws => ({ ...ws }));
+        clearStoredWorkspacesSnapshot();
         if (!workspaces.some(ws => ws.id === PERSONAL_WORKSPACE_ID)) {
             workspaces.unshift({ id: PERSONAL_WORKSPACE_ID, name: 'Personal', createdAt: Date.now(), updatedAt: Date.now(), locked: false });
         } else {
             const personal = workspaces.find(ws => ws.id === PERSONAL_WORKSPACE_ID);
             if (personal && personal.locked && !personal.lockPassphraseHash) personal.locked = false;
         }
-        if (!localStorage.getItem(ACTIVE_WORKSPACE_KEY) || !workspaces.some(ws => ws.id === localStorage.getItem(ACTIVE_WORKSPACE_KEY))) {
+        const storedActiveWorkspaceId = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
+        if (!storedActiveWorkspaceId || !workspaces.some(ws => ws.id === storedActiveWorkspaceId)) {
             localStorage.setItem(ACTIVE_WORKSPACE_KEY, PERSONAL_WORKSPACE_ID);
         }
         localStorage.setItem(WORKSPACES_HIDDEN_KEY, 'false');
@@ -7457,18 +7471,25 @@ Notes: 6</textarea>
     }
 
     function saveWorkspaces() {
+        clearStoredWorkspacesSnapshot();
         try { localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces)); } catch(e) { console.warn('localStorage unavailable:', e); }
     }
 
     function getActiveWorkspaceId() {
         if (isUnknownWorkspaceActive()) return UNKNOWN_WORKSPACE_ID;
         const stored = localStorage.getItem(ACTIVE_WORKSPACE_KEY);
+        if (!workspacesLoaded && stored && readStoredWorkspacesSnapshot().some(ws => ws.id === stored)) return stored;
         return workspaces.some(ws => ws.id === stored) ? stored : PERSONAL_WORKSPACE_ID;
     }
 
     function getActiveWorkspace() {
         if (isUnknownWorkspaceActive()) return getUnknownWorkspace();
-        return workspaces.find(ws => ws.id === getActiveWorkspaceId()) || workspaces[0] || { id: PERSONAL_WORKSPACE_ID, name: 'Personal' };
+        const activeId = getActiveWorkspaceId();
+        return workspaces.find(ws => ws.id === activeId)
+            || (!workspacesLoaded ? readStoredWorkspacesSnapshot().find(ws => ws.id === activeId) : null)
+            || workspaces.find(ws => ws.id === PERSONAL_WORKSPACE_ID)
+            || workspaces[0]
+            || { id: PERSONAL_WORKSPACE_ID, name: 'Personal' };
     }
 
     function getOmniTranslatedLabel(key, fallback) {
@@ -7496,6 +7517,19 @@ Notes: 6</textarea>
 
     function getWorkspaceHashPrefix() {
         return '#/profile/' + getActiveWorkspaceSlug();
+    }
+
+    function syncWorkspaceHash(workspace = getActiveWorkspace()) {
+        if (!workspace || !workspace.id || isUnknownWorkspaceActive()) return false;
+        const hash = window.location.hash || '';
+        const match = hash.match(/^#\/profile\/[^\/]+(\/.*)$/);
+        if (!match) return false;
+        const nextHash = '#/profile/' + getWorkspaceSlug(workspace.name) + match[1];
+        if (nextHash !== hash) {
+            window.history.replaceState(null, '', nextHash);
+            return true;
+        }
+        return false;
     }
 
     // Parse current document ID from either new (#/profile/{ws}/document/{id})
@@ -7581,18 +7615,19 @@ Notes: 6</textarea>
         }
         localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspaceId);
         if (typeof DOCUMENTS_PAGE_SIZE !== 'undefined') documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+        const currentDocId = getCurrentDocIdFromHash();
+        const currentDoc = currentDocId ? documents.find(doc => doc.id === currentDocId) : null;
         renderWorkspacesSidebar();
         renderWorkspaceTopSwitcher();
         renderDocumentsList();
         renderFoldersList();
         if (document.getElementById('notesApp')?.classList.contains('active') && typeof renderNotes === 'function') renderNotes();
         if (document.getElementById('imagesApp')?.classList.contains('active') && typeof renderImagesList === 'function') renderImagesList();
-        const currentDocId = getCurrentDocIdFromHash();
-        const currentDoc = currentDocId ? documents.find(doc => doc.id === currentDocId) : null;
         if (currentDoc && (currentDoc.workspaceId || PERSONAL_WORKSPACE_ID) !== workspaceId) {
             window.location.hash = '';
             switchPage('selectArea');
         } else {
+            syncWorkspaceHash(targetWorkspace);
             renderHomeDashboard();
         }
     }
@@ -7646,6 +7681,10 @@ Notes: 6</textarea>
                 renderWorkspacesSidebar();
                 renderDocumentsList();
                 renderFoldersList();
+                if (getActiveWorkspaceId() === workspace.id) {
+                    syncWorkspaceHash(workspace);
+                    renderHomeDashboard();
+                }
                 const managerModal = document.getElementById('workspacesManagerModal');
                 if (managerModal && typeof managerModal._renderManagerList === 'function') managerModal._renderManagerList();
                 showToast(_t('workspace_updated'), { type: 'success' });
@@ -8882,8 +8921,7 @@ Notes: 6</textarea>
         renderDocumentsList();
         renderFoldersList();
         // Now handle hash after documents are loaded
-        handleHashChangeWithDocument();
-        window.addEventListener('hashchange', handleHashChangeWithDocument);
+        installWorkspaceHashNavigation();
     }
     initializeApp().catch(function(e) {
         console.error('Failed to initialize app:', e);
@@ -8899,11 +8937,7 @@ Notes: 6</textarea>
             renderDocumentsList();
             renderFoldersList();
             renderDocumentLoadFailureStates();
-            handleHashChangeWithDocument();
-            if (!window.__omniHashNavigationFallbackReady) {
-                window.__omniHashNavigationFallbackReady = true;
-                window.addEventListener('hashchange', handleHashChangeWithDocument);
-            }
+            installWorkspaceHashNavigation();
         } catch(fallbackError) {
             console.error('Failed to start fallback UI:', fallbackError);
         }
@@ -9049,6 +9083,17 @@ Notes: 6</textarea>
             try { switchPage('selectArea'); } catch(e2) {}
         }
     }
+
+    function installWorkspaceHashNavigation() {
+        window.__omniWorkspaceHashNavigationReady = true;
+        if (window.__omniLegacyHashChangeHandler) {
+            window.removeEventListener('hashchange', window.__omniLegacyHashChangeHandler);
+        }
+        window.removeEventListener('hashchange', handleHashChangeWithDocument);
+        handleHashChangeWithDocument();
+        window.addEventListener('hashchange', handleHashChangeWithDocument);
+    }
+
     // Remove any duplicate or conflicting hashchange listeners
     window.removeEventListener('hashchange', handleHashChange);
     window.removeEventListener('hashchange', handleHashChangeWithDocument);
@@ -9458,7 +9503,7 @@ Notes: 6</textarea>
                 documentsList.appendChild(createShowMoreDocumentsButton(unpinnedDocs.length));
             }
         }
-        renderHomeDashboard();
+        if (typeof scheduleHomeDashboardRender === 'function') scheduleHomeDashboardRender();
     }
 
     // Render folders list
@@ -9471,7 +9516,7 @@ Notes: 6</textarea>
         const workspaceFolders = getWorkspaceFolders();
         if (workspaceFolders.length === 0) {
             foldersList.innerHTML = `<p style="padding: 8px; opacity: 0.6; font-size: 14px;">${_t('no_folders')}</p>`;
-            renderHomeDashboard();
+            if (typeof scheduleHomeDashboardRender === 'function') scheduleHomeDashboardRender();
             return;
         }
         
@@ -9524,7 +9569,7 @@ Notes: 6</textarea>
             
             foldersList.appendChild(docsContainer);
         });
-        renderHomeDashboard();
+        if (typeof scheduleHomeDashboardRender === 'function') scheduleHomeDashboardRender();
     }
 
     // Toggle folder expand/collapse
@@ -17360,8 +17405,11 @@ try {
                 renderHomeDashboard();
             }
         }
-        window.addEventListener('hashchange', handleHashChange);
-        handleHashChange();
+        window.__omniLegacyHashChangeHandler = handleHashChange;
+        if (!window.__omniWorkspaceHashNavigationReady) {
+            window.addEventListener('hashchange', handleHashChange);
+            handleHashChange();
+        }
 
         // Sidebar navigation click handlers
         document.querySelector('.sidebarnav__item[data-nav="images"]')?.addEventListener('click', () => { window.location.hash = getWorkspaceHashPrefix() + '/images'; });
@@ -18957,6 +19005,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.15.1 - Fixed some bugs when greeting title keeps reverting workspace name to Personal, Fixed performance issues.</li>
                         <li>v1.15.0 - Redesigned the sidebar, improved translations and added more right click context menus.</li>
                         <li>v1.14.13 - Improved mobile support </li>
                     <li>v1.14.12 - Fixed some bugs when going to document background color won't open the wrapper. Disabled the crop feature if a image was inserted from a URL</li>
@@ -21124,7 +21173,7 @@ try {
             if (index < 0) return key;
             const rows = {
                 en: ['Good morning', 'Good afternoon', 'Good evening'],
-                es: ['Buenos días', 'Buenas tardes', 'Buenas noches'],
+                es: ['Buenas días', 'Buenas tardes', 'Buenas noches'],
                 fr: ['Bonjour', 'Bon après-midi', 'Bonsoir'],
                 de: ['Guten Morgen', 'Guten Tag', 'Guten Abend'],
                 it: ['Buongiorno', 'Buon pomeriggio', 'Buonasera'],
@@ -21197,14 +21246,31 @@ try {
             document.body.classList.toggle('business-mode-active', enabled);
             document.documentElement.style.setProperty('--omni-business-bg', enabled && bgUrl ? 'url("' + bgUrl.replace(/"/g, '&quot;') + '")' : 'none');
             const brandTitle = document.querySelector('.sidebar__header h3');
-            if (brandTitle) brandTitle.textContent = enabled ? title : 'OmniWrite';
+            const nextBrandTitle = enabled ? title : 'OmniWrite';
+            if (brandTitle && brandTitle.textContent !== nextBrandTitle) brandTitle.textContent = nextBrandTitle;
             const dashboardTitle = document.getElementById('dashboardWelcomeTitle');
             const dashboardSubtitle = document.getElementById('dashboardWelcomeSubtitle');
-            if (dashboardTitle) dashboardTitle.textContent = enabled ? title : getGreetingTitle();
-            if (dashboardSubtitle) dashboardSubtitle.textContent = enabled ? subtitle : _t('welcome_subtitle');
+            const nextDashboardTitle = enabled ? title : getGreetingTitle();
+            const nextDashboardSubtitle = enabled ? subtitle : _t('welcome_subtitle');
+            if (dashboardTitle && dashboardTitle.textContent !== nextDashboardTitle) dashboardTitle.textContent = nextDashboardTitle;
+            if (dashboardSubtitle && dashboardSubtitle.textContent !== nextDashboardSubtitle) dashboardSubtitle.textContent = nextDashboardSubtitle;
             document.querySelectorAll('.business-templates-label').forEach(function(el) {
-                el.textContent = enabled ? 'Business' : _t('templates');
+                const nextLabel = enabled ? 'Business' : _t('templates');
+                if (el.textContent !== nextLabel) el.textContent = nextLabel;
             });
+        }
+        let homeDashboardRenderFrame = 0;
+        function scheduleHomeDashboardRender() {
+            if (homeDashboardRenderFrame) return;
+            const run = function() {
+                homeDashboardRenderFrame = 0;
+                renderHomeDashboard();
+            };
+            if (typeof requestAnimationFrame === 'function') {
+                homeDashboardRenderFrame = requestAnimationFrame(run);
+            } else {
+                homeDashboardRenderFrame = setTimeout(run, 0);
+            }
         }
         function renderHomeDashboard() {
             const docs = typeof getWorkspaceDocuments === 'function' ? getWorkspaceDocuments() : (typeof documents !== 'undefined' && Array.isArray(documents) ? documents.slice() : []);
