@@ -7614,7 +7614,7 @@ Notes: 6</textarea>
             return;
         }
         localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspaceId);
-        if (typeof DOCUMENTS_PAGE_SIZE !== 'undefined') documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+        if (typeof resetSidebarDocumentPagination === 'function') resetSidebarDocumentPagination();
         const currentDocId = getCurrentDocIdFromHash();
         const currentDoc = currentDocId ? documents.find(doc => doc.id === currentDocId) : null;
         renderWorkspacesSidebar();
@@ -8425,6 +8425,11 @@ Notes: 6</textarea>
         } catch(e) { return key; }
     }
 
+    function documentTitleDefault() {
+        const translated = _t('untitled_document');
+        return translated && translated !== 'untitled_document' ? translated : 'Untitled Document';
+    }
+
     // Update saving status UI
     function updateSavingStatus(status) {
         const savingStatusElement = document.getElementById('savingStatus');
@@ -8501,7 +8506,7 @@ Notes: 6</textarea>
                     changedDocs.push({ id: doc.id, serialized });
                 }
                 nextSnapshots.set(doc.id, serialized);
-                if (docIndex > 0 && docIndex % 30 === 0) await omniYield();
+                if (docIndex > 0 && docIndex % 8 === 0) await omniYield();
             }
 
             const deletedIds = [];
@@ -8632,11 +8637,11 @@ Notes: 6</textarea>
                     try {
                         const docStr = await decryptData(item.enc);
                         const doc = JSON.parse(docStr);
-                        if (!doc.workspaceId) doc.workspaceId = PERSONAL_WORKSPACE_ID;
+                        const hadWorkspaceId = !!doc.workspaceId;
+                        if (!hadWorkspaceId) doc.workspaceId = PERSONAL_WORKSPACE_ID;
                         documents.push(doc);
                         documentStoreIds.add(doc.id);
-                        documentSaveSnapshots.set(doc.id, JSON.stringify(doc));
-                        addDocumentToList(doc);
+                        documentSaveSnapshots.set(doc.id, hadWorkspaceId ? docStr : JSON.stringify(doc));
                     } catch (e) {
                         console.error('Failed to decrypt document', item.id, e);
                         // Show a "garbage" document with shuffled or random text
@@ -8663,7 +8668,6 @@ Notes: 6</textarea>
                         documents.push(doc);
                         documentStoreIds.add(doc.id);
                         documentSaveSnapshots.set(doc.id, JSON.stringify(doc));
-                        addDocumentToList(doc);
                     }
                     if (itemIndex > 0 && itemIndex % 10 === 0) await omniYield();
                 }
@@ -9446,22 +9450,54 @@ Notes: 6</textarea>
     }
     
     const DOCUMENTS_PAGE_SIZE = 20;
+    const PINNED_DOCUMENTS_PAGE_SIZE = 20;
+    const FOLDER_DOCUMENTS_PAGE_SIZE = 25;
     let documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+    let pinnedDocumentsVisibleCount = PINNED_DOCUMENTS_PAGE_SIZE;
+    let sidebarSearchDocumentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+    let sidebarSearchPinnedDocumentsVisibleCount = PINNED_DOCUMENTS_PAGE_SIZE;
+    const folderDocumentsVisibleCounts = new Map();
 
-    function createShowMoreDocumentsButton(totalCount) {
+    function resetSidebarDocumentPagination() {
+        documentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+        pinnedDocumentsVisibleCount = PINNED_DOCUMENTS_PAGE_SIZE;
+        sidebarSearchDocumentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+        sidebarSearchPinnedDocumentsVisibleCount = PINNED_DOCUMENTS_PAGE_SIZE;
+        folderDocumentsVisibleCounts.clear();
+    }
+
+    function getShowMoreLabel(remaining) {
+        const template = _t('show_more_count');
+        return (template && template !== 'show_more_count' ? template : 'Show more ({count})').replace('{count}', Math.max(0, remaining));
+    }
+
+    function createShowMoreDocumentsButton(totalCount, visibleCount, onShowMore) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'sidebarnav__item liquid-glass';
         button.style.justifyContent = 'center';
         button.style.marginTop = '8px';
-        button.innerHTML = '<icon>expand_more</icon><div class="menu-text">Show more (' + Math.max(0, totalCount - documentsVisibleCount) + ')</div>';
+        button.innerHTML = '<icon>expand_more</icon><div class="menu-text">' + escapeHtml(getShowMoreLabel(totalCount - visibleCount)) + '</div>';
         button.addEventListener('click', event => {
             event.preventDefault();
             event.stopPropagation();
-            documentsVisibleCount += DOCUMENTS_PAGE_SIZE;
-            renderDocumentsList();
+            onShowMore();
         });
         return button;
+    }
+
+    function appendDocumentRows(container, docs) {
+        const fragment = document.createDocumentFragment();
+        docs.forEach(doc => fragment.appendChild(createDocumentElement(doc)));
+        container.appendChild(fragment);
+    }
+
+    function createDocumentLookup(source = documents) {
+        const lookup = new Map();
+        source.forEach(doc => {
+            if (doc && doc.id) lookup.set(doc.id, doc);
+        });
+        return lookup;
     }
 
     // Re-render all documents in sorted order (pinned in separate section)
@@ -9473,37 +9509,80 @@ Notes: 6</textarea>
         if (pinnedList) pinnedList.innerHTML = '';
         if (documentsList) documentsList.innerHTML = '';
         
-        // Separate pinned and unpinned documents
         const workspaceDocs = getWorkspaceDocuments();
-        const pinnedDocs = workspaceDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        const unpinnedDocs = workspaceDocs.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const pinnedDocs = [];
+        const unpinnedDocs = [];
+        workspaceDocs.forEach(doc => {
+            if (doc.pinned) pinnedDocs.push(doc);
+            else unpinnedDocs.push(doc);
+        });
+        pinnedDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        unpinnedDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
         // Render pinned documents
         if (pinnedList) {
             if (pinnedDocs.length > 0) {
-                pinnedDocs.forEach(doc => {
-                    const el = createDocumentElement(doc);
-                    pinnedList.appendChild(el);
-                });
+                const visiblePinnedDocs = pinnedDocs.slice(0, pinnedDocumentsVisibleCount);
+                appendDocumentRows(pinnedList, visiblePinnedDocs);
+                if (pinnedDocs.length > pinnedDocumentsVisibleCount) {
+                    pinnedList.appendChild(createShowMoreDocumentsButton(pinnedDocs.length, pinnedDocumentsVisibleCount, () => {
+                        pinnedDocumentsVisibleCount += PINNED_DOCUMENTS_PAGE_SIZE;
+                        renderDocumentsList();
+                    }));
+                }
                 // Show pinned section
                 if (pinnedSection) pinnedSection.style.display = 'block';
             } else {
-                pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">No pinned documents</p>';
+                pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">' + escapeHtml(_t('no_pinned')) + '</p>';
             }
         }
         
         // Render unpinned documents
         if (documentsList) {
             const visibleDocs = unpinnedDocs.slice(0, documentsVisibleCount);
-            visibleDocs.forEach(doc => {
-                const el = createDocumentElement(doc);
-                documentsList.appendChild(el);
-            });
+            appendDocumentRows(documentsList, visibleDocs);
             if (unpinnedDocs.length > documentsVisibleCount) {
-                documentsList.appendChild(createShowMoreDocumentsButton(unpinnedDocs.length));
+                documentsList.appendChild(createShowMoreDocumentsButton(unpinnedDocs.length, documentsVisibleCount, () => {
+                    documentsVisibleCount += DOCUMENTS_PAGE_SIZE;
+                    renderDocumentsList();
+                }));
             }
         }
         if (typeof scheduleHomeDashboardRender === 'function') scheduleHomeDashboardRender();
+    }
+
+    function renderFolderDocuments(folderId, docsContainer = document.getElementById(`folder-docs-${folderId}`)) {
+        if (!docsContainer) return;
+        const folder = getWorkspaceFolders().find(item => item.id === folderId);
+        docsContainer.innerHTML = '';
+        if (!folder || !Array.isArray(folder.documentIds) || !folder.documentIds.length) {
+            docsContainer.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            return;
+        }
+
+        const visibleCount = folderDocumentsVisibleCounts.get(folderId) || FOLDER_DOCUMENTS_PAGE_SIZE;
+        const docLookup = createDocumentLookup(getWorkspaceDocuments());
+        const visibleDocs = [];
+        let totalDocs = 0;
+        folder.documentIds.forEach(docId => {
+            const doc = docLookup.get(docId);
+            if (!doc) return;
+            totalDocs += 1;
+            if (visibleDocs.length < visibleCount) visibleDocs.push(doc);
+        });
+
+        if (!totalDocs) {
+            docsContainer.innerHTML = '<p style="padding: 8px; opacity: 0.6; font-size: 14px;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            return;
+        }
+
+        appendDocumentRows(docsContainer, visibleDocs);
+        if (totalDocs > visibleCount) {
+            docsContainer.appendChild(createShowMoreDocumentsButton(totalDocs, visibleCount, () => {
+                folderDocumentsVisibleCounts.set(folderId, visibleCount + FOLDER_DOCUMENTS_PAGE_SIZE);
+                renderFolderDocuments(folderId, docsContainer);
+            }));
+        }
     }
 
     // Render folders list
@@ -9522,6 +9601,8 @@ Notes: 6</textarea>
         
         workspaceFolders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         
+        const fragment = document.createDocumentFragment();
+
         workspaceFolders.forEach(folder => {
             const div = document.createElement('div');
             div.className = 'sidebarnav__item folder-item';
@@ -9531,8 +9612,8 @@ Notes: 6</textarea>
             
             div.innerHTML = `
                 <icon>folder</icon>
-                <div class="menu-text">${folder.name} (${docCount})</div>
-                <icon class="folder-more-btn" data-folder-id="${folder.id}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
+                <div class="menu-text">${escapeHtml(folder.name || _t('folders'))} (${docCount})</div>
+                <icon class="folder-more-btn" data-folder-id="${escapeHtml(folder.id)}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
             `;
             
             // Click folder to expand/collapse
@@ -9548,7 +9629,7 @@ Notes: 6</textarea>
                 showFolderMoreOptions(folder.id, e.target);
             });
             
-            foldersList.appendChild(div);
+            fragment.appendChild(div);
             
             // Add documents in folder (collapsed by default)
             const docsContainer = document.createElement('div');
@@ -9556,19 +9637,10 @@ Notes: 6</textarea>
             docsContainer.id = `folder-docs-${folder.id}`;
             docsContainer.style.display = 'none';
             docsContainer.style.paddingLeft = '30px';
-            
-            if (folder.documentIds && folder.documentIds.length > 0) {
-                folder.documentIds.forEach(docId => {
-                    const doc = documents.find(d => d.id === docId);
-                    if (doc) {
-                        const docEl = createDocumentElement(doc);
-                        docsContainer.appendChild(docEl);
-                    }
-                });
-            }
-            
-            foldersList.appendChild(docsContainer);
+            docsContainer.dataset.folderId = folder.id;
+            fragment.appendChild(docsContainer);
         });
+        foldersList.appendChild(fragment);
         if (typeof scheduleHomeDashboardRender === 'function') scheduleHomeDashboardRender();
     }
 
@@ -9578,6 +9650,7 @@ Notes: 6</textarea>
         if (docsContainer) {
             const isVisible = docsContainer.style.display !== 'none';
             docsContainer.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) renderFolderDocuments(folderId, docsContainer);
             
             // Update folder icon
             const folderItem = document.querySelector(`[data-folder-id="${folderId}"]`);
@@ -13782,12 +13855,21 @@ Q4: 22</textarea>
         let downloadModal = document.createElement('div');
         downloadModal.className = 'modal';
         downloadModal.innerHTML = `
-            <div class="modal-content liquid-glass" style="max-width: 400px;">
+            <div class="modal-content liquid-glass" style="max-width: 420px;">
                 <div class="modal-content-close" id="closeDownloadModal">
                     <icon>close</icon>
                 </div>
                 <h2>${_t('download_document')}</h2>
-                <p style="margin-bottom: 20px;">${_t('download_format_intro')} "${doc.title}":</p>
+                <p style="margin-bottom: 20px;">${_t('download_format_intro')} "${escapeHtml(doc.title || documentTitleDefault())}":</p>
+                <label style="display:grid;gap:8px;margin-bottom:16px;font-weight:600;">
+                    <span>${_t('file_encoding') === 'file_encoding' ? 'File encoding' : _t('file_encoding')}</span>
+                    <select id="downloadEncodingSelect" class="custom-font-input" style="width:100%;">
+                        <option value="utf-8">${_t('encoding_utf8') === 'encoding_utf8' ? 'UTF-8' : _t('encoding_utf8')}</option>
+                        <option value="utf-8-bom">${_t('encoding_utf8_bom') === 'encoding_utf8_bom' ? 'UTF-8 with BOM' : _t('encoding_utf8_bom')}</option>
+                        <option value="utf-16le">${_t('encoding_utf16le') === 'encoding_utf16le' ? 'UTF-16 LE' : _t('encoding_utf16le')}</option>
+                        <option value="windows-1252">${_t('encoding_windows_1252') === 'encoding_windows_1252' ? 'Windows-1252' : _t('encoding_windows_1252')}</option>
+                    </select>
+                </label>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <button id="downloadTxt" style="justify-content: center;">
                         <icon>text_snippet</icon>
@@ -13863,6 +13945,79 @@ Q4: 22</textarea>
             }
             confirmMediaLimitedDownload(formatLabel, proceed);
         }
+
+        function getSelectedDownloadEncoding() {
+            return downloadModal.querySelector('#downloadEncodingSelect')?.value || 'utf-8';
+        }
+
+        function getDownloadCharsetLabel(encoding = getSelectedDownloadEncoding()) {
+            if (encoding === 'utf-16le') return 'UTF-16LE';
+            if (encoding === 'windows-1252') return 'windows-1252';
+            return 'UTF-8';
+        }
+
+        function encodeWindows1252(text) {
+            const special = {
+                0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
+                0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E,
+                0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+                0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F
+            };
+            const bytes = [];
+            for (let i = 0; i < text.length; i += 1) {
+                const code = text.charCodeAt(i);
+                if (code <= 0x7F || (code >= 0xA0 && code <= 0xFF)) bytes.push(code);
+                else if (special[code]) bytes.push(special[code]);
+                else bytes.push(0x3F);
+            }
+            return new Uint8Array(bytes);
+        }
+
+        function encodeUtf16Le(text) {
+            const bytes = new Uint8Array(2 + text.length * 2);
+            bytes[0] = 0xFF;
+            bytes[1] = 0xFE;
+            for (let i = 0; i < text.length; i += 1) {
+                const code = text.charCodeAt(i);
+                const offset = 2 + i * 2;
+                bytes[offset] = code & 0xFF;
+                bytes[offset + 1] = code >> 8;
+            }
+            return bytes;
+        }
+
+        function createEncodedTextBlob(content, mimeType) {
+            const text = String(content || '');
+            const encoding = getSelectedDownloadEncoding();
+            const charset = getDownloadCharsetLabel(encoding);
+            let payload;
+            if (encoding === 'utf-16le') {
+                payload = encodeUtf16Le(text);
+            } else if (encoding === 'windows-1252') {
+                payload = encodeWindows1252(text);
+            } else if (encoding === 'utf-8-bom') {
+                const encoded = new TextEncoder().encode(text);
+                payload = new Uint8Array(encoded.length + 3);
+                payload.set([0xEF, 0xBB, 0xBF], 0);
+                payload.set(encoded, 3);
+            } else {
+                payload = new TextEncoder().encode(text);
+            }
+            return new Blob([payload], { type: mimeType + ';charset=' + charset });
+        }
+
+        function triggerEncodedDownload(content, mimeType, filename) {
+            const blob = createEncodedTextBlob(content, mimeType);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                URL.revokeObjectURL(a.href);
+                a.remove();
+            }, 100);
+        }
         
         // Download as TXT
         downloadModal.querySelector('#downloadTxt').onclick = function() {
@@ -13870,16 +14025,7 @@ Q4: 22</textarea>
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = doc.content;
             const text = tempDiv.innerText || tempDiv.textContent || '';
-            const blob = new Blob([text], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = (doc.title || 'document') + '.txt';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                URL.revokeObjectURL(a.href);
-                a.remove();
-            }, 100);
+            triggerEncodedDownload(text, 'text/plain', (doc.title || 'document') + '.txt');
             downloadModal.remove();
             showToast(_t('document_downloaded_txt'), { type: 'success' });
             });
@@ -13891,7 +14037,7 @@ Q4: 22</textarea>
             const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="${getDownloadCharsetLabel()}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${doc.title}</title>
     <link rel="stylesheet" href="https://api.munetios.com/beautiful-css/beautiful.css">
@@ -13938,16 +14084,7 @@ Q4: 22</textarea>
     ${doc.content}
 </body>
 </html>`;
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = (doc.title || 'document') + '.html';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                URL.revokeObjectURL(a.href);
-                a.remove();
-            }, 100);
+            triggerEncodedDownload(htmlContent, 'text/html', (doc.title || 'document') + '.html');
             downloadModal.remove();
             showToast(_t('document_downloaded_html'), { type: 'success' });
         };
@@ -13959,7 +14096,7 @@ Q4: 22</textarea>
             const docxContent = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
-    <meta charset='utf-8'>
+    <meta charset='${getDownloadCharsetLabel()}'>
     <title>${doc.title}</title>
     <link rel="stylesheet" href="https://api.munetios.com/beautiful-css/beautiful.css">
     <style>
@@ -13975,16 +14112,7 @@ Q4: 22</textarea>
     ${doc.content}
 </body>
 </html>`;
-            const blob = new Blob([docxContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = (doc.title || 'document') + '.docx';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                URL.revokeObjectURL(a.href);
-                a.remove();
-            }, 100);
+            triggerEncodedDownload(docxContent, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', (doc.title || 'document') + '.docx');
             downloadModal.remove();
             showToast(_t('document_downloaded_docx'), { type: 'success' });
             });
@@ -14030,16 +14158,7 @@ Q4: 22</textarea>
             
             markdown = '# ' + doc.title + '\n\n' + markdown;
             
-            const blob = new Blob([markdown], { type: 'text/markdown' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = (doc.title || 'document') + '.md';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                URL.revokeObjectURL(a.href);
-                a.remove();
-            }, 100);
+            triggerEncodedDownload(markdown, 'text/markdown', (doc.title || 'document') + '.md');
             downloadModal.remove();
             showToast(_t('document_downloaded_md'), { type: 'success' });
             });
@@ -14297,7 +14416,7 @@ Q4: 22</textarea>
             workspaceId: doc.workspaceId || getActiveWorkspaceId()
         };
         documents.push(newDoc);
-        addDocumentToList(newDoc);
+        renderDocumentsList();
         openDocument(newDoc.id);
         scheduleDocumentSave();
         showToast(_t('document_duplicated'), { type: 'success' });
@@ -14389,26 +14508,44 @@ Q4: 22</textarea>
             <div class="modal-content" style="position:relative;max-width:500px;">
                 <span class="modal-content-close" id="closeSplitSelectModal" style="position:absolute;top:12px;right:18px;cursor:pointer;font-size:22px;">&times;</span>
                 <h2>${_t('select_doc_split')}</h2>
-                <div style="margin:18px 0;max-height:300px;overflow-y:auto;">
-                    ${getWorkspaceDocuments().filter(d => d.id !== currentDocId).map(d => 
-                        `<div class="sidebarnav__item" data-doc-id="${d.id}" style="cursor:pointer;margin-bottom:8px;">
-                            <icon>description</icon>
-                            <div class="menu-text">${d.title}</div>
-                        </div>`
-                    ).join('')}
-                </div>
+                <div id="splitDocumentSelectList" style="margin:18px 0;max-height:300px;overflow-y:auto;"></div>
             </div>
         `;
         document.body.appendChild(modal);
 
         modal.querySelector('#closeSplitSelectModal').onclick = () => modal.remove();
 
-        modal.querySelectorAll('.sidebarnav__item').forEach(item => {
-            item.onclick = function() {
-                const selectedDocId = this.getAttribute('data-doc-id');
-                modal.remove();
-                activateSplitView(currentDocId, selectedDocId);
-            };
+        const splitCandidateDocs = getWorkspaceDocuments().filter(d => d.id !== currentDocId);
+        let splitVisibleCount = 50;
+        function renderSplitDocumentPicker() {
+            const list = modal.querySelector('#splitDocumentSelectList');
+            if (!list) return;
+            const visibleDocs = splitCandidateDocs.slice(0, splitVisibleCount);
+            list.innerHTML = visibleDocs.map(d => 
+                `<div class="sidebarnav__item" data-doc-id="${escapeHtml(d.id)}" style="cursor:pointer;margin-bottom:8px;">
+                    <icon>description</icon>
+                    <div class="menu-text">${escapeHtml(d.title || documentTitleDefault())}</div>
+                </div>`
+            ).join('') || '<p style="padding:8px;opacity:.66;">' + escapeHtml(_t('no_results')) + '</p>';
+            if (splitCandidateDocs.length > splitVisibleCount) {
+                list.insertAdjacentHTML('beforeend', '<button id="splitPickerShowMoreBtn" class="sidebarnav__item liquid-glass" type="button" style="justify-content:center;margin-top:8px;width:100%;"><icon>expand_more</icon><div class="menu-text">' + escapeHtml(getShowMoreLabel(splitCandidateDocs.length - splitVisibleCount)) + '</div></button>');
+            }
+        }
+        renderSplitDocumentPicker();
+
+        modal.querySelector('#splitDocumentSelectList').addEventListener('click', function(event) {
+            const showMore = event.target.closest('#splitPickerShowMoreBtn');
+            if (showMore) {
+                event.preventDefault();
+                splitVisibleCount += 50;
+                renderSplitDocumentPicker();
+                return;
+            }
+            const item = event.target.closest('.sidebarnav__item[data-doc-id]');
+            if (!item) return;
+            const selectedDocId = item.getAttribute('data-doc-id');
+            modal.remove();
+            activateSplitView(currentDocId, selectedDocId);
         });
     } catch(e) {
     showToast('Couldn\'t enter split view. Please try again.', { type: 'error' });
@@ -14713,6 +14850,16 @@ try {
             }
         }
 
+        function getLiveEditorContext(fallbackEditor = null, fallbackDoc = null) {
+            const selectionEditor = _cachedEditorSelection && _cachedEditorSelection.editor && _cachedEditorSelection.editor.isConnected
+                ? _cachedEditorSelection.editor
+                : null;
+            const activeEditor = (typeof getActiveEditorSurface === 'function' ? getActiveEditorSurface() : null) || selectionEditor || fallbackEditor;
+            const editor = activeEditor && activeEditor.isConnected ? activeEditor : (selectionEditor || fallbackEditor);
+            const doc = (typeof getDocumentByEditor === 'function' ? getDocumentByEditor(editor) : null) || fallbackDoc;
+            return { doc, editorArea: editor };
+        }
+
         function applyEditorFontSize(doc, editorArea, fontSizeDisplay, size) {
             if (!doc || !editorArea || !fontSizeDisplay) return;
             const numericSize = Math.max(1, Math.min(200, Math.round(Number(size) || 18)));
@@ -14753,17 +14900,28 @@ try {
             });
 
             fontSizeDisplay.textContent = String(numericSize);
-            doc.content = editorArea.innerHTML;
-            scheduleDocumentSave();
+            if (typeof saveEditorSurfaceContent === 'function') saveEditorSurfaceContent(editorArea);
+            else {
+                doc.content = editorArea.innerHTML;
+                scheduleDocumentSave();
+            }
         }
 
         function syncFontToolbarState() {
             if (!_fontToolbarContext || !_fontToolbarContext.editorArea) return;
-            const { editorArea, fontSizeDisplay, fontFamilyPicker, fontFamilyText } = _fontToolbarContext;
+            let { editorArea, fontSizeDisplay, fontFamilyPicker, fontFamilyText } = _fontToolbarContext;
             const selection = window.getSelection();
             if (!selection || !selection.rangeCount) return;
             let node = selection.anchorNode;
             if (!node) return;
+            const selectionElement = node.nodeType === 3 ? node.parentNode : node;
+            const selectionEditor = selectionElement && selectionElement.closest ? selectionElement.closest('.editor-surface') : null;
+            if (selectionEditor) {
+                editorArea = selectionEditor;
+                const liveDoc = getDocumentByEditor(editorArea);
+                _fontToolbarContext.editorArea = editorArea;
+                if (liveDoc) _fontToolbarContext.doc = liveDoc;
+            }
 
             let insideEditor = false;
             let checkNode = node.nodeType === 3 ? node.parentNode : node;
@@ -14794,18 +14952,20 @@ try {
                 probe = probe.parentNode;
             }
             if (!font) font = "'Google Sans Flex'";
-            let found = false;
-            fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
-                const itemFont = item.getAttribute('data-font');
-                if (itemFont && font.replace(/['"]/g, '').toLowerCase().startsWith(itemFont.replace(/['"]/g, '').toLowerCase().split(',')[0])) {
-                    fontFamilyText.textContent = item.innerText;
-                    fontFamilyText.style.fontFamily = itemFont;
-                    found = true;
+            if (fontFamilyPicker && fontFamilyText) {
+                let found = false;
+                fontFamilyPicker.querySelectorAll('.dropdown-item').forEach(item => {
+                    const itemFont = item.getAttribute('data-font');
+                    if (itemFont && font.replace(/['"]/g, '').toLowerCase().startsWith(itemFont.replace(/['"]/g, '').toLowerCase().split(',')[0])) {
+                        fontFamilyText.textContent = item.innerText;
+                        fontFamilyText.style.fontFamily = itemFont;
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    fontFamilyText.textContent = font.split(',')[0].replace(/['"]/g, '');
+                    fontFamilyText.style.fontFamily = font;
                 }
-            });
-            if (!found) {
-                fontFamilyText.textContent = font.split(',')[0].replace(/['"]/g, '');
-                fontFamilyText.style.fontFamily = font;
             }
         }
 
@@ -14830,8 +14990,70 @@ try {
                 fontFamilyText.textContent = label ? label.innerText : (item?.innerText || execFontName);
                 fontFamilyText.style.fontFamily = font;
             }
-            doc.content = editorArea.innerHTML;
-            scheduleDocumentSave();
+            if (typeof saveEditorSurfaceContent === 'function') saveEditorSurfaceContent(editorArea);
+            else {
+                doc.content = editorArea.innerHTML;
+                scheduleDocumentSave();
+            }
+        }
+
+        function selectionHasOmniTextStyle(editorArea) {
+            const selection = window.getSelection();
+            if (!editorArea || !selection || !selection.rangeCount) return false;
+            const node = selection.anchorNode;
+            const element = node && (node.nodeType === 1 ? node : node.parentElement);
+            return !!(element && editorArea.contains(element) && element.closest('[data-omni-text-style]'));
+        }
+
+        function resetOmniTextStyleTypingState(editorArea) {
+            if (!editorArea) return;
+            try {
+                focusEditorSurface(editorArea);
+                document.execCommand('formatBlock', false, '<p>');
+                document.execCommand('removeFormat', false, null);
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount) {
+                    let node = selection.anchorNode;
+                    let element = node && (node.nodeType === 1 ? node : node.parentElement);
+                    while (element && element !== editorArea) {
+                        const styled = element.closest?.('[data-omni-text-style]');
+                        if (!styled || !editorArea.contains(styled)) break;
+                        if (!styled.textContent.trim() && !styled.querySelector('img, video, audio, iframe, table')) {
+                            const parent = styled.parentNode;
+                            const br = document.createElement('br');
+                            parent.replaceChild(br, styled);
+                            const range = document.createRange();
+                            range.setStartAfter(br);
+                            range.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                            element = parent;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                const fontStyleText = document.getElementById('fontStyleText');
+                if (fontStyleText) {
+                    fontStyleText.replaceChildren(document.createTextNode('Normal Text '));
+                    const icon = document.createElement('icon');
+                    icon.textContent = 'arrow_drop_down';
+                    fontStyleText.appendChild(icon);
+                }
+                saveEditorSurfaceContent(editorArea);
+            } catch (error) {
+                console.warn('Failed to reset font style typing state:', error);
+            }
+        }
+
+        if (!window.__omniFontStyleEnterResetReady) {
+            window.__omniFontStyleEnterResetReady = true;
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+                const editor = event.target && event.target.closest ? event.target.closest('.editor-surface') : null;
+                if (!editor || !selectionHasOmniTextStyle(editor)) return;
+                setTimeout(() => resetOmniTextStyleTypingState(editor), 0);
+            }, true);
         }
 
         if (!window._fontToolbarSelectionBound) {
@@ -14909,10 +15131,12 @@ try {
                     'Emphasis': { fontStyle: 'italic', fontWeight: '600' }
                 }[style];
                 if (!styleConfig) return;
-                const { doc: activeDoc, editorArea: activeEditor, fontStyleText: activeText } = context;
+                const liveContext = getLiveEditorContext(context.editorArea, context.doc);
+                const { doc: activeDoc, editorArea: activeEditor } = liveContext;
+                const activeText = context.fontStyleText;
                 if (!activeDoc || !activeEditor || isEffectivelyLocked(activeDoc)) return;
                 focusEditorSurface(activeEditor);
-                restoreEditorSelection(activeEditor, fontStyleDropdown._savedSelection);
+                restoreEditorSelection(activeEditor, fontStyleDropdown._savedSelection) || restoreCachedEditorSelection(activeEditor);
                 const selection = window.getSelection();
                 if (!selection || !selection.rangeCount || selection.isCollapsed) return;
                 const selectedRange = selection.getRangeAt(0);
@@ -14952,6 +15176,9 @@ try {
                 appliedRange.setEndAfter(wrappers[wrappers.length - 1]);
                 selection.removeAllRanges();
                 selection.addRange(appliedRange);
+                appliedRange.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(appliedRange);
                 setFontStyleLabel(activeText, style === 'Normal' ? 'Normal Text' : style);
                 saveEditorSurfaceContent(activeEditor);
             };
@@ -14969,7 +15196,9 @@ try {
             fontStylesBtn.addEventListener('mousedown', event => {
                 event.preventDefault();
                 event.stopPropagation();
-                fontStyleDropdown._savedSelection = saveEditorSelection(fontStyleDropdown._ctx.editorArea);
+                const liveContext = getLiveEditorContext(fontStyleDropdown._ctx.editorArea, fontStyleDropdown._ctx.doc);
+                fontStyleDropdown._ctx = { ...fontStyleDropdown._ctx, ...liveContext };
+                fontStyleDropdown._savedSelection = saveEditorSelection(liveContext.editorArea) || (_cachedEditorSelection && _cachedEditorSelection.range);
                 const willOpen = fontStyleDropdown.style.display !== 'block';
                 closeAll(willOpen ? fontStyleDropdown : null);
                 if (!willOpen) return;
@@ -15089,6 +15318,17 @@ try {
             if (fontFamilyPicker) _fontFamilyPickerRef = fontFamilyPicker;
             _fontToolbarContext = { editorArea, fontSizeDisplay, fontFamilyPicker, fontFamilyText };
 
+            function getLiveFontPickerContext() {
+                const live = getLiveEditorContext(editorArea, doc);
+                return {
+                    doc: live.doc || doc,
+                    editorArea: live.editorArea || editorArea,
+                    fontSizeDisplay,
+                    fontFamilyPicker,
+                    fontFamilyText
+                };
+            }
+
             // Apply default document font from settings
             const savedDefaultFont = getSavedDefaultDocumentFont();
             ensureFontFaceLoadedFromValue(savedDefaultFont);
@@ -15111,7 +15351,9 @@ try {
             // Font Size Picker
             fontSizeBtn.addEventListener('mousedown', function(e) {
                 e.stopImmediatePropagation();
-                fontSizePicker._savedSelection = saveEditorSelection(editorArea);
+                const live = getLiveFontPickerContext();
+                fontSizePicker._ctx = live;
+                fontSizePicker._savedSelection = saveEditorSelection(live.editorArea) || (_cachedEditorSelection && _cachedEditorSelection.range);
                 if (e.target === fontSizeDisplay || fontSizeDisplay.contains(e.target)) {
                     if (document.activeElement === fontSizeDisplay) {
                         e.preventDefault();
@@ -15150,31 +15392,36 @@ try {
                 item.addEventListener('mousedown', function(e) {
                     e.preventDefault();
                     const size = Number(this.getAttribute('data-size'));
-                    restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
-                    applyEditorFontSize(doc, editorArea, fontSizeDisplay, size);
+                    const live = fontSizePicker._ctx || getLiveFontPickerContext();
+                    restoreEditorSelection(live.editorArea, fontSizePicker._savedSelection) || restoreCachedEditorSelection(live.editorArea);
+                    applyEditorFontSize(live.doc, live.editorArea, fontSizeDisplay, size);
                     closeFloatingDropdown(fontSizePicker);
                 });
             });
 
             fontSizeDecreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
-                const currentSize = pxToPt(getSelectionFontSizePx(editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
-                applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, -1));
+                const live = getLiveFontPickerContext();
+                restoreEditorSelection(live.editorArea, saveEditorSelection(live.editorArea) || fontSizePicker._savedSelection) || restoreCachedEditorSelection(live.editorArea);
+                const currentSize = pxToPt(getSelectionFontSizePx(live.editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
+                applyEditorFontSize(live.doc, live.editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, -1));
             });
 
             fontSizeIncreaseBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                restoreEditorSelection(editorArea, saveEditorSelection(editorArea) || fontSizePicker._savedSelection);
-                const currentSize = pxToPt(getSelectionFontSizePx(editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
-                applyEditorFontSize(doc, editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, 1));
+                const live = getLiveFontPickerContext();
+                restoreEditorSelection(live.editorArea, saveEditorSelection(live.editorArea) || fontSizePicker._savedSelection) || restoreCachedEditorSelection(live.editorArea);
+                const currentSize = pxToPt(getSelectionFontSizePx(live.editorArea)) || parseFloat(fontSizeDisplay.textContent) || 18;
+                applyEditorFontSize(live.doc, live.editorArea, fontSizeDisplay, getAdjacentFontSize(currentSize, 1));
             });
 
             // Font Family Picker
             fontFamilyBtn.addEventListener('mousedown', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                fontFamilyPicker._savedSelection = saveEditorSelection(editorArea);
+                const live = getLiveFontPickerContext();
+                fontFamilyPicker._ctx = { doc: live.doc, editorArea: live.editorArea, fontFamilyText: live.fontFamilyText };
+                fontFamilyPicker._savedSelection = saveEditorSelection(live.editorArea) || (_cachedEditorSelection && _cachedEditorSelection.range);
                 if (document.body.contains(fontFamilyPicker) && fontFamilyPicker.style.display === 'block') {
                     closeFloatingDropdown(fontFamilyPicker);
                 } else {
@@ -15211,14 +15458,16 @@ try {
                     if (!font) return;
                     const { doc: curDoc, editorArea: curEditor, fontFamilyText: curText } = fontFamilyPicker._ctx;
                     if (!curDoc || !curEditor) return;
-                    restoreEditorSelection(curEditor, fontFamilyPicker._savedSelection);
+                    restoreEditorSelection(curEditor, fontFamilyPicker._savedSelection) || restoreCachedEditorSelection(curEditor);
                     applyEditorFontFamily(curDoc, curEditor, curText, item, font);
                     closeFloatingDropdown(fontFamilyPicker);
                 });
             }
 
             fontSizeDisplay.addEventListener('mousedown', function() {
-                fontSizePicker._savedSelection = saveEditorSelection(editorArea) || fontSizePicker._savedSelection;
+                const live = getLiveFontPickerContext();
+                fontSizePicker._ctx = live;
+                fontSizePicker._savedSelection = saveEditorSelection(live.editorArea) || fontSizePicker._savedSelection;
             });
             fontSizeDisplay.addEventListener('input', function() {
                 let numeric = this.textContent.replace(/[^\d]/g, '').slice(0, 3);
@@ -15238,15 +15487,17 @@ try {
                 }
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
-                    applyEditorFontSize(doc, editorArea, fontSizeDisplay, this.textContent);
+                    const live = fontSizePicker._ctx || getLiveFontPickerContext();
+                    restoreEditorSelection(live.editorArea, fontSizePicker._savedSelection) || restoreCachedEditorSelection(live.editorArea);
+                    applyEditorFontSize(live.doc, live.editorArea, fontSizeDisplay, this.textContent);
                     fontSizeDisplay.blur();
                 }
             });
             fontSizeDisplay.addEventListener('blur', function() {
                 const size = Math.max(1, Math.min(200, Math.round(Number(this.textContent) || 18)));
-                restoreEditorSelection(editorArea, fontSizePicker._savedSelection);
-                applyEditorFontSize(doc, editorArea, fontSizeDisplay, size);
+                const live = fontSizePicker._ctx || getLiveFontPickerContext();
+                restoreEditorSelection(live.editorArea, fontSizePicker._savedSelection) || restoreCachedEditorSelection(live.editorArea);
+                applyEditorFontSize(live.doc, live.editorArea, fontSizeDisplay, size);
             });
 
             syncFontToolbarState();
@@ -16562,7 +16813,7 @@ try {
                 <div class="modal-body" style="padding: 20px;">
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 8px; font-weight: 600;">${_t('folder_name_label')}</label>
-                        <input type="text" id="folderNameInput" value="${isEdit && folder ? folder.name : ''}" 
+                        <input type="text" id="folderNameInput" value="${escapeHtml(isEdit && folder ? folder.name : '')}" 
                                placeholder="${_t('folder_name_placeholder')}" 
                                style="width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); 
                                       border-radius: 8px; background: rgba(255,255,255,0.05); 
@@ -16573,20 +16824,6 @@ try {
                         <div id="folderDocumentsSelect" style="max-height: 300px; overflow-y: auto; 
                                                                border: 1px solid rgba(255,255,255,0.2); 
                                                                border-radius: 8px; padding: 10px;">
-                            ${getWorkspaceDocuments().map(doc => {
-                                const isSelected = isEdit && folder && folder.documentIds && folder.documentIds.includes(doc.id);
-                                return `
-                                    <div class="folder-doc-checkbox" style="padding: 8px; cursor: pointer; 
-                                                                             border-radius: 4px; margin-bottom: 4px;
-                                                                             display: flex; align-items: center; gap: 10px;
-                                                                             background: ${isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent'};">
-                                        <input type="checkbox" value="${doc.id}" ${isSelected ? 'checked' : ''} 
-                                               style="cursor: pointer;">
-                                        <icon>description</icon>
-                                        <span>${doc.title}</span>
-                                    </div>
-                                `;
-                            }).join('')}
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -16605,23 +16842,54 @@ try {
             </div>
         `;
         document.body.appendChild(modal);
+
+        const folderPickerDocs = getWorkspaceDocuments().slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const folderPickerSelectedIds = new Set(isEdit && folder && Array.isArray(folder.documentIds) ? folder.documentIds : []);
+        const folderPickerPageSize = 50;
+        let folderPickerVisibleCount = folderPickerPageSize;
+
+        function renderFolderDocumentPicker() {
+            const picker = modal.querySelector('#folderDocumentsSelect');
+            if (!picker) return;
+            const visibleDocs = folderPickerDocs.slice(0, folderPickerVisibleCount);
+            picker.innerHTML = visibleDocs.map(doc => {
+                const isSelected = folderPickerSelectedIds.has(doc.id);
+                return `
+                    <div class="folder-doc-checkbox" data-doc-id="${escapeHtml(doc.id)}" style="padding: 8px; cursor: pointer; 
+                                                             border-radius: 4px; margin-bottom: 4px;
+                                                             display: flex; align-items: center; gap: 10px;
+                                                             background: ${isSelected ? 'rgba(99, 102, 241, 0.2)' : 'transparent'};">
+                        <input type="checkbox" value="${escapeHtml(doc.id)}" ${isSelected ? 'checked' : ''} 
+                               style="cursor: pointer;">
+                        <icon>description</icon>
+                        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(doc.title || documentTitleDefault())}</span>
+                    </div>
+                `;
+            }).join('') || '<p style="padding:8px;opacity:.66;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            if (folderPickerDocs.length > folderPickerVisibleCount) {
+                picker.insertAdjacentHTML('beforeend', '<button id="folderPickerShowMoreBtn" class="sidebarnav__item liquid-glass" type="button" style="justify-content:center;margin-top:8px;width:100%;"><icon>expand_more</icon><div class="menu-text">' + escapeHtml(getShowMoreLabel(folderPickerDocs.length - folderPickerVisibleCount)) + '</div></button>');
+            }
+            picker.querySelectorAll('.folder-doc-checkbox').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    if (!checkbox) return;
+                    if (e.target.type !== 'checkbox') checkbox.checked = !checkbox.checked;
+                    if (checkbox.checked) folderPickerSelectedIds.add(checkbox.value);
+                    else folderPickerSelectedIds.delete(checkbox.value);
+                    this.style.background = checkbox.checked ? 'rgba(99, 102, 241, 0.2)' : 'transparent';
+                });
+            });
+            picker.querySelector('#folderPickerShowMoreBtn')?.addEventListener('click', event => {
+                event.preventDefault();
+                folderPickerVisibleCount += folderPickerPageSize;
+                renderFolderDocumentPicker();
+            });
+        }
+
+        renderFolderDocumentPicker();
         
         // Focus name input
         setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
-        
-        // Handle checkbox clicks
-        modal.querySelectorAll('.folder-doc-checkbox').forEach(item => {
-            item.addEventListener('click', function(e) {
-                if (e.target.type !== 'checkbox') {
-                    const checkbox = this.querySelector('input[type="checkbox"]');
-                    checkbox.checked = !checkbox.checked;
-                }
-                // Update background
-                this.style.background = this.querySelector('input[type="checkbox"]').checked 
-                    ? 'rgba(99, 102, 241, 0.2)' 
-                    : 'transparent';
-            });
-        });
         
         // Close modal
         modal.querySelector('#closeFolderModal').onclick = () => modal.remove();
@@ -16637,8 +16905,7 @@ try {
                     return;
                 }
                 
-                const selectedDocs = Array.from(modal.querySelectorAll('#folderDocumentsSelect input[type="checkbox"]:checked'))
-                    .map(cb => cb.value);
+                const selectedDocs = Array.from(folderPickerSelectedIds);
                 
                 if (isEdit && folder) {
                     // Update existing folder
@@ -16848,7 +17115,12 @@ try {
     // --- Document Search Functionality ---
     let sidebarDocumentSearchQuery = '';
     function filterSidebarDocuments(query) {
-        query = String(query || '').trim().toLowerCase();
+        const nextQuery = String(query || '').trim().toLowerCase();
+        if (nextQuery !== sidebarDocumentSearchQuery) {
+            sidebarSearchDocumentsVisibleCount = DOCUMENTS_PAGE_SIZE;
+            sidebarSearchPinnedDocumentsVisibleCount = PINNED_DOCUMENTS_PAGE_SIZE;
+        }
+        query = nextQuery;
         sidebarDocumentSearchQuery = query;
         const pinnedList = document.getElementById('pinnedDocumentsList');
         const documentsList = document.getElementById('documentsList');
@@ -16860,15 +17132,18 @@ try {
             renderDocumentsList();
             renderFoldersList();
         } else {
-            // Filter documents
             const filteredDocs = getWorkspaceDocuments().filter(doc => doc.title && doc.title.toLowerCase().includes(query));
             
-            // Filter folders
             const filteredFolders = getWorkspaceFolders().filter(folder => folder.name && folder.name.toLowerCase().includes(query));
             
-            // Separate into pinned and unpinned
-            const pinnedDocs = filteredDocs.filter(d => d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            const unpinnedDocs = filteredDocs.filter(d => !d.pinned).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            const pinnedDocs = [];
+            const unpinnedDocs = [];
+            filteredDocs.forEach(doc => {
+                if (doc.pinned) pinnedDocs.push(doc);
+                else unpinnedDocs.push(doc);
+            });
+            pinnedDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            unpinnedDocs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             
             if (pinnedList) pinnedList.innerHTML = '';
             if (documentsList) documentsList.innerHTML = '';
@@ -16877,19 +17152,24 @@ try {
             // Show pinned section if there are pinned results
             if (pinnedList) {
                 if (pinnedDocs.length > 0) {
-                    pinnedDocs.forEach(doc => {
-                        const el = createDocumentElement(doc);
-                        pinnedList.appendChild(el);
-                    });
+                    const visiblePinnedDocs = pinnedDocs.slice(0, sidebarSearchPinnedDocumentsVisibleCount);
+                    appendDocumentRows(pinnedList, visiblePinnedDocs);
+                    if (pinnedDocs.length > sidebarSearchPinnedDocumentsVisibleCount) {
+                        pinnedList.appendChild(createShowMoreDocumentsButton(pinnedDocs.length, sidebarSearchPinnedDocumentsVisibleCount, () => {
+                            sidebarSearchPinnedDocumentsVisibleCount += PINNED_DOCUMENTS_PAGE_SIZE;
+                            filterSidebarDocuments(sidebarDocumentSearchQuery);
+                        }));
+                    }
                     if (pinnedSection) pinnedSection.style.display = 'block';
                 } else {
-                    pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">No pinned documents</p>';
+                    pinnedList.innerHTML = '<p style=\"padding: 8px; opacity: 0.6; font-size: 14px;\">' + escapeHtml(_t('no_pinned')) + '</p>';
                 }
             }
             
             // Show folder results
             if (foldersList) {
                 if (filteredFolders.length > 0) {
+                    const folderFragment = document.createDocumentFragment();
                     filteredFolders.forEach(folder => {
                         const div = document.createElement('div');
                         div.className = 'sidebarnav__item folder-item';
@@ -16897,8 +17177,8 @@ try {
                         const docCount = folder.documentIds ? folder.documentIds.length : 0;
                         div.innerHTML = `
                             <icon>folder</icon>
-                            <div class="menu-text">${folder.name} (${docCount})</div>
-                            <icon class="folder-more-btn" data-folder-id="${folder.id}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
+                            <div class="menu-text">${escapeHtml(folder.name || _t('folders'))} (${docCount})</div>
+                            <icon class="folder-more-btn" data-folder-id="${escapeHtml(folder.id)}" style="margin-left: auto; cursor: pointer;">more_vert</icon>
                         `;
                         div.addEventListener('click', (e) => {
                             if (e.target.classList.contains('folder-more-btn')) return;
@@ -16909,8 +17189,17 @@ try {
                             e.stopPropagation();
                             showFolderMoreOptions(folder.id, e.target);
                         });
-                        foldersList.appendChild(div);
+                        folderFragment.appendChild(div);
+
+                        const docsContainer = document.createElement('div');
+                        docsContainer.className = 'folder-documents';
+                        docsContainer.id = `folder-docs-${folder.id}`;
+                        docsContainer.style.display = 'none';
+                        docsContainer.style.paddingLeft = '30px';
+                        docsContainer.dataset.folderId = folder.id;
+                        folderFragment.appendChild(docsContainer);
                     });
+                    foldersList.appendChild(folderFragment);
                 } else {
                     foldersList.innerHTML = `<p style="padding: 8px; opacity: 0.6; font-size: 14px;">${_t('no_folders_found')}</p>`;
                 }
@@ -16918,25 +17207,13 @@ try {
             
             // Show unpinned results
             if (documentsList) {
-                const visibleDocs = unpinnedDocs.slice(0, DOCUMENTS_PAGE_SIZE);
-                visibleDocs.forEach(doc => {
-                    const el = createDocumentElement(doc);
-                    documentsList.appendChild(el);
-                });
-                if (unpinnedDocs.length > DOCUMENTS_PAGE_SIZE) {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'sidebarnav__item liquid-glass';
-                    button.style.justifyContent = 'center';
-                    button.style.marginTop = '8px';
-                    button.innerHTML = '<icon>expand_more</icon><div class="menu-text">Show more (' + (unpinnedDocs.length - DOCUMENTS_PAGE_SIZE) + ')</div>';
-                    button.addEventListener('click', event => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        documentsVisibleCount = unpinnedDocs.length;
+                const visibleDocs = unpinnedDocs.slice(0, sidebarSearchDocumentsVisibleCount);
+                appendDocumentRows(documentsList, visibleDocs);
+                if (unpinnedDocs.length > sidebarSearchDocumentsVisibleCount) {
+                    documentsList.appendChild(createShowMoreDocumentsButton(unpinnedDocs.length, sidebarSearchDocumentsVisibleCount, () => {
+                        sidebarSearchDocumentsVisibleCount += DOCUMENTS_PAGE_SIZE;
                         filterSidebarDocuments(sidebarDocumentSearchQuery);
-                    });
-                    documentsList.appendChild(button);
+                    }));
                 }
             }
         }
@@ -17322,7 +17599,7 @@ try {
                 workspaceId: getActiveWorkspaceId()
             };
             documents.push(newDoc);
-            addDocumentToList(newDoc);
+            renderDocumentsList();
             openDocument(newDoc.id);
             scheduleDocumentSave();
         } catch (e) {
@@ -17767,7 +18044,7 @@ try {
                             workspaceId: getActiveWorkspaceId()
                         };
                         documents.push(newDoc);
-                        addDocumentToList(newDoc);
+                        renderDocumentsList();
                         openDocument(newDoc.id);
                         scheduleDocumentSave();
                         showToast(_t('file_imported'), { type: 'success' });
@@ -21277,9 +21554,20 @@ try {
             const pinned = docs.filter(function(doc) { return !!doc.pinned; });
             const imagesCount = typeof images !== 'undefined' && Array.isArray(images) ? images.length : 0;
             const foldersCount = typeof getWorkspaceFolders === 'function' ? getWorkspaceFolders().length : (typeof folders !== 'undefined' && Array.isArray(folders) ? folders.length : 0);
-            const recent = docs.slice().sort(function(a, b) {
-                return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
-            }).slice(0, 5);
+            const recent = [];
+            docs.forEach(function(doc) {
+                const time = doc.updatedAt || doc.timestamp || doc.createdAt || 0;
+                let insertAt = recent.findIndex(function(item) {
+                    return time > (item.updatedAt || item.timestamp || item.createdAt || 0);
+                });
+                if (insertAt === -1) insertAt = recent.length;
+                if (insertAt < 5) {
+                    recent.splice(insertAt, 0, doc);
+                    if (recent.length > 5) recent.pop();
+                } else if (recent.length < 5) {
+                    recent.push(doc);
+                }
+            });
             const setText = function(id, value) {
                 const el = document.getElementById(id);
                 if (el) el.textContent = String(value);
@@ -29044,10 +29332,8 @@ try {
                     applyTranslations(value);
                     setTimeout(() => {
                         if (document.getElementById('templatesList')) renderTemplatesList();
-                        if (document.getElementById('documentsList')) {
-                            document.getElementById('documentsList').innerHTML = '';
-                            documents.forEach(doc => addDocumentToList(doc));
-                        }
+                        if (document.getElementById('documentsList') && typeof renderDocumentsList === 'function') renderDocumentsList();
+                        if (document.getElementById('foldersList') && typeof renderFoldersList === 'function') renderFoldersList();
                     }, 100);
                 };
             });
@@ -30613,7 +30899,12 @@ try {
                 insert_command: 'Insert command',
                 command_switch_document_workspace: 'Switch document or workspace',
                 insert_quote: 'Insert Quote',
-                insert_code_block: 'Insert Code Block'
+                insert_code_block: 'Insert Code Block',
+                file_encoding: 'File encoding',
+                encoding_utf8: 'UTF-8',
+                encoding_utf8_bom: 'UTF-8 with BOM',
+                encoding_utf16le: 'UTF-16 LE',
+                encoding_windows_1252: 'Windows-1252'
             },
             es: {
                 notes: 'Notas',
@@ -30717,7 +31008,12 @@ try {
                 insert_command: 'Comando de inserción',
                 command_switch_document_workspace: 'Cambiar documento o espacio',
                 insert_quote: 'Insertar cita',
-                insert_code_block: 'Insertar bloque de código'
+                insert_code_block: 'Insertar bloque de código',
+                file_encoding: 'Codificación del archivo',
+                encoding_utf8: 'UTF-8',
+                encoding_utf8_bom: 'UTF-8 con BOM',
+                encoding_utf16le: 'UTF-16 LE',
+                encoding_windows_1252: 'Windows-1252'
             }
         };
         if (typeof TRANSLATIONS !== 'undefined') {
@@ -34519,25 +34815,83 @@ try {
                 }
             }
 
+            function applyOmniTranslationsToSubtree(root, lang) {
+                const resolvedLang = typeof resolveOmniLanguage === 'function' ? resolveOmniLanguage(lang) : lang;
+                const dict = TRANSLATIONS[resolvedLang] || TRANSLATIONS.en || {};
+                const indexes = typeof getOmniTranslationIndexes === 'function' ? getOmniTranslationIndexes(dict) : null;
+                const scope = root && root.nodeType === Node.ELEMENT_NODE ? root : document.body;
+                if (!scope || !dict) return;
+                const collect = selector => {
+                    const elements = [];
+                    if (scope.matches?.(selector)) elements.push(scope);
+                    scope.querySelectorAll?.(selector).forEach(el => elements.push(el));
+                    return elements;
+                };
+                collect('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (key && dict[key]) setTranslatedTextExcludingIcons(el, dict[key]);
+                });
+                collect('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (key && dict[key]) setOmniPropertyIfChanged(el, 'placeholder', dict[key]);
+                });
+                collect('[data-i18n-aria-label]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-aria-label');
+                    if (key && dict[key]) setOmniAttributeIfChanged(el, 'aria-label', dict[key]);
+                });
+                collect('[data-i18n-title]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-title');
+                    if (key && dict[key]) setOmniAttributeIfChanged(el, 'data-tooltip', dict[key]);
+                });
+                if (indexes && typeof translateStaticUiText === 'function') translateStaticUiText(scope, dict, indexes);
+            }
+
             refreshOmniTranslationCoverage(false, document, true);
             window.ensureOmniAllLanguageTranslationCoverage = () => refreshOmniTranslationCoverage(false, document, true);
             if (typeof MutationObserver === 'function' && !window.__omniTranslationCoverageObserverReady) {
                 window.__omniTranslationCoverageObserverReady = true;
-                const pendingTranslationRoots = new Set();
-                const runPendingTranslationCoverage = () => {
-                    const roots = Array.from(pendingTranslationRoots);
-                    pendingTranslationRoots.clear();
-                    roots.forEach(root => refreshOmniTranslationCoverage(true, root, false));
+                const pendingTranslationRoots = [];
+                const TRANSLATION_COVERAGE_IDLE_BUDGET_MS = 8;
+                let omniTranslationCoverageIdleHandle = null;
+                const hasQueuedAncestor = root => pendingTranslationRoots.some(existing => existing === root || (existing instanceof HTMLElement && root instanceof HTMLElement && existing.contains(root)));
+                const queueTranslationRoot = root => {
+                    if (!(root instanceof HTMLElement) || hasQueuedAncestor(root)) return;
+                    for (let i = pendingTranslationRoots.length - 1; i >= 0; i--) {
+                        const existing = pendingTranslationRoots[i];
+                        if (existing instanceof HTMLElement && root.contains(existing)) pendingTranslationRoots.splice(i, 1);
+                    }
+                    pendingTranslationRoots.push(root);
                 };
-                const scheduleTranslationCoverage = () => {
+                const runPendingTranslationCoverage = deadline => {
+                    omniTranslationCoverageIdleHandle = null;
+                    const started = performance.now();
+                    while (pendingTranslationRoots.length) {
+                        const hasIdleTime = !deadline || deadline.didTimeout || typeof deadline.timeRemaining !== 'function' || deadline.timeRemaining() > 2;
+                        if (!hasIdleTime || performance.now() - started > TRANSLATION_COVERAGE_IDLE_BUDGET_MS) break;
+                        const root = pendingTranslationRoots.shift();
+                        refreshOmniTranslationCoverage(false, root, false);
+                        if (!omniTranslationCoverageApplying && !window.__omniApplyingTranslations) {
+                            omniTranslationCoverageApplying = true;
+                            window.__omniApplyingTranslations = true;
+                            try { applyOmniTranslationsToSubtree(root, localStorage.getItem('omniwrite-lang') || 'en'); } catch(e) {}
+                            finally {
+                                window.__omniApplyingTranslations = false;
+                                omniTranslationCoverageApplying = false;
+                            }
+                        }
+                    }
+                    if (pendingTranslationRoots.length) scheduleTranslationCoverage(true);
+                };
+                const scheduleTranslationCoverage = (immediate = false) => {
                     clearTimeout(omniTranslationCoverageTimer);
+                    if (omniTranslationCoverageIdleHandle) return;
                     omniTranslationCoverageTimer = setTimeout(() => {
                         if ('requestIdleCallback' in window) {
-                            requestIdleCallback(runPendingTranslationCoverage, { timeout: 1200 });
+                            omniTranslationCoverageIdleHandle = requestIdleCallback(runPendingTranslationCoverage, { timeout: 1200 });
                         } else {
-                            setTimeout(runPendingTranslationCoverage, 0);
+                            omniTranslationCoverageIdleHandle = setTimeout(() => runPendingTranslationCoverage(null), 0);
                         }
-                    }, 320);
+                    }, immediate ? 0 : 320);
                 };
                 const isRelevantAddedNode = node => {
                     if (!(node instanceof HTMLElement)) return false;
@@ -34553,10 +34907,10 @@ try {
                     mutations.forEach(mutation => {
                         if (mutation.type !== 'childList') return;
                         mutation.addedNodes.forEach(node => {
-                            if (isRelevantAddedNode(node)) pendingTranslationRoots.add(node);
+                            if (isRelevantAddedNode(node)) queueTranslationRoot(node);
                         });
                     });
-                    if (pendingTranslationRoots.size) scheduleTranslationCoverage();
+                    if (pendingTranslationRoots.length) scheduleTranslationCoverage();
                 });
                 translationCoverageObserver.observe(document.body, { childList: true, subtree: true });
             }
@@ -34927,6 +35281,7 @@ try {
         }
 
         let selectedFoldersPageFolderId = null;
+        let foldersPageDocsVisibleCount = FOLDER_DOCUMENTS_PAGE_SIZE;
         function renderFoldersPage() {
             const folderList = document.getElementById('foldersPageList');
             const docsList = document.getElementById('foldersPageDocsList');
@@ -34948,16 +35303,26 @@ try {
             }).join('');
             const selected = workspaceFolders.find(folder => folder.id === selectedFoldersPageFolderId);
             if (docsTitle) docsTitle.textContent = selected?.name || _t('documents_section');
-            const docs = (selected?.documentIds || []).map(id => documents.find(doc => doc.id === id)).filter(Boolean);
-            docsList.innerHTML = docs.length ? docs.map(doc => '<div class="omni-folder-doc-card"><span style="min-width:0;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(doc.title || documentTitleDefault()) + '</strong><small style="opacity:.66;">' + escapeHtml(new Date(doc.timestamp || doc.updatedAt || doc.createdAt || Date.now()).toLocaleString()) + '</small></span><button type="button" data-open-doc="' + escapeHtml(doc.id) + '"><icon>open_in_new</icon>' + escapeHtml(_t('open')) + '</button></div>').join('') : '<p style="opacity:.66;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            const docsLookup = typeof createDocumentLookup === 'function' ? createDocumentLookup(typeof getWorkspaceDocuments === 'function' ? getWorkspaceDocuments() : documents) : new Map(documents.map(doc => [doc.id, doc]));
+            const docs = (selected?.documentIds || []).map(id => docsLookup.get(id)).filter(Boolean);
+            const visibleDocs = docs.slice(0, foldersPageDocsVisibleCount);
+            docsList.innerHTML = docs.length ? visibleDocs.map(doc => '<div class="omni-folder-doc-card"><span style="min-width:0;"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(doc.title || documentTitleDefault()) + '</strong><small style="opacity:.66;">' + escapeHtml(new Date(doc.timestamp || doc.updatedAt || doc.createdAt || Date.now()).toLocaleString()) + '</small></span><button type="button" data-open-doc="' + escapeHtml(doc.id) + '"><icon>open_in_new</icon>' + escapeHtml(_t('open')) + '</button></div>').join('') : '<p style="opacity:.66;">' + escapeHtml(_t('folder_empty')) + '</p>';
+            if (docs.length > foldersPageDocsVisibleCount) {
+                docsList.insertAdjacentHTML('beforeend', '<button id="foldersPageShowMoreDocsBtn" class="newnote-btn" type="button" style="margin-top:10px;justify-content:center;width:100%;"><icon>expand_more</icon><span>' + escapeHtml(getShowMoreLabel(docs.length - foldersPageDocsVisibleCount)) + '</span></button>');
+            }
             folderList.querySelectorAll('[data-folder-id]').forEach(item => {
                 item.onclick = () => {
                     selectedFoldersPageFolderId = item.dataset.folderId;
+                    foldersPageDocsVisibleCount = FOLDER_DOCUMENTS_PAGE_SIZE;
                     renderFoldersPage();
                 };
             });
             docsList.querySelectorAll('[data-open-doc]').forEach(button => {
                 button.onclick = () => openDocument(button.dataset.openDoc);
+            });
+            document.getElementById('foldersPageShowMoreDocsBtn')?.addEventListener('click', () => {
+                foldersPageDocsVisibleCount += FOLDER_DOCUMENTS_PAGE_SIZE;
+                renderFoldersPage();
             });
         }
 
