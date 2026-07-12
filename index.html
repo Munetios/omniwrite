@@ -1107,13 +1107,97 @@ if ('serviceWorker' in navigator) {
         }
         .omni-video-frame video {
             display: block;
-            width: auto;
+            width: 100%;
             max-width: 100%;
             height: auto;
             border-radius: inherit;
             margin: 0 !important;
             background: #05040c;
         }
+        .omni-embed-frame {
+            position: relative;
+            display: inline-block;
+            width: min(100%, 760px);
+            max-width: 100%;
+            aspect-ratio: 16 / 9;
+            margin: 12px 0;
+            overflow: hidden;
+            vertical-align: top;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(8, 6, 18, 0.42);
+        }
+        .omni-embed-frame iframe,
+        .omni-embed-frame .youtube-nocookie-placeholder {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            border: 0;
+            border-radius: inherit !important;
+        }
+        .omni-media-selected {
+            outline: 2px solid #ffe066;
+            outline-offset: 3px;
+        }
+        .omni-media-resize-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.86);
+            border-radius: 6px;
+            background: #8f5cff;
+            box-shadow: 0 0 0 2px rgba(17,7,54,0.65);
+            z-index: 10050;
+            cursor: nwse-resize;
+            touch-action: none;
+        }
+        .omni-mini-player {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1000002;
+            width: clamp(220px, 26vw, 380px);
+            min-width: 190px;
+            min-height: 128px;
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 24px);
+            overflow: hidden;
+            resize: none;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(20, 10, 48, 0.88);
+            border-radius: 18px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.38);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            touch-action: pan-y;
+            transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
+            will-change: transform, opacity;
+        }
+        .omni-mini-player.is-swiping { transition: none; }
+        .omni-mini-player.is-dismissing { transform: translateX(calc(100% + 36px)); opacity: 0; pointer-events: none; }
+        .omni-mini-player.is-hold-ready { box-shadow: 0 0 0 2px rgba(143,92,255,0.94), 0 18px 50px rgba(0,0,0,0.38); }
+        .omni-mini-resize-handle { position:absolute; z-index:3; touch-action:none; }
+        .omni-mini-resize-handle[data-edge="n"], .omni-mini-resize-handle[data-edge="s"] { left:10px; right:10px; height:10px; }
+        .omni-mini-resize-handle[data-edge="n"] { top:-5px; cursor:n-resize; }
+        .omni-mini-resize-handle[data-edge="s"] { bottom:-5px; cursor:s-resize; }
+        .omni-mini-resize-handle[data-edge="e"], .omni-mini-resize-handle[data-edge="w"] { top:10px; bottom:10px; width:10px; }
+        .omni-mini-resize-handle[data-edge="e"] { right:-5px; cursor:e-resize; }
+        .omni-mini-resize-handle[data-edge="w"] { left:-5px; cursor:w-resize; }
+        .omni-mini-resize-handle[data-edge^="n"][data-edge$="w"], .omni-mini-resize-handle[data-edge^="s"][data-edge$="w"], .omni-mini-resize-handle[data-edge^="n"][data-edge$="e"], .omni-mini-resize-handle[data-edge^="s"][data-edge$="e"] { width:16px; height:16px; }
+        .omni-mini-resize-handle[data-edge="nw"] { top:-6px; left:-6px; cursor:nwse-resize; }
+        .omni-mini-resize-handle[data-edge="ne"] { top:-6px; right:-6px; cursor:nesw-resize; }
+        .omni-mini-resize-handle[data-edge="sw"] { bottom:-6px; left:-6px; cursor:nesw-resize; }
+        .omni-mini-resize-handle[data-edge="se"] { bottom:-6px; right:-6px; cursor:nwse-resize; }
+        .omni-mini-player-media { width: 100%; aspect-ratio: 16 / 9; background:#05040c; }
+        .omni-mini-player-media video,
+        .omni-mini-player-media iframe { width:100%; height:100%; display:block; border:0; object-fit:contain; background:#05040c; }
+        .omni-mini-player-media { position:relative; min-height:132px; overflow:hidden; }
+        .omni-mini-player-media iframe { position:absolute; inset:0; }
+        .omni-mini-player-bar { display:flex; align-items:center; gap:8px; min-height:42px; padding:6px 8px; line-height:1; }
+        .omni-mini-player-bar button { width:32px; height:32px; padding:0; border-radius:10px; display:grid; place-items:center; }
+        .omni-mini-player-title { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; opacity:.86; }
+        @media (max-width: 600px) { .omni-mini-player { right:12px; bottom:12px; width:min(76vw, 340px); } }
         .omni-native-video {
             display: block;
             max-width: 100%;
@@ -11552,6 +11636,7 @@ Q4: 22</textarea>
                     // Always insert a placeholder with click-to-load, never a direct iframe
                     const placeholder = document.createElement('div');
                     placeholder.className = 'youtube-nocookie-placeholder';
+                    placeholder.setAttribute('data-omni-embed-src', embedUrl);
                     placeholder.style.position = 'relative';
                     placeholder.style.width = '100%';
                     placeholder.style.maxWidth = '560px';
@@ -19282,6 +19367,7 @@ try {
                     </ul>
                     <h3>Changelog</h3>
                     <ul>
+                        <li>v1.15.2 - Added resizable local and YouTube video embeds, a persistent custom mini-player, document resize handles, and improved Spanish (Mexico and United States) labels.</li>
                         <li>v1.15.1 - Fixed some bugs when greeting title keeps reverting workspace name to Personal, Fixed performance issues.</li>
                         <li>v1.15.0 - Redesigned the sidebar, improved translations and added more right click context menus.</li>
                         <li>v1.14.13 - Improved mobile support </li>
@@ -22495,6 +22581,10 @@ try {
                 'reading_mode': 'Reading Mode',
                 'play': 'Play',
                 'pause': 'Pause',
+                'video': 'Video',
+                'resize_media': 'Resize media',
+                'mini_player': 'Mini player',
+                'close_mini_player': 'Close mini player',
                 'stop': 'Stop',
                 'voice_label': 'Voice:',
                 'select_voice': 'Select Voice',
@@ -32234,6 +32324,396 @@ try {
             });
         }
 
+        function setupResizableMediaAndMiniPlayer() {
+            if (window.omniResizableMediaReady) return;
+            window.omniResizableMediaReady = true;
+            let selectedFrame = null;
+            let resizeHandle = null;
+            let lastMedia = null;
+            let dismissedMediaSource = '';
+
+            const editorSelector = '.editor-surface, .document-page-editor, .split-editor, #editorArea';
+            const mediaSelector = 'video, iframe[src*="youtube.com"], iframe[src*="youtu.be"], .youtube-nocookie-placeholder';
+            const isYouTube = element => element && (element.matches('.youtube-nocookie-placeholder') || /youtube(?:-nocookie)?\.com|youtu\.be/i.test(element.getAttribute('src') || ''));
+            const getEditor = element => element && element.closest(editorSelector);
+            const saveFrame = frame => {
+                const editor = getEditor(frame);
+                if (editor && typeof saveEditorSurfaceContent === 'function') saveEditorSurfaceContent(editor);
+            };
+            const frameFor = media => media && media.closest('.omni-video-frame, .omni-embed-frame');
+            const trackMedia = (media, wasPlaying = false) => {
+                if (!media || !getEditor(media)) return;
+                const source = media.currentSrc || media.src || media.getAttribute('data-omni-embed-src') || '';
+                if (!source) return;
+                if (source !== dismissedMediaSource) dismissedMediaSource = '';
+                lastMedia = { element: media, type: media.matches('video') ? 'video' : 'youtube', source, wasPlaying };
+            };
+            const clearSelection = () => {
+                selectedFrame?.classList.remove('omni-media-selected');
+                resizeHandle?.remove();
+                selectedFrame = null;
+                resizeHandle = null;
+            };
+            const positionHandle = () => {
+                if (!selectedFrame || !resizeHandle) return;
+                const rect = selectedFrame.getBoundingClientRect();
+                resizeHandle.style.left = (rect.right - 8) + 'px';
+                resizeHandle.style.top = (rect.bottom - 8) + 'px';
+            };
+            const selectFrame = frame => {
+                if (!frame) return;
+                clearSelection();
+                selectedFrame = frame;
+                frame.classList.add('omni-media-selected');
+                resizeHandle = document.createElement('div');
+                resizeHandle.className = 'omni-media-resize-handle';
+                resizeHandle.setAttribute('role', 'slider');
+                resizeHandle.setAttribute('aria-label', _t('resize_media') || 'Resize media');
+                document.body.appendChild(resizeHandle);
+                positionHandle();
+            };
+            const prepareMedia = scope => {
+                const root = scope && scope.querySelectorAll ? scope : document;
+                root.querySelectorAll(mediaSelector).forEach(media => {
+                    if (!getEditor(media)) return;
+                    let frame = frameFor(media);
+                    if (!frame) {
+                        frame = document.createElement('figure');
+                        frame.className = media.matches('video') ? 'omni-video-frame liquid-glass' : 'omni-embed-frame liquid-glass';
+                        frame.contentEditable = 'false';
+                        media.parentNode.insertBefore(frame, media);
+                        frame.appendChild(media);
+                    }
+                    frame.contentEditable = 'false';
+                    if (media.matches('video')) {
+                        media.style.width = '100%';
+                        if (!frame.style.width) {
+                            const measuredWidth = media.getBoundingClientRect().width || media.videoWidth || 640;
+                            frame.style.width = Math.min(measuredWidth, getEditor(frame).clientWidth || 760) + 'px';
+                        }
+                    } else {
+                        frame.classList.add('omni-embed-frame');
+                        media.setAttribute('title', media.getAttribute('title') || 'YouTube video');
+                    }
+                    // Attach interaction listeners for iframes (YouTube) — clicks inside iframe won't bubble, so
+                    // listen to pointerenter/focus/load to consider the iframe as the last interacted media.
+                    try {
+                        if (media.matches && media.matches('iframe')) {
+                            media.addEventListener('pointerenter', () => trackMedia(media, true));
+                            media.addEventListener('mouseenter', () => trackMedia(media, true));
+                            media.addEventListener('focus', () => trackMedia(media, true));
+                            media.addEventListener('load', () => trackMedia(media, false));
+                        }
+                    } catch (e) {}
+                });
+            };
+
+            document.addEventListener('pointerdown', event => {
+                const media = event.target.closest?.(mediaSelector);
+                if (!media) {
+                    if (event.target !== resizeHandle) clearSelection();
+                    return;
+                }
+                const frame = frameFor(media);
+                if (frame) selectFrame(frame);
+                if (getEditor(media)) dismissedMediaSource = '';
+                trackMedia(media, media.matches('video') ? !media.paused : true);
+            }, true);
+            document.addEventListener('focusin', event => {
+                const media = event.target.closest?.(mediaSelector);
+                trackMedia(media, media?.matches('video') ? !media.paused : true);
+            }, true);
+            document.addEventListener('play', event => {
+                if (!event.target.matches?.('video')) return;
+                trackMedia(event.target, true);
+            }, true);
+            document.addEventListener('pause', event => {
+                if (lastMedia?.element === event.target && event.target.isConnected && getEditor(event.target) && !event.target.ended) lastMedia.wasPlaying = false;
+            }, true);
+            document.addEventListener('pointerdown', event => {
+                if (event.target !== resizeHandle || !selectedFrame) return;
+                event.preventDefault();
+                const frame = selectedFrame;
+                const editor = getEditor(frame);
+                const startX = event.clientX;
+                const startWidth = frame.getBoundingClientRect().width;
+                const maxWidth = () => Math.max(190, (editor?.getBoundingClientRect().width || window.innerWidth) - 16);
+                const move = moveEvent => {
+                    const width = Math.max(180, Math.min(maxWidth(), startWidth + moveEvent.clientX - startX));
+                    frame.style.width = Math.round(width) + 'px';
+                    frame.style.maxWidth = '100%';
+                    positionHandle();
+                };
+                const up = () => {
+                    document.removeEventListener('pointermove', move);
+                    document.removeEventListener('pointerup', up);
+                    saveFrame(frame);
+                };
+                document.addEventListener('pointermove', move);
+                document.addEventListener('pointerup', up, { once: true });
+            }, true);
+            window.addEventListener('resize', positionHandle);
+            window.addEventListener('scroll', positionHandle, true);
+
+            const closeMiniPlayer = () => {
+                const mini = document.getElementById('omniMediaMiniPlayer');
+                if (!mini || mini.classList.contains('is-dismissing')) return;
+                if (lastMedia) lastMedia.dismissed = true;
+                dismissedMediaSource = lastMedia?.source || dismissedMediaSource;
+                mini.classList.add('is-dismissing');
+                setTimeout(() => {
+                    // If we moved an original iframe into the mini player, restore it back to its placeholder
+                    try {
+                        const iframe = mini.querySelector('iframe');
+                        if (iframe && iframe.dataset && iframe.dataset.omniOriginalPlaceholder) {
+                            // Find placeholder element (the node we inserted where the iframe originally was)
+                            const placeholder = document.querySelector('.youtube-iframe-placeholder[data-omni-id="' + (iframe.dataset.omniPlaceholderId || '') + '"]');
+                            if (placeholder && placeholder.parentNode) {
+                                placeholder.parentNode.replaceChild(iframe, placeholder);
+                                // cleanup markers
+                                delete iframe.dataset.omniOriginalPlaceholder;
+                                delete iframe.dataset.omniPlaceholderId;
+                            }
+                        }
+                    } catch (e) {}
+                    mini.querySelector('video')?.pause();
+                    mini.remove();
+                }, 220);
+            };
+            const isStillVisible = media => !!(media && media.isConnected && getEditor(media) && media.getClientRects().length && getEditor(media).getClientRects().length);
+            const capturePlaybackState = () => {
+                if (lastMedia?.type === 'video' && lastMedia.element?.matches('video')) lastMedia.wasPlaying = !lastMedia.element.paused;
+            };
+            const showMiniPlayer = () => {
+                if (!lastMedia || lastMedia.dismissed || isStillVisible(lastMedia.element) || document.getElementById('omniMediaMiniPlayer')) return;
+                const source = lastMedia.source;
+                if (!source || source === dismissedMediaSource) return;
+                const original = lastMedia.element;
+                if (lastMedia.type === 'video' && !lastMedia.wasPlaying) return;
+                const mini = document.createElement('section');
+                mini.id = 'omniMediaMiniPlayer';
+                mini.className = 'omni-mini-player liquid-glass';
+                mini.setAttribute('aria-label', _t('mini_player') || 'Mini player');
+                const mediaBox = document.createElement('div');
+                mediaBox.className = 'omni-mini-player-media';
+                const bar = document.createElement('div');
+                bar.className = 'omni-mini-player-bar';
+                const title = document.createElement('span');
+                title.className = 'omni-mini-player-title';
+                title.textContent = original?.getAttribute('title') || (lastMedia.type === 'youtube' ? 'YouTube' : _t('video') || 'Video');
+                if (lastMedia.type === 'video') {
+                    // Use native controls in the mini-player for reliability across browsers
+                    const video = document.createElement('video');
+                    video.src = source;
+                    video.playsInline = true;
+                    video.volume = original.volume;
+                    video.muted = original.muted;
+                    video.controls = true;
+                    video.setAttribute('controls', '');
+                    // Defer seeking until metadata is available to avoid exceptions on some browsers
+                    video.addEventListener('loadedmetadata', () => {
+                        try { if (original.currentTime) video.currentTime = original.currentTime || 0; } catch (e) {}
+                        // Try playing after metadata; respect autoplay policies
+                        video.play().catch(() => {});
+                    }, { once: true });
+                    mediaBox.appendChild(video);
+                    // Only show the title bar (native controls handle play/pause)
+                    bar.append(title);
+                } else {
+                    // If the original iframe element is still available in the document, reparent it
+                    let iframe = null;
+                    try {
+                        const originalFrame = original && original.matches && original.matches('iframe') ? original : null;
+                        if (originalFrame && originalFrame.isConnected) {
+                            // Insert a lightweight placeholder where the iframe was so we can restore it later
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'youtube-iframe-placeholder';
+                            const id = Math.random().toString(36).slice(2,10);
+                            placeholder.dataset.omniId = id;
+                            // If author set an inline size, copy it to reduce layout shift; avoid synchronous layout reads
+                            try {
+                                if (originalFrame.style && originalFrame.style.width) placeholder.style.width = originalFrame.style.width;
+                                if (originalFrame.style && originalFrame.style.height) placeholder.style.height = originalFrame.style.height;
+                            } catch (e) {}
+                            originalFrame.parentNode.insertBefore(placeholder, originalFrame);
+                            // mark iframe so we know it was moved
+                            originalFrame.dataset.omniOriginalPlaceholder = '1';
+                            originalFrame.dataset.omniPlaceholderId = id;
+                            iframe = originalFrame;
+                            // Ensure iframe will play when reparented
+                            iframe.allow = iframe.allow ? iframe.allow + '; autoplay' : 'autoplay';
+                            mediaBox.appendChild(iframe);
+                        } else {
+                            iframe = document.createElement('iframe');
+                            const url = new URL(source, window.location.href);
+                            url.searchParams.set('autoplay', '1');
+                            url.searchParams.set('playsinline', '1');
+                            url.searchParams.set('rel', '0');
+                            iframe.src = url.href;
+                            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+                            iframe.allowFullscreen = true;
+                            iframe.referrerPolicy = 'origin';
+                            iframe.title = title.textContent;
+                            mediaBox.appendChild(iframe);
+                        }
+                    } catch (e) {
+                        // fallback to creating a new iframe
+                        iframe = document.createElement('iframe');
+                        const url = new URL(source, window.location.href);
+                        url.searchParams.set('autoplay', '1');
+                        url.searchParams.set('playsinline', '1');
+                        url.searchParams.set('rel', '0');
+                        iframe.src = url.href;
+                        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+                        iframe.allowFullscreen = true;
+                        iframe.referrerPolicy = 'origin';
+                        iframe.title = title.textContent;
+                        mediaBox.appendChild(iframe);
+                    }
+                    bar.append(title);
+                }
+                mini.append(mediaBox, bar);
+                ['n', 'e', 's', 'w', 'nw', 'ne', 'sw', 'se'].forEach(edge => {
+                    const handle = document.createElement('div');
+                    handle.className = 'omni-mini-resize-handle';
+                    handle.dataset.edge = edge;
+                    handle.setAttribute('aria-hidden', 'true');
+                    handle.addEventListener('pointerdown', event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const start = mini.getBoundingClientRect();
+                        const startX = event.clientX;
+                        const startY = event.clientY;
+                        mini.style.left = start.left + 'px';
+                        mini.style.top = start.top + 'px';
+                        mini.style.right = 'auto';
+                        mini.style.bottom = 'auto';
+                        const move = moveEvent => {
+                            const dx = moveEvent.clientX - startX;
+                            const dy = moveEvent.clientY - startY;
+                            let width = start.width, height = start.height, left = start.left, top = start.top;
+                            if (edge.includes('e')) width += dx;
+                            if (edge.includes('s')) height += dy;
+                            if (edge.includes('w')) { width -= dx; left += dx; }
+                            if (edge.includes('n')) { height -= dy; top += dy; }
+                            const minWidth = 190, minHeight = 128, margin = 12;
+                            width = Math.max(minWidth, Math.min(width, window.innerWidth - margin - Math.max(margin, left)));
+                            height = Math.max(minHeight, Math.min(height, window.innerHeight - margin - Math.max(margin, top)));
+                            if (edge.includes('w')) left = start.right - width;
+                            if (edge.includes('n')) top = start.bottom - height;
+                            left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+                            top = Math.max(margin, Math.min(top, window.innerHeight - height - margin));
+                            mini.style.width = Math.round(width) + 'px';
+                            mini.style.height = Math.round(height) + 'px';
+                            mini.style.left = Math.round(left) + 'px';
+                            mini.style.top = Math.round(top) + 'px';
+                        };
+                        const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); };
+                        document.addEventListener('pointermove', move);
+                        document.addEventListener('pointerup', up, { once: true });
+                    });
+                    mini.appendChild(handle);
+                });
+                let swipeStartX = 0;
+                let holdDismissTimer = 0;
+                let holdReady = false;
+                const resetSwipe = () => {
+                    clearTimeout(holdDismissTimer);
+                    holdReady = false;
+                    mini.classList.remove('is-swiping');
+                    mini.classList.remove('is-hold-ready');
+                    mini.style.transform = '';
+                    mini.style.opacity = '';
+                };
+                mini.addEventListener('pointerdown', event => {
+                    if (event.target.closest('.omni-mini-resize-handle')) return;
+                    swipeStartX = event.clientX;
+                    mini.setPointerCapture?.(event.pointerId);
+                    holdDismissTimer = setTimeout(() => { holdReady = true; mini.classList.add('is-hold-ready'); }, 520);
+                });
+                mini.addEventListener('pointermove', event => {
+                    if (!holdReady) return;
+                    const distance = Math.max(0, event.clientX - swipeStartX);
+                    if (!distance) return;
+                    mini.classList.add('is-swiping');
+                    mini.style.transform = 'translateX(' + distance + 'px)';
+                    mini.style.opacity = String(Math.max(0.28, 1 - distance / Math.max(220, mini.offsetWidth)));
+                });
+                mini.addEventListener('pointerup', event => {
+                    const distance = event.clientX - swipeStartX;
+                    if (holdReady && distance > 72) closeMiniPlayer();
+                    else resetSwipe();
+                });
+                mini.addEventListener('pointercancel', resetSwipe);
+                document.body.appendChild(mini);
+            };
+            const queueMiniPlayer = () => setTimeout(showMiniPlayer, 120);
+            const scheduleMiniPlayer = () => { capturePlaybackState(); queueMiniPlayer(); };
+            window.addEventListener('hashchange', scheduleMiniPlayer);
+            window.addEventListener('popstate', scheduleMiniPlayer);
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMiniPlayer(); });
+            document.addEventListener('click', () => { capturePlaybackState(); setTimeout(() => { prepareMedia(document); showMiniPlayer(); }, 160); }, true);
+            // Throttle mutation handling to avoid heavy synchronous layout reads when many DOM changes occur
+            let _mediaMutationScheduled = false;
+            const mediaMutationHandler = (mutations) => {
+                let added = false;
+                for (let i = 0; i < mutations.length; i++) {
+                    const m = mutations[i];
+                    if (m.addedNodes && m.addedNodes.length) { added = true; break; }
+                }
+                if (!_mediaMutationScheduled) {
+                    _mediaMutationScheduled = true;
+                    requestAnimationFrame(() => {
+                        try {
+                            if (added) prepareMedia(document);
+                        } catch (e) {}
+                        try { queueMiniPlayer(); } catch (e) {}
+                        _mediaMutationScheduled = false;
+                    });
+                }
+            };
+            const observer = new MutationObserver(mediaMutationHandler);
+            observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+            prepareMedia(document);
+        }
+
+        function setupDocumentResizeHandle() {
+            if (window.omniDocumentResizeHandleReady) return;
+            window.omniDocumentResizeHandleReady = true;
+            let editor = null;
+            let handle = null;
+            const clear = () => { handle?.remove(); handle = null; editor = null; };
+            const position = () => {
+                if (!editor || !handle) return;
+                const rect = editor.getBoundingClientRect();
+                handle.style.left = (rect.right - 8) + 'px';
+                handle.style.top = (rect.bottom - 8) + 'px';
+            };
+            document.addEventListener('focusin', event => {
+                const next = event.target.closest?.('.document-page-editor, .split-editor, #editorArea');
+                if (!next || event.target.closest?.('.omni-video-frame, .omni-embed-frame')) return;
+                clear(); editor = next;
+                handle = document.createElement('div');
+                handle.className = 'omni-media-resize-handle omni-document-resize-handle';
+                handle.setAttribute('aria-label', _t('resize_document') || 'Resize document');
+                document.body.appendChild(handle); position();
+            }, true);
+            document.addEventListener('pointerdown', event => {
+                if (event.target !== handle || !editor) return;
+                event.preventDefault();
+                const startX = event.clientX, startWidth = editor.getBoundingClientRect().width;
+                const move = moveEvent => { editor.style.width = Math.max(320, Math.min(window.innerWidth - 24, startWidth + moveEvent.clientX - startX)) + 'px'; position(); };
+                const up = () => {
+                    document.removeEventListener('pointermove', move);
+                    document.removeEventListener('pointerup', up);
+                    const docId = getCurrentDocumentIdForWidth();
+                    if (docId) setDocumentWidthSetting(docId, { value: 'custom', mode: 'fixed', customValue: String(Math.round(editor.getBoundingClientRect().width)) });
+                };
+                document.addEventListener('pointermove', move); document.addEventListener('pointerup', up, { once: true });
+            }, true);
+            window.addEventListener('resize', position); window.addEventListener('scroll', position, true);
+        }
+
         function forceTranslatedDefaultTitles() {
             document.addEventListener('click', event => {
                 if (!event.target.closest || !event.target.closest('#createNewDocumentBtn')) return;
@@ -32284,6 +32764,7 @@ try {
                 cleanVideo.classList.add('omni-native-video');
                 cleanVideo.style.display = 'block';
                 cleanVideo.style.maxWidth = '100%';
+                if (frame.style.width) cleanVideo.style.width = frame.style.width;
                 if (cleanVideo.style.width === '100%') cleanVideo.style.width = '';
                 cleanVideo.style.borderRadius = '8px';
                 cleanVideo.style.margin = '8px 0';
@@ -32700,6 +33181,8 @@ try {
         setupFindReplace();
         setupCustomContextMenu();
         setupImageResize();
+        setupResizableMediaAndMiniPlayer();
+        setupDocumentResizeHandle();
         setupVideoUpgradeObserver();
         setupOmniUiTranslationObserver();
         function renderOmniRetryState(containerId, messageKey, retryHandler) {
@@ -34684,6 +35167,17 @@ try {
             trash: 'Trash',
             failed_load_trash: 'Failed to load the trash'
         });
+        const omniLatinAmericanSpanishPatch = {
+            settings: 'Configuración', Settings: 'Configuración', settings_modal_title: 'Configuración',
+            add: 'Agregar', manage: 'Administrar', manage_workspaces: 'Administrar', personal: 'Personal', personal_workspace: 'Personal', active: 'Activo',
+            open: 'Abrir', edit: 'Editar', delete: 'Eliminar', save: 'Guardar', insert: 'Insertar', remove: 'Quitar',
+            upload: 'Subir', download: 'Descargar', share: 'Compartir', print: 'Imprimir', preview: 'Vista previa', search: 'Buscar', help: 'Ayuda',
+            documents: 'Documentos', folders: 'Proyectos', images: 'Imágenes', notes: 'Notas', charts: 'Gráficos', trash: 'Papelera', tasks: 'Tareas', templates: 'Plantillas', workspaces: 'Espacios de trabajo',
+            new_document: 'Nuevo documento', new_folder: 'Nuevo proyecto', import_file: 'Importar archivo', upload_image: 'Subir imagen', browse_templates: 'Explorar plantillas',
+            ctx_add_project: 'Agregar proyecto', add_folder: 'Agregar proyecto', no_folders: 'No hay proyectos', no_pinned: 'No hay documentos fijados',
+            untitled_document: 'Documento sin título', 'Untitled Document': 'Documento sin título', resize_document: 'Cambiar tamaño del documento',
+            quick_notes: 'Notas rápidas', manage_workspaces: 'Administrar', workspace: 'Espacio de trabajo', add_workspace: 'Agregar espacio de trabajo'
+        };
         const omniRegionalLocalePatches = {
             'en-GB': omniBritishEnglishPatch,
             'en-AU': Object.assign({}, omniBritishEnglishPatch),
@@ -34692,28 +35186,13 @@ try {
             'es-ES': {
                 settings: 'Ajustes',
                 Settings: 'Ajustes',
-                settings_modal_title: 'Ajustes'
+                settings_modal_title: 'Ajustes',
+                     ctx_add_project: 'Añadir Proyecto',
             },
-            'es-MX': {
-                settings: 'Configuración',
-                Settings: 'Configuración',
-                settings_modal_title: 'Configuración'
-            },
-            'es-US': {
-                settings: 'Configuración',
-                Settings: 'Configuración',
-                settings_modal_title: 'Configuración'
-            },
-            'es-AR': {
-                settings: 'Configuración',
-                Settings: 'Configuración',
-                settings_modal_title: 'Configuración'
-            },
-            'es-CO': {
-                settings: 'Configuración',
-                Settings: 'Configuración',
-                settings_modal_title: 'Configuración'
-            }
+            'es-MX': Object.assign({}, omniLatinAmericanSpanishPatch),
+            'es-US': Object.assign({}, omniLatinAmericanSpanishPatch),
+            'es-AR': Object.assign({}, omniLatinAmericanSpanishPatch),
+            'es-CO': Object.assign({}, omniLatinAmericanSpanishPatch)
         };
         if (typeof TRANSLATIONS === 'object') {
             Object.entries(omniRegionalLocalePatches).forEach(([locale, patch]) => {
@@ -34847,6 +35326,10 @@ try {
             }
 
             refreshOmniTranslationCoverage(false, document, true);
+            const activeRegionalLanguage = localStorage.getItem('omniwrite-lang') || 'en';
+            if (/^es-(MX|US|AR|CO)$/i.test(activeRegionalLanguage) && typeof applyTranslations === 'function') {
+                requestAnimationFrame(() => applyTranslations(activeRegionalLanguage));
+            }
             window.ensureOmniAllLanguageTranslationCoverage = () => refreshOmniTranslationCoverage(false, document, true);
             if (typeof MutationObserver === 'function' && !window.__omniTranslationCoverageObserverReady) {
                 window.__omniTranslationCoverageObserverReady = true;
